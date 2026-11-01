@@ -1,0 +1,178 @@
+/* ==========================================================================
+   GSK Design System - frontend/css/style.css
+   Berdasarkan DESIGN.md (GSK Industrial & Financial Enterprise)
+   ========================================================================== */
+
+:root {
+  --gsk-primary: #0F172A;
+  --gsk-primary-container: #131B2E;
+  --gsk-secondary: #855300;
+  --gsk-secondary-container: #FEA619; /* Amber Construction */
+  --gsk-tertiary-container: #002113;
+  --gsk-on-tertiary-container: #009668; /* Emerald Margin Profit */
+  --gsk-surface: #F9F9FF;
+  --gsk-surface-lowest: #FFFFFF;
+  --gsk-surface-container: #E7EEFF;
+  --gsk-on-surface: #111C2D;
+  --gsk-outline: #76777D;
+  --gsk-outline-variant: #C6C6CD;
+  --gsk-error: #BA1A1A;
+  --gsk-radius: 8px;
+  --gsk-radius-lg: 12px;
+  --gsk-shadow: 0 1px 3px 0 rgba(17, 28, 45, 0.08), 0 1px 2px -1px rgba(17, 28, 45, 0.08);
+  --gsk-shadow-hover: 0 10px 25px -5px rgba(17, 28, 45, 0.12);
+}
+
+[data-theme="dark"] {
+  --gsk-surface: #0B0F19;
+  --gsk-surface-lowest: #131B2E;
+  --gsk-surface-container: #1E293B;
+  --gsk-on-surface: #F8FAFC;
+  --gsk-outline-variant: #334155;
+  --gsk-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
+}
+
+* {
+  box-sizing: border-box;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+h1, h2, h3, h4, h5, h6, .brand-font {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background-color: var(--gsk-surface);
+  color: var(--gsk-on-surface);
+  transition: background-color 0.3s, color 0.3s;
+}
+
+/* Navbar */
+.landing-navbar {
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--gsk-outline-variant);
+  position: sticky;
+  top: 0;
+  z-index: 1030;
+}
+
+[data-theme="dark"] .landing-navbar {
+  background: rgba(11, 15, 25, 0.92);
+  border-bottom-color: #243048;
+}
+
+.brand-badge {
+  background: var(--gsk-secondary-container);
+  color: #000;
+  font-weight: 800;
+  padding: 6px 12px;
+  border-radius: var(--gsk-radius);
+  font-size: 16px;
+}
+
+/* Hero Section */
+.hero-section {
+  padding: 80px 0 60px 0;
+  background: radial-gradient(circle at top right, rgba(254, 166, 25, 0.1) 0%, transparent 60%);
+}
+
+.hero-title {
+  font-size: 2.75rem;
+  font-weight: 800;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+}
+
+.hero-subtitle {
+  font-size: 1.15rem;
+  color: #64748B;
+  line-height: 1.6;
+}
+
+/* Product Cards */
+.product-card {
+  background: var(--gsk-surface-lowest);
+  border: 1px solid var(--gsk-outline-variant);
+  border-radius: var(--gsk-radius-lg);
+  padding: 24px;
+  box-shadow: var(--gsk-shadow);
+  transition: transform 0.2s, box-shadow 0.2s;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.product-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--gsk-shadow-hover);
+  border-color: var(--gsk-secondary-container);
+}
+
+.product-price-tag {
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: var(--gsk-primary);
+}
+
+[data-theme="dark"] .product-price-tag {
+  color: #F8FAFC;
+}
+
+/* ProductReceiver Form Container */
+.receiver-card {
+  background: var(--gsk-surface-lowest);
+  border: 2px solid var(--gsk-secondary-container);
+  border-radius: 16px;
+  padding: 32px;
+  box-shadow: var(--gsk-shadow-hover);
+}
+
+/* Buttons */
+.btn-gsk-action {
+  background: var(--gsk-primary);
+  color: #FFFFFF;
+  font-weight: 600;
+  border-radius: var(--gsk-radius);
+  padding: 10px 20px;
+  border: none;
+  transition: opacity 0.2s;
+}
+
+.btn-gsk-action:hover {
+  opacity: 0.9;
+  color: #FFFFFF;
+}
+
+.btn-gsk-amber {
+  background: var(--gsk-secondary-container);
+  color: #000;
+  font-weight: 700;
+  border-radius: var(--gsk-radius);
+  padding: 10px 22px;
+  border: none;
+  transition: transform 0.2s;
+}
+
+.btn-gsk-amber:hover {
+  transform: scale(1.02);
+  color: #000;
+}
+
+/* Loading Toast & Overlay */
+.gsk-loader {
+  position: fixed;
+  top: 0; left: 0; width: 100vw; height: 100vh;
+  background: rgba(15, 23, 42, 0.7);
+  backdrop-filter: blur(4px);
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: #FFF;
+}
+
+.d-none { display: none !important; }

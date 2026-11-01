@@ -1,0 +1,382 @@
+﻿<!DOCTYPE html>
+<html lang="id" data-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <title>PT Griya Sultra Konstruksi - Pabrik Manufaktur Baja Ringan, Rangka Atap & Portal ERP</title>
+
+  <!-- Google Fonts: Plus Jakarta Sans & Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+
+  <!-- Bootstrap 5 & Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <!-- Style CSS Standar Desain Industri GSK -->
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <!-- Loading Overlay -->
+  <div id="appLoader" class="gsk-loader d-none">
+    <div class="spinner-border text-warning mb-3" style="width: 3rem; height: 3rem;" role="status"></div>
+    <div id="loaderText" class="fw-bold tracking-wide">Memproses Transaksi...</div>
+  </div>
+
+  <!-- NAVBAR UTAMA -->
+  <header class="landing-navbar py-3">
+    <div class="container d-flex align-items-center justify-content-between">
+      <div class="d-flex align-items-center gap-2">
+        <span class="brand-badge" id="navBrandLogo">GSK</span>
+        <div>
+          <h6 class="m-0 fw-bold" id="navCompanyName">PT Griya Sultra Konstruksi</h6>
+          <small class="text-secondary" style="font-size: 11px;">Pabrik Baja Ringan & Spandek</small>
+        </div>
+      </div>
+
+      <nav class="d-none d-md-flex align-items-center gap-4">
+        <a href="#katalog" class="text-decoration-none text-dark fw-medium small">Katalog Produk</a>
+        <a href="#orderReceiver" class="text-decoration-none text-dark fw-medium small">Penerimaan Pesanan</a>
+        <a href="#cekFaktur" class="text-decoration-none text-dark fw-medium small">Cek Keaslian Faktur</a>
+        <a href="javascript:void(0)" onclick="bukaAdminPortalFrontend()" class="text-decoration-none text-dark fw-bold small text-warning"><i class="bi bi-shield-shaded me-1"></i> Portal Admin & Logo</a>
+      </nav>
+
+      <div class="d-flex align-items-center gap-2">
+        <button class="btn btn-sm btn-outline-secondary" onclick="toggleDarkMode()" title="Mode Gelap/Terang">
+          <i class="bi bi-moon-stars" id="themeIcon"></i>
+        </button>
+        <button class="btn btn-gsk-action btn-sm" onclick="bukaAdminPortalFrontend()">
+          <i class="bi bi-shield-shaded me-1"></i> Menu Admin
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- HERO SECTION -->
+  <section class="hero-section text-center">
+    <div class="container">
+      <div class="badge bg-warning text-dark px-3 py-2 rounded-pill fw-bold mb-3">
+        <i class="bi bi-building-gear me-1"></i> Pabrik Baja Ringan & Rangka Atap Galvalum Berkualitas Tinggi
+      </div>
+      <h1 class="hero-title mb-3" id="heroTitle">Solusi Presisi Baja Ringan & Rangka Atap Sulawesi Tenggara</h1>
+      <p class="hero-subtitle mx-auto mb-4" style="max-width: 680px;" id="heroTagline">
+        Memproduksi Kanal C 75.75 SNI, Reng Asimetris, Atap Spandek Galvalum, dan Hollow Plafon dengan Baja Berkekuatan Tarik Tinggi G550.
+      </p>
+      <div class="d-flex justify-content-center gap-3">
+        <a href="#orderReceiver" class="btn btn-gsk-amber">
+          <i class="bi bi-cart-check me-1"></i> Pesan Baja Ringan Proyek
+        </a>
+        <a href="#katalog" class="btn btn-outline-dark">
+          Lihat Daftar Produk
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- KATALOG PRODUK MANUFAKTUR -->
+  <section id="katalog" class="py-5 bg-white border-top border-bottom">
+    <div class="container">
+      <div class="d-flex justify-content-between align-items-end mb-4">
+        <div>
+          <h6 class="text-warning text-uppercase fw-bold m-0" style="font-size: 12px; letter-spacing: 1px;">Katalog Manufaktur</h6>
+          <h3 class="fw-bold m-0">Produk Baja Ringan & Atap Galvalum GSK Siap Kirim</h3>
+        </div>
+        <span class="badge bg-light text-secondary border px-3 py-2">Data Real-Time Google Sheets</span>
+      </div>
+
+      <div class="row g-4" id="katalogProdukContainer">
+        <div class="col-12 text-center py-5 text-muted">Memuat daftar produk manufaktur dari server...</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PRODUCTRECEIVER (FORM PEMESANAN & PENERIMAAN PRODUK ONLINE) -->
+  <section id="orderReceiver" class="py-5" style="background: var(--gsk-surface);">
+    <div class="container">
+      <div class="row align-items-center g-5">
+        <div class="col-12 col-lg-5">
+          <span class="badge bg-primary text-white mb-2">ProductReceiver Engine</span>
+          <h2 class="fw-bold mb-3">Pemesanan Baja Ringan & Material Rangka Atap (ProductReceiver)</h2>
+          <p class="text-secondary mb-4">
+            Khusus kontraktor, aplikator baja ringan, toko bangunan, dan mandor proyek. Masukkan estimasi kebutuhan Kanal C, Reng, atau Spandek Anda. Data pesanan langsung terintegrasi ke sistem gudang dan antrean produksi pabrik.
+          </p>
+          <div class="d-flex flex-column gap-3">
+            <div class="d-flex align-items-center gap-3">
+              <div class="rounded-circle bg-warning bg-opacity-25 p-2 text-warning fw-bold"><i class="bi bi-check-lg"></i></div>
+              <span class="small fw-medium">Konfirmasi cepat via WhatsApp & Email tim logistik.</span>
+            </div>
+            <div class="d-flex align-items-center gap-3">
+              <div class="rounded-circle bg-warning bg-opacity-25 p-2 text-warning fw-bold"><i class="bi bi-check-lg"></i></div>
+              <span class="small fw-medium">Kalkulasi harga pabrik langsung & penjadwalan armada pengiriman ke lokasi proyek.</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-12 col-lg-7">
+          <div class="receiver-card">
+            <h5 class="fw-bold mb-3"><i class="bi bi-clipboard2-check text-warning me-2"></i> Form Permintaan Material (ProductReceiver)</h5>
+            <form id="formProductReceiver" onsubmit="handleProductReceiverSubmit(event)">
+              <div class="row g-3 mb-3">
+                <div class="col-12 col-sm-6">
+                  <label class="form-label small fw-bold">Nama Pemesan / Penanggung Jawab</label>
+                  <input type="text" id="rcvNama" class="form-control" placeholder="contoh: Bpk. Hendra" required>
+                </div>
+                <div class="col-12 col-sm-6">
+                  <label class="form-label small fw-bold">Perusahaan / Nama Proyek</label>
+                  <input type="text" id="rcvProyek" class="form-control" placeholder="contoh: Proyek Drainase Kendari" required>
+                </div>
+              </div>
+
+              <div class="row g-3 mb-3">
+                <div class="col-12 col-sm-6">
+                  <label class="form-label small fw-bold">Nomor Telepon / WhatsApp</label>
+                  <input type="tel" id="rcvTelepon" class="form-control" placeholder="0812-xxxx-xxxx" required>
+                </div>
+                <div class="col-12 col-sm-6">
+                  <label class="form-label small fw-bold">Pilih Produk GSK</label>
+                  <select id="rcvProduk" class="form-select" required>
+                    <option value="">-- Pilih Produk Baja Ringan / Spandek --</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="row g-3 mb-3">
+                <div class="col-12 col-sm-6">
+                  <label class="form-label small fw-bold">Perkiraan Volume / Jumlah</label>
+                  <input type="number" id="rcvJumlah" class="form-control" min="1" value="100" required>
+                </div>
+                <div class="col-12 col-sm-6">
+                  <label class="form-label small fw-bold">Satuan Kebutuhan</label>
+                  <input type="text" id="rcvSatuan" class="form-control" placeholder="Batang / Lembar / Meter" value="Batang" required>
+                </div>
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label small fw-bold">Lokasi Pengiriman / Titik Proyek</label>
+                <textarea id="rcvAlamat" class="form-control" rows="2" placeholder="Alamat lengkap tujuan pengantaran material"></textarea>
+              </div>
+
+              <button type="submit" class="btn btn-gsk-amber w-100 py-2 fs-6">
+                <i class="bi bi-send-check me-1"></i> Kirim Permintaan Material ke Pabrik
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- VERIFIKASI KEASLIAN FAKTUR & DOKUMEN BER-QR -->
+  <section id="cekFaktur" class="py-5 bg-white border-top">
+    <div class="container text-center" style="max-width: 640px;">
+      <i class="bi bi-qr-code-scan fs-1 text-warning mb-2 d-inline-block"></i>
+      <h3 class="fw-bold mb-2">Verifikasi Keaslian Faktur & Kwitansi Resmi</h3>
+      <p class="text-secondary small mb-4">
+        Validasi dokumen resmi PT Griya Sultra Konstruksi ber-tanda tangan digital HMAC. Masukkan nomor faktur Anda untuk memeriksa status validitas.
+      </p>
+      <div class="input-group mb-3">
+        <input type="text" id="cekNoInvoiceInput" class="form-control" placeholder="Masukkan nomor faktur (contoh: INV-2026-001)">
+        <button class="btn btn-gsk-action" onclick="verifikasiFakturPublik()">Cek Dokumen</button>
+      </div>
+      <div id="hasilVerifikasiBox" class="alert d-none text-start small"></div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer class="py-4 bg-dark text-white border-top">
+    <div class="container d-flex flex-column flex-md-row justify-content-between align-items-center gap-3">
+      <div>
+        <span class="fw-bold" id="footCompanyName">PT Griya Sultra Konstruksi</span>
+        <div class="text-secondary small" id="footCompanyAddress">Kendari, Sulawesi Tenggara</div>
+      </div>
+      <small class="text-secondary">&copy; 2026 GSK Industrial ERP. Arsitektur Decoupled REST API.</small>
+    </div>
+  </footer>
+
+  <!-- MODAL LOGIN PORTAL INTERNAL (HMAC PROTECTED) -->
+  <div class="modal fade" id="modalLoginInternal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered" style="max-width: 400px;">
+      <div class="modal-content p-3 border-0 shadow-lg" style="border-radius: 16px; background: #131B2E; color: #FFF;">
+        <div class="modal-header border-0 pb-0">
+          <h5 class="modal-title fw-bold text-white">Login Portal Internal GSK</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <p class="text-secondary small mb-3">Akses terbatas bagi Direktur, Admin Finance, dan Mandor Pabrik.</p>
+          <form onsubmit="handleLoginERP(event)">
+            <div class="mb-3">
+              <label class="form-label text-light small fw-bold">Email Karyawan</label>
+              <input type="email" id="erpEmail" class="form-control bg-dark border-secondary text-white" value="direktur@gsk.id" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label text-light small fw-bold">PIN Keamanan (6 Digit)</label>
+              <input type="password" id="erpPIN" maxlength="6" class="form-control bg-dark border-secondary text-white" value="123456" required>
+            </div>
+            <div id="loginAlertModal" class="alert alert-danger py-2 small d-none"></div>
+            <button type="submit" class="btn btn-gsk-amber w-100 py-2">
+              <i class="bi bi-box-arrow-in-right me-1"></i> Masuk Workspace ERP
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL WORKSPACE ERP INTERAKTIF (SETELAH LOGIN) -->
+  <div class="modal fade" id="modalWorkspaceERP" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog modal-fullscreen">
+      <div class="modal-content" style="background: var(--gsk-surface);">
+        <div class="modal-header bg-dark text-white py-2 px-4">
+          <div class="d-flex align-items-center gap-2">
+            <span class="badge bg-warning text-dark fw-bold">PORTAL KERJA GSK</span>
+            <span class="fw-bold small" id="wsUserName">Direktur Utama</span>
+            <span class="badge bg-secondary" id="wsUserRole">Direktur</span>
+          </div>
+          <button type="button" class="btn btn-sm btn-outline-danger" onclick="logoutERP()">
+            <i class="bi bi-box-arrow-right me-1"></i> Keluar Portal
+          </button>
+        </div>
+        <div class="modal-body p-4" style="overflow-y: auto;">
+          <!-- Navigasi Tab Internal -->
+          <ul class="nav nav-pills mb-4 border-bottom pb-3 gap-2">
+            <li class="nav-item">
+              <button class="nav-link active fw-bold" id="tabBtnDashboard" onclick="switchTabERP('dashboard')">
+                <i class="bi bi-speedometer2 me-1"></i> Dashboard Finansial
+              </button>
+            </li>
+            <li class="nav-item">
+              <button class="nav-link fw-bold" id="tabBtnAdmin" onclick="switchTabERP('admin')">
+                <i class="bi bi-shield-shaded me-1"></i> Portal Admin & Ganti Logo
+              </button>
+            </li>
+          </ul>
+
+          <!-- TAB 1: KONTEN CEPAT DASHBOARD ERP -->
+          <div id="erpTabDashboard">
+            <div class="row g-3 mb-4">
+              <div class="col-sm-3">
+                <div class="card p-3 border shadow-sm">
+                  <small class="text-secondary fw-bold text-uppercase">Total Omzet</small>
+                  <h4 class="fw-bold text-primary m-0" id="wsOmzet">Rp 0</h4>
+                </div>
+              </div>
+              <div class="col-sm-3">
+                <div class="card p-3 border shadow-sm">
+                  <small class="text-secondary fw-bold text-uppercase">Beban HPP</small>
+                  <h4 class="fw-bold text-secondary m-0" id="wsHPP">Rp 0</h4>
+                </div>
+              </div>
+              <div class="col-sm-3">
+                <div class="card p-3 border shadow-sm">
+                  <small class="text-secondary fw-bold text-uppercase">Laba Kotor</small>
+                  <h4 class="fw-bold text-success m-0" id="wsLabaKotor">Rp 0</h4>
+                </div>
+              </div>
+              <div class="col-sm-3">
+                <div class="card p-3 border shadow-sm">
+                  <small class="text-secondary fw-bold text-uppercase">Margin Laba</small>
+                  <h4 class="fw-bold text-warning m-0" id="wsMarginPersen">0%</h4>
+                </div>
+              </div>
+            </div>
+
+            <div class="card p-3 shadow-sm border mb-4">
+              <h6 class="fw-bold mb-3"><i class="bi bi-receipt me-1"></i> Data Transaksi Penjualan Proyek Terkini</h6>
+              <div class="table-responsive">
+                <table class="table table-hover table-sm">
+                  <thead class="table-light">
+                    <tr><th>No Faktur</th><th>Pelanggan</th><th>Total Nilai</th><th>Laba Kotor</th><th>Status</th></tr>
+                  </thead>
+                  <tbody id="wsTabelInvoices"><tr><td colspan="5" class="text-muted text-center">Memuat transaksi...</td></tr></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- TAB 2: PORTAL ADMIN & KUSTOMISASI LOGO -->
+          <div id="erpTabAdmin" class="d-none">
+            <div class="row g-4">
+              <div class="col-12 col-lg-6">
+                <div class="card p-4 shadow-sm border">
+                  <h5 class="fw-bold mb-3"><i class="bi bi-image text-warning me-2"></i> Kustomisasi Logo Perusahaan</h5>
+                  <div class="d-flex align-items-center gap-3 mb-3">
+                    <div id="frontendLogoPreviewBox" class="border rounded p-2 text-center" style="width: 120px; height: 120px; display: flex; align-items: center; justify-content: center; background: #F8FAFC;">
+                      <span class="text-muted small">Pratinjau Logo</span>
+                    </div>
+                    <div>
+                      <label class="form-label small fw-bold">Pilih File Logo Baru</label>
+                      <input type="file" id="frontendLogoInput" class="form-control form-control-sm mb-2" accept="image/*" onchange="previewLogoFrontend(event)">
+                      <small class="text-muted d-block" style="font-size: 11px;">Mendukung PNG, JPG, SVG. Logo otomatis tersinkronisasi ke seluruh halaman.</small>
+                    </div>
+                  </div>
+                  <form onsubmit="handleSimpanProfilFrontend(event)">
+                    <div class="mb-3">
+                      <label class="form-label small fw-bold">Nama Perusahaan</label>
+                      <input type="text" id="feNamaPerusahaan" class="form-control" value="PT Griya Sultra Konstruksi" required>
+                    </div>
+                    <div class="mb-3">
+                      <label class="form-label small fw-bold">Tagline Bisnis</label>
+                      <input type="text" id="feTagline" class="form-control" value="Pabrik & Manufaktur Baja Ringan, Rangka Atap, Kanal C, Reng & Spandek">
+                    </div>
+                    <div class="mb-3">
+                      <label class="form-label small fw-bold">Alamat Kantor / Workshop</label>
+                      <textarea id="feAlamat" class="form-control" rows="2">Jl. Poros Konstruksi No. 88, Kendari, Sulawesi Tenggara</textarea>
+                    </div>
+                    <div class="row g-2 mb-3">
+                      <div class="col-6">
+                        <label class="form-label small fw-bold">Telepon</label>
+                        <input type="text" id="feTelepon" class="form-control" value="0812-4567-8901">
+                      </div>
+                      <div class="col-6">
+                        <label class="form-label small fw-bold">Email</label>
+                        <input type="email" id="feEmail" class="form-control" value="keuangan@griyasultrakonstruksi.co.id">
+                      </div>
+                    </div>
+                    <button type="submit" class="btn btn-gsk-amber w-100 py-2">
+                      <i class="bi bi-check-circle me-1"></i> Simpan Profil & Terapkan Logo
+                    </button>
+                  </form>
+                </div>
+              </div>
+
+              <div class="col-12 col-lg-6">
+                <div class="card p-4 shadow-sm border">
+                  <h5 class="fw-bold mb-3"><i class="bi bi-people text-primary me-2"></i> Manajemen Akun Pengguna & PIN</h5>
+                  <div class="table-responsive mb-3">
+                    <table class="table table-sm table-bordered">
+                      <thead class="table-light">
+                        <tr><th>Nama</th><th>Email</th><th>Peran</th><th>PIN</th></tr>
+                      </thead>
+                      <tbody>
+                        <tr><td>Direktur Utama GSK</td><td>direktur@gsk.id</td><td><span class="badge bg-secondary">Direktur</span></td><td><code>123456</code></td></tr>
+                        <tr><td>Admin Keuangan</td><td>keuangan@gsk.id</td><td><span class="badge bg-secondary">Finance</span></td><td><code>123456</code></td></tr>
+                        <tr><td>Mandor Pabrik</td><td>gudang@gsk.id</td><td><span class="badge bg-secondary">Produksi</span></td><td><code>123456</code></td></tr>
+                      </tbody>
+                    </table>
+                  </div>
+                  <div class="alert alert-info py-2 small m-0">
+                    <i class="bi bi-info-circle me-1"></i> Untuk menambah atau mereset PIN staf lain, Anda juga dapat mengeditnya di sheet <code>Sys_Users</code> pada Google Sheets.
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bootstrap JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <!-- Konfigurasi API -->
+  <script src="js/config.js"></script>
+  <!-- Logika Aplikasi Terpisah -->
+  <script src="js/app.js"></script>
+</body>
+</html>
+
