@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="id" data-theme="light">
 <head>
   <meta charset="utf-8">
@@ -43,15 +43,18 @@
         <a href="#katalog" class="text-decoration-none text-dark fw-medium small">Katalog Produk</a>
         <a href="#orderReceiver" class="text-decoration-none text-dark fw-medium small">Penerimaan Pesanan</a>
         <a href="#cekFaktur" class="text-decoration-none text-dark fw-medium small">Cek Keaslian Faktur</a>
-        <a href="javascript:void(0)" onclick="bukaAdminPortalFrontend()" class="text-decoration-none text-dark fw-bold small text-warning"><i class="bi bi-shield-shaded me-1"></i> Portal Admin & Logo</a>
+        <a href="javascript:void(0)" data-bs-toggle="modal" data-bs-target="#modalWorkspaceERP" onclick="bukaAdminPortalFrontend()" class="text-decoration-none fw-bold small text-warning"><i class="bi bi-shield-shaded me-1"></i> Portal Admin & Logo</a>
       </nav>
 
       <div class="d-flex align-items-center gap-2">
-        <button class="btn btn-sm btn-outline-secondary" onclick="toggleDarkMode()" title="Mode Gelap/Terang">
+        <button class="btn btn-sm btn-outline-secondary" onclick="toggleDarkMode()" id="btnThemeToggle" title="Mode Gelap / Terang">
           <i class="bi bi-moon-stars" id="themeIcon"></i>
         </button>
-        <button class="btn btn-gsk-action btn-sm" onclick="bukaAdminPortalFrontend()">
+        <button class="btn btn-gsk-action btn-sm" data-bs-toggle="modal" data-bs-target="#modalWorkspaceERP" onclick="bukaAdminPortalFrontend()">
           <i class="bi bi-shield-shaded me-1"></i> Menu Admin
+        </button>
+        <button class="btn btn-outline-primary btn-sm d-flex align-items-center gap-1" data-bs-toggle="modal" data-bs-target="#modalLoginInternal">
+          <i class="bi bi-box-arrow-in-right"></i> Masuk
         </button>
       </div>
     </div>
@@ -237,7 +240,7 @@
             <span class="fw-bold small" id="wsUserName">Direktur Utama</span>
             <span class="badge bg-secondary" id="wsUserRole">Direktur</span>
           </div>
-          <button type="button" class="btn btn-sm btn-outline-danger" onclick="logoutERP()">
+          <button type="button" class="btn btn-sm btn-outline-danger" data-bs-dismiss="modal" onclick="logoutERP()">
             <i class="bi bi-box-arrow-right me-1"></i> Keluar Portal
           </button>
         </div>

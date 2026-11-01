@@ -1,4 +1,4 @@
-﻿/**
+/**
  * =========================================================================
  * GSK Frontend REST Client (Vanilla JS - gas-pro-api + gas-scale-turbo)
  * Berkas: frontend/js/app.js
@@ -25,12 +25,35 @@ const DATA_FALLBACK_GSK = {
   ]
 };
 
+// Inisialisasi tema instan tanpa flash
+(function() {
+  try {
+    const savedTheme = localStorage.getItem('gsk_theme_mode') || 'light';
+    document.documentElement.setAttribute('data-theme', savedTheme);
+  } catch(e) {}
+})();
+
 document.addEventListener('DOMContentLoaded', function() {
+  // Pulihkan tema dan icon
+  const savedTheme = localStorage.getItem('gsk_theme_mode') || 'light';
+  applyTheme(savedTheme);
+
+  // Pulihkan logo tersimpan jika ada
+  const savedLogo = localStorage.getItem('gsk_custom_logo');
+  if (savedLogo) {
+    const badge = document.getElementById('navBrandLogo');
+    if (badge) badge.innerHTML = `<img src="${savedLogo}" alt="Logo" style="max-height: 28px; vertical-align: middle;">`;
+  }
+
   const modalLoginEl = document.getElementById('modalLoginInternal');
-  if (modalLoginEl) modalLogin = new bootstrap.Modal(modalLoginEl);
+  if (modalLoginEl && typeof bootstrap !== 'undefined') {
+    modalLogin = bootstrap.Modal.getOrCreateInstance(modalLoginEl);
+  }
 
   const modalWsEl = document.getElementById('modalWorkspaceERP');
-  if (modalWsEl) modalWorkspace = new bootstrap.Modal(modalWsEl);
+  if (modalWsEl && typeof bootstrap !== 'undefined') {
+    modalWorkspace = bootstrap.Modal.getOrCreateInstance(modalWsEl);
+  }
 
   // 1. Render data instan seketika (0 milidetik - bebas loading)
   renderKatalogPublik(DATA_FALLBACK_GSK);
@@ -39,13 +62,20 @@ document.addEventListener('DOMContentLoaded', function() {
   muatKatalogPublik();
 });
 
-function toggleDarkMode() {
-  const html = document.documentElement;
-  const cur = html.getAttribute('data-theme') || 'light';
-  const baru = cur === 'light' ? 'dark' : 'light';
-  html.setAttribute('data-theme', baru);
+function applyTheme(theme) {
+  document.documentElement.setAttribute('data-theme', theme);
+  if (document.body) document.body.setAttribute('data-theme', theme);
+  try { localStorage.setItem('gsk_theme_mode', theme); } catch(e) {}
   const icon = document.getElementById('themeIcon');
-  if (icon) icon.className = baru === 'dark' ? 'bi bi-sun' : 'bi bi-moon-stars';
+  if (icon) {
+    icon.className = theme === 'dark' ? 'bi bi-sun-fill text-warning' : 'bi bi-moon-stars';
+  }
+}
+
+function toggleDarkMode() {
+  const cur = document.documentElement.getAttribute('data-theme') || 'light';
+  const baru = cur === 'light' ? 'dark' : 'light';
+  applyTheme(baru);
 }
 
 function setLoader(show, text = 'Memproses...') {
@@ -299,27 +329,48 @@ async function bukaWorkspaceERP() {
   if (document.getElementById('wsUserName')) document.getElementById('wsUserName').textContent = user.nama || 'Pengguna';
   if (document.getElementById('wsUserRole')) document.getElementById('wsUserRole').textContent = user.role || 'Staf';
 
-  if (modalWorkspace) modalWorkspace.show();
+  const modalEl = document.getElementById('modalWorkspaceERP');
+  if (modalEl && typeof bootstrap !== 'undefined') {
+    modalWorkspace = bootstrap.Modal.getOrCreateInstance(modalEl);
+    modalWorkspace.show();
+  }
+
+  // Muat logo tersimpan jika ada
+  const savedLogo = localStorage.getItem('gsk_custom_logo');
+  if (savedLogo) {
+    const box = document.getElementById('frontendLogoPreviewBox');
+    if (box) box.innerHTML = `<img src="${savedLogo}" alt="Logo" style="max-height: 100px; max-width: 100px; object-fit: contain;">`;
+    const badge = document.getElementById('navBrandLogo');
+    if (badge) badge.innerHTML = `<img src="${savedLogo}" alt="Logo" style="max-height: 28px; vertical-align: middle;">`;
+  }
+
+  const dummyData = {
+    invoices: [
+      { NO_INVOICE: 'INV-2026-001', PELANGGAN: 'PT Bumi Perkasa', TOTAL_PENJUALAN: 13200000, TOTAL_HPP: 7860000, LABA_KOTOR: 5340000, STATUS_BAYAR: 'Lunas' },
+      { NO_INVOICE: 'INV-2026-002', PELANGGAN: 'CV Mandiri Truss Konstruksi', TOTAL_PENJUALAN: 9500000, TOTAL_HPP: 5800000, LABA_KOTOR: 3700000, STATUS_BAYAR: 'Lunas' }
+    ]
+  };
 
   // Ambil Data Terproteksi
   const token = localStorage.getItem('gsk_jwt_token');
-  try {
-    const res = await fetch(CONFIG.GAS_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify({ action: 'getInitialERPData', token: token })
-    });
-    const json = await res.json();
-    if (json && json.success) {
-      renderDataWorkspace(json.data);
+  if (typeof CONFIG !== 'undefined' && CONFIG.GAS_URL && CONFIG.GAS_URL.startsWith('http')) {
+    try {
+      const res = await fetch(CONFIG.GAS_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({ action: 'getInitialERPData', token: token })
+      });
+      const json = await res.json();
+      if (json && json.success) {
+        renderDataWorkspace(json.data);
+      } else {
+        renderDataWorkspace(dummyData);
+      }
+    } catch (e) {
+      renderDataWorkspace(dummyData);
     }
-  } catch (e) {
-    // Demo metrics
-    renderDataWorkspace({
-      invoices: [
-        { NO_INVOICE: 'INV-2026-001', PELANGGAN: 'PT Bumi Perkasa', TOTAL_PENJUALAN: 13200000, TOTAL_HPP: 7860000, LABA_KOTOR: 5340000, STATUS_BAYAR: 'Lunas' }
-      ]
-    });
+  } else {
+    renderDataWorkspace(dummyData);
   }
 }
 
@@ -359,7 +410,11 @@ function renderDataWorkspace(data) {
 function logoutERP() {
   localStorage.removeItem('gsk_jwt_token');
   localStorage.removeItem('gsk_user_info');
-  if (modalWorkspace) modalWorkspace.hide();
+  const modalEl = document.getElementById('modalWorkspaceERP');
+  if (modalEl && typeof bootstrap !== 'undefined') {
+    const instance = bootstrap.Modal.getOrCreateInstance(modalEl);
+    instance.hide();
+  }
 }
 
 /**
@@ -368,6 +423,16 @@ function logoutERP() {
 function bukaAdminPortalFrontend() {
   // Masuk langsung sebagai admin
   localStorage.setItem('gsk_jwt_token', 'session.admin.token');
+  localStorage.setItem('gsk_user_info', JSON.stringify({ nama: 'Administrator GSK', role: 'Super Admin' }));
+  
+  const modalEl = document.getElementById('modalWorkspaceERP');
+  if (modalEl && typeof bootstrap !== 'undefined') {
+    modalWorkspace = bootstrap.Modal.getOrCreateInstance(modalEl);
+    modalWorkspace.show();
+  }
+  bukaWorkspaceERP();
+  switchTabERP('admin');
+}
   localStorage.setItem('gsk_user_info', JSON.stringify({ nama: 'Administrator GSK', role: 'Super Admin' }));
   bukaWorkspaceERP();
   switchTabERP('admin');
