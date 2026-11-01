@@ -221,10 +221,28 @@
               <input type="password" id="erpPIN" maxlength="6" class="form-control bg-dark border-secondary text-white" value="123456" required>
             </div>
             <div id="loginAlertModal" class="alert alert-danger py-2 small d-none"></div>
-            <button type="submit" class="btn btn-gsk-amber w-100 py-2">
+            <button type="submit" class="btn btn-gsk-amber w-100 py-2 fw-bold">
               <i class="bi bi-box-arrow-in-right me-1"></i> Masuk Workspace ERP
             </button>
           </form>
+
+          <!-- AKUN RESMI & LOGIN CEPAT -->
+          <div class="mt-4 pt-3 border-top border-secondary">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <span class="text-warning small fw-bold"><i class="bi bi-shield-check me-1"></i> Akun Login Resmi GSK:</span>
+              <span class="badge bg-secondary small">PIN: 123456</span>
+            </div>
+            <div class="d-grid gap-2">
+              <button type="button" class="btn btn-sm btn-outline-light text-start d-flex justify-content-between align-items-center" onclick="loginCepat('direktur@gsk.id', '123456')">
+                <span><i class="bi bi-person-badge me-2 text-warning"></i><strong>Direktur Utama</strong> (direktur@gsk.id)</span>
+                <span class="badge bg-warning text-dark">Klik Masuk</span>
+              </button>
+              <button type="button" class="btn btn-sm btn-outline-light text-start d-flex justify-content-between align-items-center" onclick="loginCepat('keuangan@gsk.id', '123456')">
+                <span><i class="bi bi-cash-stack me-2 text-success"></i><strong>Admin Keuangan</strong> (keuangan@gsk.id)</span>
+                <span class="badge bg-success">Klik Masuk</span>
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     </div>

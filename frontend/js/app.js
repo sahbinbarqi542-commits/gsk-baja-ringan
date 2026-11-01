@@ -288,13 +288,15 @@ function bukaModalLogin() {
 }
 
 async function handleLoginERP(e) {
-  e.preventDefault();
-  const email = document.getElementById('erpEmail').value;
-  const pin = document.getElementById('erpPIN').value;
+  if (e) e.preventDefault();
+  const emailInput = document.getElementById('erpEmail');
+  const pinInput = document.getElementById('erpPIN');
+  const email = emailInput ? emailInput.value.trim() : '';
+  const pin = pinInput ? pinInput.value.trim() : '';
   const alertBox = document.getElementById('loginAlertModal');
 
-  alertBox.classList.add('d-none');
-  setLoader(true, 'Memverifikasi hak akses...');
+  if (alertBox) alertBox.classList.add('d-none');
+  setLoader(true, 'Memverifikasi akun GSK...');
 
   try {
     const res = await fetch(CONFIG.GAS_URL, {
@@ -308,20 +310,44 @@ async function handleLoginERP(e) {
     if (json && json.success) {
       localStorage.setItem('gsk_jwt_token', json.data.token);
       localStorage.setItem('gsk_user_info', JSON.stringify(json.data.user));
-      if (modalLogin) modalLogin.hide();
-      bukaWorkspaceERP();
+      tutupLoginDanBukaERP();
     } else {
-      alertBox.textContent = json ? json.message : 'Login gagal.';
-      alertBox.classList.remove('d-none');
+      if (alertBox) {
+        alertBox.textContent = json ? json.message : 'Login gagal. Periksa Email dan PIN Anda.';
+        alertBox.classList.remove('d-none');
+      }
     }
   } catch (err) {
     setLoader(false);
-    // Mode demo offline
+    // Mode demo instan
     localStorage.setItem('gsk_jwt_token', 'demo.hmac.token');
-    localStorage.setItem('gsk_user_info', JSON.stringify({ nama: 'Direktur Utama GSK', role: 'Direktur' }));
-    if (modalLogin) modalLogin.hide();
-    bukaWorkspaceERP();
+    localStorage.setItem('gsk_user_info', JSON.stringify({ nama: 'Direktur Utama GSK', role: 'Direktur / Owner' }));
+    tutupLoginDanBukaERP();
   }
+}
+
+function tutupLoginDanBukaERP() {
+  const loginEl = document.getElementById('modalLoginInternal');
+  if (loginEl && typeof bootstrap !== 'undefined') {
+    const inst = bootstrap.Modal.getInstance(loginEl) || bootstrap.Modal.getOrCreateInstance(loginEl);
+    if (inst) {
+      loginEl.addEventListener('hidden.bs.modal', function onHidden() {
+        loginEl.removeEventListener('hidden.bs.modal', onHidden);
+        bukaWorkspaceERP();
+      }, { once: true });
+      inst.hide();
+      return;
+    }
+  }
+  bukaWorkspaceERP();
+}
+
+function loginCepat(email, pin) {
+  const emailEl = document.getElementById('erpEmail');
+  const pinEl = document.getElementById('erpPIN');
+  if (emailEl) emailEl.value = email;
+  if (pinEl) pinEl.value = pin;
+  handleLoginERP();
 }
 
 async function bukaWorkspaceERP() {
