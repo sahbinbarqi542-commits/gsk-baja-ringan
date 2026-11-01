@@ -1,0 +1,523 @@
+<style>
+  /* ==========================================================================
+     GSK Financial & Manufacturing System - Stylesheet.html
+     Desain: Industrial Modern Construction & Financial Dashboard (Bahasa Indonesia)
+     ========================================================================== */
+
+  :root {
+    --gsk-primary: #0F172A;        /* Deep Steel Navy */
+    --gsk-primary-light: #1E293B;  /* Slate Navy */
+    --gsk-accent: #F59E0B;         /* Industrial Safety Amber */
+    --gsk-accent-hover: #D97706;
+    --gsk-success: #10B981;        /* Emerald Green (Margin Sehat) */
+    --gsk-danger: #EF4444;         /* Crimson Red (Defisit / Kritis) */
+    --gsk-info: #0284C7;           /* Sky Blue */
+    
+    --gsk-bg: #F8FAFC;             /* Light Slate Background */
+    --gsk-surface: #FFFFFF;        /* Card Surface */
+    --gsk-surface-subtle: #F1F5F9;
+    --gsk-text-main: #0F172A;
+    --gsk-text-muted: #64748B;
+    --gsk-border: #E2E8F0;
+    --gsk-shadow: 0 1px 3px 0 rgba(15, 23, 42, 0.08), 0 1px 2px -1px rgba(15, 23, 42, 0.08);
+    --gsk-shadow-hover: 0 8px 20px -4px rgba(15, 23, 42, 0.12);
+    --sidebar-width: 260px;
+  }
+
+  [data-theme="dark"] {
+    --gsk-bg: #0B0F19;             /* Dark Background */
+    --gsk-surface: #131B2E;        /* Dark Surface */
+    --gsk-surface-subtle: #1E293B;
+    --gsk-text-main: #F8FAFC;
+    --gsk-text-muted: #94A3B8;
+    --gsk-border: #243048;
+    --gsk-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    --gsk-shadow-hover: 0 8px 24px rgba(0, 0, 0, 0.45);
+  }
+
+  * {
+    box-sizing: border-box;
+    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  }
+
+  body {
+    background-color: var(--gsk-bg);
+    color: var(--gsk-text-main);
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden;
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
+
+  /* Layout Shell */
+  .app-container {
+    display: flex;
+    min-height: 100vh;
+  }
+
+  /* Sidebar */
+  .app-sidebar {
+    width: var(--sidebar-width);
+    background: var(--gsk-primary);
+    color: #FFFFFF;
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 1040;
+    display: flex;
+    flex-direction: column;
+    transition: transform 0.3s ease;
+    border-right: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  .sidebar-header {
+    padding: 20px 18px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .sidebar-logo-img {
+    max-height: 40px;
+    max-width: 44px;
+    object-fit: contain;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.95);
+    padding: 2px;
+  }
+
+  .sidebar-logo-fallback {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    background: linear-gradient(135deg, var(--gsk-accent), #B45309);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 18px;
+    color: #FFFFFF;
+  }
+
+  .sidebar-brand-text h6 {
+    margin: 0;
+    font-weight: 700;
+    font-size: 14px;
+    letter-spacing: 0.3px;
+    color: #FFFFFF;
+  }
+
+  .sidebar-brand-text small {
+    font-size: 10.5px;
+    color: #94A3B8;
+    display: block;
+  }
+
+  .sidebar-menu {
+    flex: 1;
+    overflow-y: auto;
+    padding: 14px 12px;
+    list-style: none;
+    margin: 0;
+  }
+
+  .menu-category-label {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    color: #64748B;
+    font-weight: 700;
+    margin: 14px 8px 6px 8px;
+  }
+
+  .sidebar-menu a {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 14px;
+    color: #CBD5E1;
+    text-decoration: none;
+    border-radius: 8px;
+    font-size: 13.5px;
+    font-weight: 500;
+    margin-bottom: 4px;
+    transition: all 0.2s ease;
+  }
+
+  .sidebar-menu a:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: #FFFFFF;
+  }
+
+  .sidebar-menu a.active {
+    background: linear-gradient(90deg, rgba(245, 158, 11, 0.2) 0%, rgba(245, 158, 11, 0.05) 100%);
+    color: var(--gsk-accent);
+    font-weight: 600;
+    border-left: 3px solid var(--gsk-accent);
+  }
+
+  .sidebar-menu a i {
+    font-size: 16px;
+    width: 20px;
+    text-align: center;
+  }
+
+  .sidebar-footer {
+    padding: 14px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(0, 0, 0, 0.15);
+  }
+
+  /* Main Wrapper */
+  .app-main {
+    margin-left: var(--sidebar-width);
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    transition: margin-left 0.3s ease;
+  }
+
+  /* Top Navigation Bar */
+  .app-topbar {
+    height: 64px;
+    background: var(--gsk-surface);
+    border-bottom: 1px solid var(--gsk-border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 24px;
+    position: sticky;
+    top: 0;
+    z-index: 1020;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+  }
+
+  .topbar-left {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .topbar-title {
+    font-size: 17px;
+    font-weight: 700;
+    margin: 0;
+    color: var(--gsk-text-main);
+  }
+
+  .topbar-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .user-badge-profile {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 12px;
+    background: var(--gsk-surface-subtle);
+    border: 1px solid var(--gsk-border);
+    border-radius: 30px;
+  }
+
+  .user-avatar-circle {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: var(--gsk-primary);
+    color: #FFF;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 700;
+  }
+
+  /* Content Body */
+  .app-content {
+    padding: 24px;
+    flex: 1;
+  }
+
+  /* Dynamic Sections */
+  .content-section {
+    display: none;
+    animation: fadeInSection 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .content-section.active {
+    display: block;
+  }
+
+  @keyframes fadeInSection {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* KPI Cards */
+  .kpi-card {
+    background: var(--gsk-surface);
+    border: 1px solid var(--gsk-border);
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: var(--gsk-shadow);
+    transition: transform 0.2s, box-shadow 0.2s;
+    height: 100%;
+  }
+
+  .kpi-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--gsk-shadow-hover);
+  }
+
+  .kpi-icon-wrap {
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    margin-bottom: 14px;
+  }
+
+  .kpi-title {
+    font-size: 12px;
+    text-transform: uppercase;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    color: var(--gsk-text-muted);
+    margin-bottom: 6px;
+  }
+
+  .kpi-value {
+    font-size: 22px;
+    font-weight: 800;
+    color: var(--gsk-text-main);
+    margin-bottom: 6px;
+  }
+
+  .kpi-badge {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 8px;
+    border-radius: 20px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  /* Content Cards */
+  .gsk-card {
+    background: var(--gsk-surface);
+    border: 1px solid var(--gsk-border);
+    border-radius: 12px;
+    box-shadow: var(--gsk-shadow);
+    margin-bottom: 24px;
+    overflow: hidden;
+  }
+
+  .gsk-card-header {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--gsk-border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--gsk-surface);
+  }
+
+  .gsk-card-title {
+    font-size: 15px;
+    font-weight: 700;
+    margin: 0;
+    color: var(--gsk-text-main);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .gsk-card-body {
+    padding: 20px;
+  }
+
+  /* Data Tables */
+  .table-responsive {
+    border-radius: 8px;
+    overflow-x: auto;
+  }
+
+  .gsk-table {
+    width: 100%;
+    margin-bottom: 0;
+    border-collapse: separate;
+    border-spacing: 0;
+  }
+
+  .gsk-table th {
+    background: var(--gsk-surface-subtle);
+    color: var(--gsk-text-muted);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    font-weight: 700;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--gsk-border);
+    white-space: nowrap;
+  }
+
+  .gsk-table td {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--gsk-border);
+    color: var(--gsk-text-main);
+    font-size: 13px;
+    vertical-align: middle;
+  }
+
+  .gsk-table tbody tr:hover {
+    background: var(--gsk-surface-subtle);
+  }
+
+  /* Pill Status */
+  .badge-status {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 20px;
+    display: inline-block;
+  }
+
+  .status-lunas { background: #DCFCE7; color: #166534; }
+  .status-piutang { background: #FEF3C7; color: #92400E; }
+  .status-kritis { background: #FEE2E2; color: #991B1B; }
+  .status-aman { background: #E0F2FE; color: #075985; }
+
+  /* Buttons */
+  .btn-gsk-primary {
+    background-color: var(--gsk-primary);
+    color: #FFFFFF;
+    border: none;
+    font-weight: 600;
+    border-radius: 8px;
+    padding: 8px 16px;
+    transition: all 0.2s;
+  }
+
+  .btn-gsk-primary:hover {
+    background-color: var(--gsk-primary-light);
+    color: #FFFFFF;
+  }
+
+  .btn-gsk-accent {
+    background-color: var(--gsk-accent);
+    color: #0F172A;
+    border: none;
+    font-weight: 700;
+    border-radius: 8px;
+    padding: 8px 16px;
+    transition: all 0.2s;
+  }
+
+  .btn-gsk-accent:hover {
+    background-color: var(--gsk-accent-hover);
+    color: #0F172A;
+  }
+
+  /* Form Elements */
+  .form-label {
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--gsk-text-main);
+    margin-bottom: 6px;
+  }
+
+  .form-control, .form-select {
+    background-color: var(--gsk-surface);
+    border: 1px solid var(--gsk-border);
+    color: var(--gsk-text-main);
+    border-radius: 8px;
+    font-size: 13.5px;
+    padding: 9px 12px;
+  }
+
+  .form-control:focus, .form-select:focus {
+    background-color: var(--gsk-surface);
+    color: var(--gsk-text-main);
+    border-color: var(--gsk-accent);
+    box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.2);
+  }
+
+  /* Margin Callout Box */
+  .margin-calc-box {
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.08) 0%, rgba(245, 158, 11, 0.08) 100%);
+    border: 1px dashed var(--gsk-accent);
+    border-radius: 10px;
+    padding: 16px;
+  }
+
+  /* Loading Overlay */
+  .loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(15, 23, 42, 0.6);
+    backdrop-filter: blur(4px);
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: #FFFFFF;
+  }
+
+  .loading-overlay.d-none {
+    display: none !important;
+  }
+
+  /* Logo Editor Box */
+  .logo-preview-box {
+    width: 140px;
+    height: 140px;
+    border: 2px dashed var(--gsk-border);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--gsk-surface-subtle);
+    overflow: hidden;
+    margin-bottom: 12px;
+  }
+
+  .logo-preview-box img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+  }
+
+  /* Print Modal / Invoice */
+  @media print {
+    body { background: #FFF !important; color: #000 !important; }
+    .app-sidebar, .app-topbar, .btn, .no-print { display: none !important; }
+    .app-main { margin-left: 0 !important; }
+    .app-content { padding: 0 !important; }
+    .printable-invoice { border: none !important; box-shadow: none !important; }
+  }
+
+  /* Responsive Mobile */
+  @media (max-width: 991px) {
+    .app-sidebar {
+      transform: translateX(-100%);
+    }
+    .app-sidebar.show {
+      transform: translateX(0);
+    }
+    .app-main {
+      margin-left: 0;
+    }
+  }
+</style>

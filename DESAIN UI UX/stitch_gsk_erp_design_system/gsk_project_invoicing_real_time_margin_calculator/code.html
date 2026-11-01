@@ -1,0 +1,798 @@
+<!DOCTYPE html>
+
+<html lang="id"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>GSK Financial &amp; Manufacturing ERP - Invoicing &amp; Instant Margin Calculator</title>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Plus+Jakarta+Sans:wght@600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "on-tertiary-container": "#009668",
+            "on-secondary-fixed": "#2a1700",
+            "surface-container-highest": "#d8e3fb",
+            "inverse-primary": "#bec6e0",
+            "inverse-surface": "#263143",
+            "secondary-fixed": "#ffddb8",
+            "tertiary-container": "#002113",
+            "on-background": "#111c2d",
+            "error": "#ba1a1a",
+            "surface-bright": "#f9f9ff",
+            "on-primary": "#ffffff",
+            "on-secondary-fixed-variant": "#653e00",
+            "outline": "#76777d",
+            "on-secondary": "#ffffff",
+            "surface-container-low": "#f0f3ff",
+            "on-primary-fixed-variant": "#3f465c",
+            "tertiary": "#000000",
+            "on-error": "#ffffff",
+            "on-surface-variant": "#45464d",
+            "on-tertiary-fixed": "#002113",
+            "on-tertiary-fixed-variant": "#005236",
+            "surface-tint": "#565e74",
+            "on-surface": "#111c2d",
+            "inverse-on-surface": "#ecf1ff",
+            "on-error-container": "#93000a",
+            "on-secondary-container": "#684000",
+            "error-container": "#ffdad6",
+            "surface-container-lowest": "#ffffff",
+            "tertiary-fixed-dim": "#4edea3",
+            "secondary-fixed-dim": "#ffb95f",
+            "secondary-container": "#fea619",
+            "surface-variant": "#d8e3fb",
+            "background": "#f9f9ff",
+            "tertiary-fixed": "#6ffbbe",
+            "surface-dim": "#cfdaf2",
+            "primary-container": "#131b2e",
+            "primary-fixed": "#dae2fd",
+            "secondary": "#855300",
+            "on-tertiary": "#ffffff",
+            "on-primary-container": "#7c839b",
+            "primary": "#000000",
+            "surface-container-high": "#dee8ff",
+            "surface": "#f9f9ff",
+            "primary-fixed-dim": "#bec6e0",
+            "on-primary-fixed": "#131b2e",
+            "surface-container": "#e7eeff",
+            "outline-variant": "#c6c6cd"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.125rem",
+            "lg": "0.25rem",
+            "xl": "0.5rem",
+            "full": "0.75rem"
+          },
+          "spacing": {
+            "space-xl": "1.5rem",
+            "margin": "1.5rem",
+            "space-sm": "0.5rem",
+            "gutter": "1rem",
+            "space-lg": "1rem",
+            "margin-sm": "1rem",
+            "space-2xl": "2rem",
+            "gutter-compact": "0.5rem",
+            "space-xs": "0.25rem",
+            "space-md": "0.75rem"
+          },
+          "fontFamily": {
+            "label-sm": ["Inter"],
+            "numeric-sm": ["Inter"],
+            "headline-xl-mobile": ["Plus Jakarta Sans"],
+            "numeric-lg": ["Inter"],
+            "headline-md": ["Plus Jakarta Sans"],
+            "label-md": ["Inter"],
+            "title-md": ["Plus Jakarta Sans"],
+            "body-sm": ["Inter"],
+            "numeric-md": ["Inter"],
+            "headline-sm": ["Plus Jakarta Sans"],
+            "headline-lg": ["Plus Jakarta Sans"],
+            "headline-xl": ["Plus Jakarta Sans"],
+            "body-lg": ["Inter"],
+            "body-md": ["Inter"]
+          },
+          "fontSize": {
+            "label-sm": ["11px", { "lineHeight": "14px", "letterSpacing": "0.04em", "fontWeight": "600" }],
+            "numeric-sm": ["12px", { "lineHeight": "16px", "fontWeight": "500" }],
+            "headline-xl-mobile": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "700" }],
+            "numeric-lg": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+            "headline-md": ["20px", { "lineHeight": "28px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+            "label-md": ["13px", { "lineHeight": "18px", "fontWeight": "500" }],
+            "title-md": ["14px", { "lineHeight": "20px", "fontWeight": "600" }],
+            "body-sm": ["12px", { "lineHeight": "16px", "fontWeight": "400" }],
+            "numeric-md": ["14px", { "lineHeight": "20px", "fontWeight": "500" }],
+            "headline-sm": ["16px", { "lineHeight": "24px", "fontWeight": "600" }],
+            "headline-lg": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.015em", "fontWeight": "600" }],
+            "headline-xl": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+            "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+            "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }]
+          }
+        },
+      },
+    }
+  </script>
+</head>
+<body class="bg-background text-on-surface antialiased min-h-screen flex font-body-md text-body-md selection:bg-secondary-container selection:text-primary-container">
+<!-- ==================== SIDENAV BAR (SHARED COMPONENT) ==================== -->
+<aside class="fixed top-0 left-0 bottom-0 z-40 w-64 flex flex-col justify-between p-4 bg-primary-container dark:bg-primary-container border-r border-outline dark:border-outline">
+<div class="flex flex-col gap-4">
+<!-- SideNav Brand / Crest Header -->
+<div class="flex items-center gap-3 px-2 py-1">
+<div class="w-10 h-10 rounded-lg bg-surface-container-lowest flex items-center justify-center text-primary-container shadow-sm">
+<span class="material-symbols-outlined text-primary-container" style="font-variation-settings: 'FILL' 1;">domain</span>
+</div>
+<div class="overflow-hidden">
+<h1 class="font-headline-sm text-headline-sm font-bold text-surface-container-lowest dark:text-surface-container-lowest leading-tight truncate">PT GSK Enterprise</h1>
+<p class="font-body-sm text-body-sm text-on-primary-container leading-tight truncate">Construction &amp; Industrial ERP</p>
+</div>
+</div>
+<!-- Action Button / CTA -->
+<button class="w-full flex items-center justify-between px-3 py-1.5 text-xs font-semibold rounded bg-surface-variant/10 text-on-primary-fixed border border-outline/40 hover:bg-surface-variant/20 hover:text-surface-container-lowest transition-colors active:scale-[0.98]">
+<span class="flex items-center gap-2">
+<span class="material-symbols-outlined text-sm">hub</span>
+<span>Switch Unit</span>
+</span>
+<span class="material-symbols-outlined text-xs">unfold_more</span>
+</button>
+<!-- Navigation Tabs (10 tabs, Invoicing active) -->
+<nav class="flex flex-col gap-1 mt-1">
+<!-- 0: Dashboard -->
+<a class="flex items-center gap-3 px-3 py-2 text-on-primary-container dark:text-on-primary-container hover:text-surface-container-lowest rounded-lg hover:bg-surface-variant/10 transition-colors" href="#">
+<span class="material-symbols-outlined text-base">dashboard</span>
+<span class="font-label-md text-label-md">Dashboard</span>
+</a>
+<!-- 1: Margin Matrix -->
+<a class="flex items-center gap-3 px-3 py-2 text-on-primary-container dark:text-on-primary-container hover:text-surface-container-lowest rounded-lg hover:bg-surface-variant/10 transition-colors" href="#">
+<span class="material-symbols-outlined text-base">analytics</span>
+<span class="font-label-md text-label-md">Margin Matrix</span>
+</a>
+<!-- 2: BOM Studio -->
+<a class="flex items-center gap-3 px-3 py-2 text-on-primary-container dark:text-on-primary-container hover:text-surface-container-lowest rounded-lg hover:bg-surface-variant/10 transition-colors" href="#">
+<span class="material-symbols-outlined text-base">precision_manufacturing</span>
+<span class="font-label-md text-label-md">BOM Studio</span>
+</a>
+<!-- 3: Production Execution -->
+<a class="flex items-center gap-3 px-3 py-2 text-on-primary-container dark:text-on-primary-container hover:text-surface-container-lowest rounded-lg hover:bg-surface-variant/10 transition-colors" href="#">
+<span class="material-symbols-outlined text-base">factory</span>
+<span class="font-label-md text-label-md">Production Execution</span>
+</a>
+<!-- 4: Stock Cards -->
+<a class="flex items-center gap-3 px-3 py-2 text-on-primary-container dark:text-on-primary-container hover:text-surface-container-lowest rounded-lg hover:bg-surface-variant/10 transition-colors" href="#">
+<span class="material-symbols-outlined text-base">inventory_2</span>
+<span class="font-label-md text-label-md">Stock Cards</span>
+</a>
+<!-- 5: Invoicing (ACTIVE MATCH) -->
+<a class="flex items-center gap-3 px-3 py-2 text-surface-container-lowest bg-surface-variant/20 dark:bg-inverse-surface/40 border-l-4 border-secondary-container font-semibold rounded-r-lg" href="#">
+<span class="material-symbols-outlined text-base text-secondary-container" style="font-variation-settings: 'FILL' 1;">receipt_long</span>
+<span class="font-label-md text-label-md">Invoicing</span>
+</a>
+<!-- 6: Aging Receivables -->
+<a class="flex items-center gap-3 px-3 py-2 text-on-primary-container dark:text-on-primary-container hover:text-surface-container-lowest rounded-lg hover:bg-surface-variant/10 transition-colors" href="#">
+<span class="material-symbols-outlined text-base">pending_actions</span>
+<span class="font-label-md text-label-md">Aging Receivables</span>
+</a>
+<!-- 7: Expenses -->
+<a class="flex items-center gap-3 px-3 py-2 text-on-primary-container dark:text-on-primary-container hover:text-surface-container-lowest rounded-lg hover:bg-surface-variant/10 transition-colors" href="#">
+<span class="material-symbols-outlined text-base">payments</span>
+<span class="font-label-md text-label-md">Expenses</span>
+</a>
+<!-- 8: Master COA -->
+<a class="flex items-center gap-3 px-3 py-2 text-on-primary-container dark:text-on-primary-container hover:text-surface-container-lowest rounded-lg hover:bg-surface-variant/10 transition-colors" href="#">
+<span class="material-symbols-outlined text-base">account_balance</span>
+<span class="font-label-md text-label-md">Master COA</span>
+</a>
+<!-- 9: Audit Log -->
+<a class="flex items-center gap-3 px-3 py-2 text-on-primary-container dark:text-on-primary-container hover:text-surface-container-lowest rounded-lg hover:bg-surface-variant/10 transition-colors" href="#">
+<span class="material-symbols-outlined text-base">history</span>
+<span class="font-label-md text-label-md">Audit Log</span>
+</a>
+</nav>
+</div>
+<!-- Footer Tabs -->
+<div class="pt-4 border-t border-outline/30 flex flex-col gap-1">
+<a class="flex items-center gap-3 px-3 py-1.5 text-on-primary-container hover:text-surface-container-lowest rounded-lg hover:bg-surface-variant/10 transition-colors" href="#">
+<span class="material-symbols-outlined text-base">admin_panel_settings</span>
+<span class="font-label-md text-label-md">User RBAC</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-1.5 text-on-primary-container hover:text-surface-container-lowest rounded-lg hover:bg-surface-variant/10 transition-colors" href="#">
+<span class="material-symbols-outlined text-base">business</span>
+<span class="font-label-md text-label-md">Company Profile</span>
+</a>
+</div>
+</aside>
+<!-- ==================== MAIN APPLICATION WRAPPER ==================== -->
+<div class="flex-1 ml-64 flex flex-col min-w-0">
+<!-- ==================== TOP NAV BAR (SHARED COMPONENT) ==================== -->
+<header class="flex justify-between items-center w-full px-6 h-14 border-b border-outline-variant dark:border-outline bg-surface-container-lowest dark:bg-primary-container sticky top-0 z-30 shadow-sm dark:shadow-none">
+<!-- Search on Left & Product Brand Name -->
+<div class="flex items-center gap-6">
+<div class="flex items-center gap-3">
+<span class="font-headline-sm text-headline-sm font-bold text-primary dark:text-primary-fixed">GSK Financial &amp; Manufacturing ERP</span>
+<span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-surface-container-low text-on-surface-variant border border-outline-variant">PLANT SULTRA-01</span>
+</div>
+<div class="relative w-72">
+<span class="material-symbols-outlined absolute left-2.5 top-1/2 -translate-y-1/2 text-outline-variant text-base">search</span>
+<input class="w-full h-8 pl-8 pr-3 text-xs bg-surface-container-low border border-outline-variant rounded focus:outline-none focus:ring-1 focus:ring-secondary-container focus:border-primary-container" placeholder="Cari Dokumen, PO, Produk..." type="text"/>
+</div>
+</div>
+<!-- Center & Trailing Actions -->
+<div class="flex items-center gap-4">
+<!-- Navigation Link (Financial Quarter) -->
+<div class="text-primary dark:text-primary-fixed font-bold border-b-2 border-secondary-container dark:border-secondary-container h-14 flex items-center px-2">
+<span class="font-label-md text-label-md">FY 2026 - Q1</span>
+</div>
+<!-- Action Icons: notifications, help, settings -->
+<div class="flex items-center gap-1">
+<button class="w-8 h-8 rounded flex items-center justify-center text-on-surface-variant hover:bg-surface-container-low transition-colors relative" title="Notifications">
+<span class="material-symbols-outlined text-lg">notifications</span>
+<span class="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-secondary-container"></span>
+</button>
+<button class="w-8 h-8 rounded flex items-center justify-center text-on-surface-variant hover:bg-surface-container-low transition-colors" title="Help">
+<span class="material-symbols-outlined text-lg">help</span>
+</button>
+<button class="w-8 h-8 rounded flex items-center justify-center text-on-surface-variant hover:bg-surface-container-low transition-colors" title="Settings">
+<span class="material-symbols-outlined text-lg">settings</span>
+</button>
+</div>
+<div class="h-6 w-px bg-outline-variant"></div>
+<!-- Profile badge -->
+<div class="flex items-center gap-2">
+<img class="w-8 h-8 rounded-full border border-outline-variant object-cover" data-alt="Close up photographic corporate portrait of a serious Indonesian plant controller wearing an industrial steel navy polo shirt and an accredited corporate ID lanyard in an ultra modern cement manufacturing control room." src="https://lh3.googleusercontent.com/aida-public/AB6AXuC42XzfpaqIWNRrKvz0FH7D2MLq6ng45XhUhmgDyBCyctFx3SpKUROuvy1oySuinFaLBvxjlY4boaE_h1xEFLjTZMBz-U5JooLrp9pU3Q36vv1F6avAIm_uIV01qVax5UcPntUd4EvEclqhW7C7pXLVIFM2bwU1kS6QcJ3KyhQxqg-9QUnAU-v9gO8sDTdLJaLIHUnvJcTuAVW50u0TOTiNY1ICQzXrXz0DFjrG7Up3"/>
+<div class="flex flex-col text-left">
+<span class="text-xs font-semibold text-on-surface leading-tight">Ir. Hendra S.</span>
+<span class="text-[10px] font-medium text-on-surface-variant leading-tight">Plant Controller</span>
+</div>
+</div>
+</div>
+</header>
+<!-- ==================== MAIN CONTENT CANVAS ==================== -->
+<main class="p-6 flex flex-col gap-6 max-w-[1680px] w-full mx-auto">
+<!-- Breadcrumbs & Screen Headline -->
+<div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-2 border-b border-outline-variant">
+<div>
+<div class="flex items-center gap-2 font-label-sm text-label-sm text-on-surface-variant uppercase">
+<span>Faktur Komersial</span>
+<span class="material-symbols-outlined text-xs">chevron_right</span>
+<span>Penjualan Proyek Dermaga</span>
+<span class="material-symbols-outlined text-xs">chevron_right</span>
+<span class="text-primary font-bold">INV-GSK-2026/02-089</span>
+</div>
+<h2 class="font-headline-lg text-headline-lg font-bold text-on-surface mt-1 flex items-center gap-3">
+            Split Invoice Builder &amp; Live Margin Calculation
+            <span class="font-label-sm text-label-sm px-2.5 py-0.5 rounded bg-secondary-fixed text-on-secondary-fixed border border-secondary-fixed-dim uppercase tracking-wider font-semibold">
+              Live GAAP Realtime
+            </span>
+</h2>
+</div>
+<!-- Fast Header Actions -->
+<div class="flex items-center gap-2">
+<button class="h-8 px-3 rounded bg-surface-container-lowest border border-outline-variant text-on-surface font-label-md text-label-md hover:bg-surface-container-low transition-colors flex items-center gap-1.5 shadow-sm">
+<span class="material-symbols-outlined text-sm">print</span>
+<span>Cetak Lembar Kerja</span>
+</button>
+<button class="h-8 px-3 rounded bg-surface-container-lowest border border-outline-variant text-on-surface font-label-md text-label-md hover:bg-surface-container-low transition-colors flex items-center gap-1.5 shadow-sm">
+<span class="material-symbols-outlined text-sm">calculate</span>
+<span>Audit HPP Otomatis</span>
+</button>
+</div>
+</div>
+<!-- ==================== INVOICE METADATA HEADER ==================== -->
+<section class="bg-surface-container-lowest rounded-lg border border-outline-variant p-5 shadow-sm">
+<div class="flex items-center justify-between pb-3 mb-4 border-b border-outline-variant">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary-container text-lg">receipt</span>
+<h3 class="font-title-md text-title-md text-on-surface">Metadata Faktur Penjualan Proyek</h3>
+</div>
+<!-- Status Faktur -->
+<div class="flex items-center gap-2">
+<span class="font-label-sm text-label-sm text-on-surface-variant">Status Faktur:</span>
+<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded bg-[#FEF3C7] text-[#B45309] border border-[#FDE68A] font-label-sm text-label-sm font-semibold">
+<span class="w-1.5 h-1.5 rounded-full bg-[#B45309] animate-pulse"></span>
+              Draft Penjualan &amp; Verifikasi Margin
+            </span>
+</div>
+</div>
+<!-- 4-Column Metadata Grid -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+<!-- Col 1: Invoice Number & Date -->
+<div class="bg-surface-container-low/50 p-3 rounded border border-outline-variant/60 flex flex-col justify-between">
+<div>
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase">Nomor Invoice</span>
+<div class="font-title-md text-title-md font-bold text-on-surface mt-0.5 tracking-tight">INV-GSK-2026/02-089</div>
+</div>
+<div class="mt-2 text-xs flex items-center justify-between text-on-surface-variant pt-2 border-t border-outline-variant/40">
+<span>Sistem: Auto-generated</span>
+<span class="material-symbols-outlined text-sm text-tertiary-fixed-dim" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+</div>
+</div>
+<!-- Col 2: Tanggal & Jatuh Tempo -->
+<div class="bg-surface-container-low/50 p-3 rounded border border-outline-variant/60 flex flex-col justify-between">
+<div class="flex justify-between items-start">
+<div>
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase">Tanggal Terbit</span>
+<div class="font-numeric-md text-numeric-md font-semibold text-on-surface mt-0.5">18 Februari 2026</div>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant text-base">calendar_today</span>
+</div>
+<div class="mt-2 text-xs text-on-surface-variant pt-2 border-t border-outline-variant/40 flex items-center justify-between">
+<span>Jatuh Tempo:</span>
+<span class="font-semibold text-error">18 Maret 2026 (NET 30)</span>
+</div>
+</div>
+<!-- Col 3: Pelanggan / Kontraktor -->
+<div class="bg-surface-container-low/50 p-3 rounded border border-outline-variant/60 flex flex-col justify-between">
+<div>
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase">Pelanggan / Kontraktor</span>
+<div class="font-title-md text-title-md font-bold text-on-surface mt-0.5 truncate" title="PT Bumi Sultra Mandiri - Proyek Pelabuhan Murhum Bau-Bau">
+                PT Bumi Sultra Mandiri
+              </div>
+<div class="text-xs text-on-surface-variant truncate">Proyek Pelabuhan Murhum Bau-Bau</div>
+</div>
+<div class="mt-2 text-[11px] text-on-surface-variant pt-2 border-t border-outline-variant/40 flex items-center gap-1">
+<span class="material-symbols-outlined text-xs">badge</span>
+<span>NPWP: 01.382.902.4-812.000</span>
+</div>
+</div>
+<!-- Col 4: No. Kontrak/PO -->
+<div class="bg-surface-container-low/50 p-3 rounded border border-outline-variant/60 flex flex-col justify-between">
+<div>
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase">No. Kontrak / PO Terikat</span>
+<div class="font-title-md text-title-md font-bold text-on-surface mt-0.5 tracking-tight truncate">
+                PO-BSM-KDR/092/2026
+              </div>
+<div class="text-xs text-on-surface-variant">Surat Perintah Kerja (SPK) Dermaga</div>
+</div>
+<div class="mt-2 text-xs text-tertiary-fixed-dim pt-2 border-t border-outline-variant/40 flex items-center gap-1 font-semibold">
+<span class="material-symbols-outlined text-xs">verified</span>
+<span>PO Tervalidasi Legal</span>
+</div>
+</div>
+</div>
+</section>
+<!-- ==================== SPLIT MAIN LAYOUT (TABLE + SIDEBAR CALCULATOR) ==================== -->
+<div class="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
+<!-- ==================== LEFT / MAIN COLUMN: MULTI-ITEM INVOICE TABLE (8 Cols) ==================== -->
+<div class="xl:col-span-8 flex flex-col gap-6">
+<!-- Table Container -->
+<div class="bg-surface-container-lowest rounded-lg border border-outline-variant shadow-sm overflow-hidden">
+<div class="px-5 py-3 border-b border-outline-variant flex items-center justify-between bg-surface-container-low/30">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary-container text-lg">list_alt</span>
+<h3 class="font-title-md text-title-md text-on-surface">Rincian Komponen Invoice &amp; Live Unit Cost HPP</h3>
+</div>
+<div class="flex items-center gap-3">
+<span class="font-label-sm text-label-sm text-on-surface-variant">3 Baris Terdaftar</span>
+<button class="h-7 px-2.5 rounded bg-primary-container text-on-primary font-label-sm text-label-sm flex items-center gap-1 hover:bg-[#1E293B] transition-colors">
+<span class="material-symbols-outlined text-xs">add</span>
+<span>Tambah Item</span>
+</button>
+</div>
+</div>
+<!-- Scrollable Table -->
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse text-xs">
+<thead>
+<tr class="bg-surface-container-low/80 border-b-2 border-outline-variant font-label-sm text-label-sm text-on-surface-variant">
+<th class="py-2.5 px-3">Item / Produk</th>
+<th class="py-2.5 px-2">Deskripsi Pekerjaan</th>
+<th class="py-2.5 px-2 text-right">Qty</th>
+<th class="py-2.5 px-2 text-center">Satuan</th>
+<th class="py-2.5 px-2 text-right">HPP Unit (Internal)</th>
+<th class="py-2.5 px-2 text-right">Harga Jual Satuan</th>
+<th class="py-2.5 px-2 text-right">Subtotal Omzet</th>
+<th class="py-2.5 px-2 text-right">Subtotal HPP</th>
+<th class="py-2.5 px-2 text-right">Margin Kotor (Rp)</th>
+<th class="py-2.5 px-2 text-center">Margin %</th>
+<th class="py-2.5 px-3 text-center">Aksi</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant">
+<!-- Row 1 -->
+<tr class="hover:bg-surface-container-low transition-colors">
+<td class="py-3 px-3 align-top font-semibold text-on-surface">
+<div class="flex flex-col">
+<span>Paving Block K-300 Heavy Duty</span>
+<span class="text-[10px] text-on-surface-variant font-normal">SKU: PV-K300-HD</span>
+</div>
+</td>
+<td class="py-3 px-2 align-top text-on-surface-variant">
+                      Proyek Dermaga 1.200 M²
+                    </td>
+<td class="py-3 px-2 align-top text-right font-numeric-md text-numeric-md font-semibold text-on-surface">
+                      1.200
+                    </td>
+<td class="py-3 px-2 align-top text-center">
+<span class="px-1.5 py-0.5 rounded bg-surface-container text-on-surface-variant text-[11px] font-medium border border-outline-variant">M2</span>
+</td>
+<td class="py-3 px-2 align-top text-right font-numeric-sm text-numeric-sm text-on-surface-variant">
+                      Rp 48.850
+                    </td>
+<td class="py-3 px-2 align-top text-right font-numeric-sm text-numeric-sm font-semibold text-on-surface">
+                      Rp 78.000
+                    </td>
+<td class="py-3 px-2 align-top text-right font-numeric-md text-numeric-md font-bold text-on-surface">
+                      Rp 93.600.000
+                    </td>
+<td class="py-3 px-2 align-top text-right font-numeric-sm text-numeric-sm text-on-surface-variant">
+                      Rp 58.620.000
+                    </td>
+<td class="py-3 px-2 align-top text-right font-numeric-md text-numeric-md font-bold text-tertiary-fixed-dim">
+                      +Rp 34.980.000
+                    </td>
+<td class="py-3 px-2 align-top text-center">
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-bold bg-[#DCFCE7] text-[#15803D] border border-[#BBF7D0]">
+<span class="material-symbols-outlined text-xs">trending_up</span>
+                        37.37%
+                      </span>
+</td>
+<td class="py-3 px-3 align-top text-center">
+<div class="flex items-center justify-center gap-1">
+<button class="p-1 hover:text-primary transition-colors text-on-surface-variant" title="Edit">
+<span class="material-symbols-outlined text-base">edit</span>
+</button>
+<button class="p-1 hover:text-error transition-colors text-on-surface-variant" title="Hapus">
+<span class="material-symbols-outlined text-base">delete</span>
+</button>
+</div>
+</td>
+</tr>
+<!-- Row 2 -->
+<tr class="hover:bg-surface-container-low transition-colors bg-surface-bright">
+<td class="py-3 px-3 align-top font-semibold text-on-surface">
+<div class="flex flex-col">
+<span>Kanstin Pembatas 40x25x15</span>
+<span class="text-[10px] text-on-surface-variant font-normal">SKU: KST-402515-ST</span>
+</div>
+</td>
+<td class="py-3 px-2 align-top text-on-surface-variant">
+                      Pembatas Bahu Dermaga
+                    </td>
+<td class="py-3 px-2 align-top text-right font-numeric-md text-numeric-md font-semibold text-on-surface">
+                      450
+                    </td>
+<td class="py-3 px-2 align-top text-center">
+<span class="px-1.5 py-0.5 rounded bg-surface-container text-on-surface-variant text-[11px] font-medium border border-outline-variant">Pcs</span>
+</td>
+<td class="py-3 px-2 align-top text-right font-numeric-sm text-numeric-sm text-on-surface-variant">
+                      Rp 22.400
+                    </td>
+<td class="py-3 px-2 align-top text-right font-numeric-sm text-numeric-sm font-semibold text-on-surface">
+                      Rp 35.000
+                    </td>
+<td class="py-3 px-2 align-top text-right font-numeric-md text-numeric-md font-bold text-on-surface">
+                      Rp 15.750.000
+                    </td>
+<td class="py-3 px-2 align-top text-right font-numeric-sm text-numeric-sm text-on-surface-variant">
+                      Rp 10.080.000
+                    </td>
+<td class="py-3 px-2 align-top text-right font-numeric-md text-numeric-md font-bold text-tertiary-fixed-dim">
+                      +Rp 5.670.000
+                    </td>
+<td class="py-3 px-2 align-top text-center">
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-bold bg-[#DCFCE7] text-[#15803D] border border-[#BBF7D0]">
+<span class="material-symbols-outlined text-xs">trending_up</span>
+                        36.00%
+                      </span>
+</td>
+<td class="py-3 px-3 align-top text-center">
+<div class="flex items-center justify-center gap-1">
+<button class="p-1 hover:text-primary transition-colors text-on-surface-variant" title="Edit">
+<span class="material-symbols-outlined text-base">edit</span>
+</button>
+<button class="p-1 hover:text-error transition-colors text-on-surface-variant" title="Hapus">
+<span class="material-symbols-outlined text-base">delete</span>
+</button>
+</div>
+</td>
+</tr>
+<!-- Row 3 -->
+<tr class="hover:bg-surface-container-low transition-colors">
+<td class="py-3 px-3 align-top font-semibold text-on-surface">
+<div class="flex flex-col">
+<span>Jasa Pemasangan &amp; Pemadatan Stamper</span>
+<span class="text-[10px] text-on-surface-variant font-normal">SKU: SRV-INST-STMP</span>
+</div>
+</td>
+<td class="py-3 px-2 align-top text-on-surface-variant">
+                      Tenaga Pasang Subkon
+                    </td>
+<td class="py-3 px-2 align-top text-right font-numeric-md text-numeric-md font-semibold text-on-surface">
+                      1.200
+                    </td>
+<td class="py-3 px-2 align-top text-center">
+<span class="px-1.5 py-0.5 rounded bg-surface-container text-on-surface-variant text-[11px] font-medium border border-outline-variant">M2</span>
+</td>
+<td class="py-3 px-2 align-top text-right font-numeric-sm text-numeric-sm text-on-surface-variant">
+                      Rp 12.000
+                    </td>
+<td class="py-3 px-2 align-top text-right font-numeric-sm text-numeric-sm font-semibold text-on-surface">
+                      Rp 18.500
+                    </td>
+<td class="py-3 px-2 align-top text-right font-numeric-md text-numeric-md font-bold text-on-surface">
+                      Rp 22.200.000
+                    </td>
+<td class="py-3 px-2 align-top text-right font-numeric-sm text-numeric-sm text-on-surface-variant">
+                      Rp 14.400.000
+                    </td>
+<td class="py-3 px-2 align-top text-right font-numeric-md text-numeric-md font-bold text-tertiary-fixed-dim">
+                      +Rp 7.800.000
+                    </td>
+<td class="py-3 px-2 align-top text-center">
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-bold bg-[#DCFCE7] text-[#15803D] border border-[#BBF7D0]">
+<span class="material-symbols-outlined text-xs">trending_up</span>
+                        35.14%
+                      </span>
+</td>
+<td class="py-3 px-3 align-top text-center">
+<div class="flex items-center justify-center gap-1">
+<button class="p-1 hover:text-primary transition-colors text-on-surface-variant" title="Edit">
+<span class="material-symbols-outlined text-base">edit</span>
+</button>
+<button class="p-1 hover:text-error transition-colors text-on-surface-variant" title="Hapus">
+<span class="material-symbols-outlined text-base">delete</span>
+</button>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Table Subfooter summary row -->
+<div class="bg-surface-container-low p-3.5 border-t border-outline-variant flex flex-col sm:flex-row justify-between items-center text-xs gap-3">
+<div class="flex items-center gap-3">
+<span class="font-semibold text-on-surface">Penetapan Kurs / Valuta:</span>
+<span class="px-2 py-0.5 bg-surface-container-lowest border border-outline-variant rounded font-mono font-medium">IDR (Rupiah)</span>
+<span class="text-on-surface-variant">Metode Pencatatan: Akrual (Accrual Basis)</span>
+</div>
+<div class="flex items-center gap-4">
+<span class="text-on-surface-variant">Rekonsiliasi Gudang Kendari:</span>
+<span class="inline-flex items-center gap-1 text-[#15803D] font-semibold">
+<span class="material-symbols-outlined text-xs">check_circle</span>
+                  Stok &amp; Batch Terkunci
+                </span>
+</div>
+</div>
+</div>
+<!-- ==================== DYNAMIC BOTTOM MARGIN & PROFITABILITY CARD ==================== -->
+<div class="bg-surface-container-lowest rounded-lg border border-outline-variant p-6 shadow-sm">
+<div class="flex items-center justify-between pb-4 mb-4 border-b border-outline-variant">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-secondary font-bold">query_stats</span>
+<h3 class="font-headline-sm text-headline-sm font-bold text-on-surface">Analisis Profitabilitas &amp; Laba Kotor Transaksi</h3>
+</div>
+<div class="inline-flex items-center gap-1.5 px-3 py-1 rounded bg-[#DCFCE7] text-[#15803D] border border-[#BBF7D0] font-label-sm text-label-sm font-bold">
+<span class="material-symbols-outlined text-sm font-bold">verified</span>
+                Margin Sehat di atas Ambang Batas 30%
+              </div>
+</div>
+<!-- 4 Big Financial Indicators Grid -->
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+<!-- KPI 1 -->
+<div class="bg-surface-container-low/40 border border-outline-variant p-4 rounded-lg">
+<div class="flex items-center justify-between mb-1">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase font-semibold">Total Nilai Kontrak</span>
+<span class="material-symbols-outlined text-on-surface-variant text-base">point_of_sale</span>
+</div>
+<div class="font-numeric-lg text-numeric-lg font-bold text-on-surface tracking-tight">
+                  Rp 131.550.000
+                </div>
+<div class="text-[11px] text-on-surface-variant mt-1">Omzet Bruto (Exclude PPN 11%)</div>
+</div>
+<!-- KPI 2 -->
+<div class="bg-surface-container-low/40 border border-outline-variant p-4 rounded-lg">
+<div class="flex items-center justify-between mb-1">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase font-semibold">Total Beban HPP</span>
+<span class="material-symbols-outlined text-on-surface-variant text-base">factory</span>
+</div>
+<div class="font-numeric-lg text-numeric-lg font-bold text-on-surface tracking-tight">
+                  Rp 83.100.000
+                </div>
+<div class="text-[11px] text-on-surface-variant mt-1">Produksi Pabrik &amp; Material Split</div>
+</div>
+<!-- KPI 3 -->
+<div class="bg-surface-container-low/40 border border-outline-variant p-4 rounded-lg">
+<div class="flex items-center justify-between mb-1">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase font-semibold">Estimasi Laba Kotor</span>
+<span class="material-symbols-outlined text-[#15803D] text-base">savings</span>
+</div>
+<div class="font-numeric-lg text-numeric-lg font-bold text-[#15803D] tracking-tight">
+                  Rp 48.450.000
+                </div>
+<div class="text-[11px] text-[#15803D] font-semibold mt-1">Gross Profit Riil GSK</div>
+</div>
+<!-- KPI 4 -->
+<div class="bg-surface-container-low/40 border border-outline-variant p-4 rounded-lg">
+<div class="flex items-center justify-between mb-1">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase font-semibold">Margin Transaksi</span>
+<span class="material-symbols-outlined text-[#15803D] text-base">donut_large</span>
+</div>
+<div class="font-numeric-lg text-numeric-lg font-bold text-[#15803D] tracking-tight flex items-baseline gap-1">
+                  36.83%
+                  <span class="text-xs font-normal text-on-surface-variant">Nett</span>
+</div>
+<div class="text-[11px] text-on-surface-variant mt-1">+6.83% vs Target Minimum (30%)</div>
+</div>
+</div>
+<!-- Syarat Termin Pembayaran Breakdown -->
+<div class="mt-5 p-4 rounded border border-outline-variant bg-surface-container-low/20">
+<div class="flex items-center justify-between mb-3">
+<span class="font-title-md text-title-md font-bold text-on-surface flex items-center gap-2">
+<span class="material-symbols-outlined text-primary-container text-base">handshake</span>
+                  Syarat Termin Pembayaran Kontrak
+                </span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Metode: 2-Tahap Verifikasi BAST</span>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+<!-- Termin 1 -->
+<div class="p-3 bg-surface-container-lowest rounded border border-outline-variant flex items-center justify-between">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded bg-surface-container flex items-center justify-center font-bold text-on-surface">1</div>
+<div>
+<div class="text-xs font-semibold text-on-surface">DP 30% Saat Penerbitan Invoice</div>
+<div class="text-[11px] text-on-surface-variant">Uang Muka Produksi &amp; Mobilisasi</div>
+</div>
+</div>
+<div class="text-right">
+<div class="font-numeric-md text-numeric-md font-bold text-on-surface">Rp 39.465.000</div>
+<div class="text-[10px] text-on-surface-variant">Tempo: 3 Hari Kerja</div>
+</div>
+</div>
+<!-- Termin 2 -->
+<div class="p-3 bg-surface-container-lowest rounded border border-outline-variant flex items-center justify-between">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded bg-surface-container flex items-center justify-center font-bold text-on-surface">2</div>
+<div>
+<div class="text-xs font-semibold text-on-surface">Pelunasan 70% Setelah BAST</div>
+<div class="text-[11px] text-on-surface-variant">Berita Acara Serah Terima Dermaga</div>
+</div>
+</div>
+<div class="text-right">
+<div class="font-numeric-md text-numeric-md font-bold text-on-surface">Rp 92.085.000</div>
+<div class="text-[10px] text-on-surface-variant">Tempo: NET 30 Pasca BAST</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- ==================== RIGHT COLUMN: LIVE MARGIN CALCULATOR SIDEBAR (4 Cols) ==================== -->
+<div class="xl:col-span-4 flex flex-col gap-6">
+<!-- Live Gross Profit Calculator Widget -->
+<div class="bg-surface-container-lowest rounded-lg border border-outline-variant shadow-sm overflow-hidden sticky top-20">
+<div class="p-4 bg-primary-container text-surface-container-lowest flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-secondary-container">balance</span>
+<div>
+<h3 class="font-title-md text-title-md font-bold">Live Margin Calculator</h3>
+<p class="text-[11px] text-on-primary-container">Simulasi Sensitivitas Biaya &amp; HPP</p>
+</div>
+</div>
+<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-secondary-container text-primary-container">
+                REALTIME
+              </span>
+</div>
+<div class="p-5 flex flex-col gap-4">
+<!-- Visual Gauge/Bar of Margin -->
+<div class="flex flex-col gap-1.5">
+<div class="flex justify-between items-center text-xs">
+<span class="font-semibold text-on-surface">Rasio Gross Profit Margin</span>
+<span class="font-bold text-[#15803D]">36.83%</span>
+</div>
+<!-- Progress track -->
+<div class="w-full h-3 bg-surface-container rounded-full overflow-hidden flex">
+<!-- Red Zone (0-20%) -->
+<div class="bg-error/30 h-full w-[20%]" title="Danger Zone (&lt;20%)"></div>
+<!-- Amber Zone (20-30%) -->
+<div class="bg-secondary-container/40 h-full w-[10%]" title="Warning (20-30%)"></div>
+<!-- Healthy Zone (30-100%) -->
+<div class="bg-[#16A34A] h-full w-[36.83%]" title="Healthy Margin Current (36.83%)"></div>
+</div>
+<div class="flex justify-between text-[10px] text-on-surface-variant">
+<span>0%</span>
+<span>Ambang Batas: 30%</span>
+<span>Target: 40%</span>
+</div>
+</div>
+<!-- Cost Composition Breakdown -->
+<div class="border-t border-outline-variant pt-4 flex flex-col gap-2.5">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase">Struktur Komposisi Kontrak</span>
+<div class="flex items-center justify-between text-xs py-1 border-b border-surface-container">
+<span class="text-on-surface flex items-center gap-1.5">
+<span class="w-2.5 h-2.5 rounded bg-on-surface-variant"></span>
+                    Biaya Bahan Baku (Semen, Pasir, Batu)
+                  </span>
+<span class="font-numeric-sm text-numeric-sm font-semibold">Rp 52.800.000</span>
+</div>
+<div class="flex items-center justify-between text-xs py-1 border-b border-surface-container">
+<span class="text-on-surface flex items-center gap-1.5">
+<span class="w-2.5 h-2.5 rounded bg-outline"></span>
+                    Tenaga Kerja Langsung &amp; Subkon
+                  </span>
+<span class="font-numeric-sm text-numeric-sm font-semibold">Rp 21.300.000</span>
+</div>
+<div class="flex items-center justify-between text-xs py-1 border-b border-surface-container">
+<span class="text-on-surface flex items-center gap-1.5">
+<span class="w-2.5 h-2.5 rounded bg-surface-tint"></span>
+                    Overhead Pabrik &amp; Logistik Dermaga
+                  </span>
+<span class="font-numeric-sm text-numeric-sm font-semibold">Rp 9.000.000</span>
+</div>
+<div class="flex items-center justify-between text-xs py-1.5 font-bold text-on-surface bg-surface-container-low px-2 rounded">
+<span>Total Harga Pokok Penjualan (HPP)</span>
+<span class="text-error">Rp 83.100.000</span>
+</div>
+</div>
+<!-- PPN & Tax Calculations -->
+<div class="border-t border-outline-variant pt-3 flex flex-col gap-2 text-xs">
+<div class="flex justify-between items-center">
+<span class="text-on-surface-variant">Dasar Pengenaan Pajak (DPP):</span>
+<span class="font-semibold text-on-surface">Rp 131.550.000</span>
+</div>
+<div class="flex justify-between items-center">
+<span class="text-on-surface-variant">PPN Proyek (11% UU HPP):</span>
+<span class="font-semibold text-on-surface">+ Rp 14.470.500</span>
+</div>
+<div class="flex justify-between items-center">
+<span class="text-on-surface-variant">PPh Pasal 22 Konstruksi (1.5%):</span>
+<span class="text-on-surface-variant">- Rp 1.973.250</span>
+</div>
+<div class="flex justify-between items-center pt-2 border-t border-outline-variant font-bold text-sm text-on-surface">
+<span>Grand Total Tagihan:</span>
+<span class="text-primary font-bold font-numeric-md text-numeric-md">Rp 146.020.500</span>
+</div>
+</div>
+<!-- Visual QR Code Preview Box -->
+<div class="mt-2 p-3 bg-surface-container-low rounded border border-dashed border-outline-variant flex items-center gap-3">
+<div class="w-12 h-12 bg-white rounded border border-outline-variant flex items-center justify-center p-1 shrink-0">
+<span class="material-symbols-outlined text-3xl text-primary">qr_code_2</span>
+</div>
+<div class="overflow-hidden">
+<div class="text-xs font-bold text-on-surface truncate">E-Faktur Validasi DJP</div>
+<div class="text-[11px] text-on-surface-variant">Tercetak otomatis setelah persetujuan otoritas plant.</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- ==================== ACTION BAR (STICKY BOTTOM OR FOOTER ANCHOR) ==================== -->
+<footer class="mt-4 p-4 bg-surface-container-lowest rounded-lg border border-outline-variant shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
+<!-- Status audit alert indicator -->
+<div class="flex items-center gap-3">
+<div class="w-9 h-9 rounded-full bg-surface-container-low flex items-center justify-center text-primary-container">
+<span class="material-symbols-outlined text-lg">policy</span>
+</div>
+<div>
+<div class="text-xs font-bold text-on-surface">Persetujuan Otoritas Plant Controller Terbuka</div>
+<div class="text-[11px] text-on-surface-variant">Dokumen memenuhi margin minimum 30% dan alokasi stock card aktif.</div>
+</div>
+</div>
+<!-- The 3 Action Buttons -->
+<div class="flex items-center gap-3 w-full sm:w-auto justify-end">
+<!-- 1. Secondary button: 'Simpan Draf' -->
+<button class="h-9 px-4 rounded bg-surface-container-lowest border border-outline text-[#1E293B] font-label-md text-label-md hover:bg-surface-container-low transition-colors active:scale-[0.99] flex items-center gap-1.5 shadow-sm">
+<span class="material-symbols-outlined text-base">save</span>
+<span>Simpan Draf</span>
+</button>
+<!-- 2. Amber button: 'Pratinjau Faktur & QR Code Verifikasi' -->
+<button class="h-9 px-4 rounded bg-[#F59E0B] text-[#0F172A] font-label-md text-label-md font-bold hover:bg-[#D97706] transition-colors active:scale-[0.99] flex items-center gap-1.5 shadow-sm">
+<span class="material-symbols-outlined text-base">qr_code_scanner</span>
+<span>Pratinjau Faktur &amp; QR Code Verifikasi</span>
+</button>
+<!-- 3. Primary Steel Navy button: 'Terbitkan Invoice & Kunci Saldo Piutang' -->
+<button class="h-9 px-5 rounded bg-primary-container text-surface-container-lowest font-label-md text-label-md font-bold hover:bg-[#1E293B] transition-colors active:scale-[0.99] flex items-center gap-2 shadow">
+<span class="material-symbols-outlined text-base text-secondary-container">lock</span>
+<span>Terbitkan Invoice &amp; Kunci Saldo Piutang</span>
+</button>
+</div>
+</footer>
+</main>
+</div>
+</body></html>

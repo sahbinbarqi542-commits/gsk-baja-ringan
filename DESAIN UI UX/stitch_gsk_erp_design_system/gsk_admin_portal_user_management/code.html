@@ -1,0 +1,845 @@
+<!DOCTYPE html>
+
+<html lang="id"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Portal Super Admin &amp; Tata Kelola Sistem GSK - PT Griya Sultra Konstruksi</title>
+<!-- Google Fonts: Plus Jakarta Sans & Inter -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Plus+Jakarta+Sans:wght@500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols Outlined -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS v3 with Plugins -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "on-tertiary-container": "#009668",
+            "on-secondary-fixed": "#2a1700",
+            "surface-container-highest": "#d8e3fb",
+            "inverse-primary": "#bec6e0",
+            "inverse-surface": "#263143",
+            "secondary-fixed": "#ffddb8",
+            "tertiary-container": "#002113",
+            "on-background": "#111c2d",
+            "error": "#ba1a1a",
+            "surface-bright": "#f9f9ff",
+            "on-primary": "#ffffff",
+            "on-secondary-fixed-variant": "#653e00",
+            "outline": "#76777d",
+            "on-secondary": "#ffffff",
+            "surface-container-low": "#f0f3ff",
+            "on-primary-fixed-variant": "#3f465c",
+            "tertiary": "#000000",
+            "on-error": "#ffffff",
+            "on-surface-variant": "#45464d",
+            "on-tertiary-fixed": "#002113",
+            "on-tertiary-fixed-variant": "#005236",
+            "surface-tint": "#565e74",
+            "on-surface": "#111c2d",
+            "inverse-on-surface": "#ecf1ff",
+            "on-error-container": "#93000a",
+            "on-secondary-container": "#684000",
+            "error-container": "#ffdad6",
+            "surface-container-lowest": "#ffffff",
+            "tertiary-fixed-dim": "#4edea3",
+            "secondary-fixed-dim": "#ffb95f",
+            "secondary-container": "#fea619",
+            "surface-variant": "#d8e3fb",
+            "background": "#f9f9ff",
+            "tertiary-fixed": "#6ffbbe",
+            "surface-dim": "#cfdaf2",
+            "primary-container": "#131b2e",
+            "primary-fixed": "#dae2fd",
+            "secondary": "#855300",
+            "on-tertiary": "#ffffff",
+            "on-primary-container": "#7c839b",
+            "primary": "#000000",
+            "surface-container-high": "#dee8ff",
+            "surface": "#f9f9ff",
+            "primary-fixed-dim": "#bec6e0",
+            "on-primary-fixed": "#131b2e",
+            "surface-container": "#e7eeff",
+            "outline-variant": "#c6c6cd"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.125rem",
+            "lg": "0.25rem",
+            "xl": "0.5rem",
+            "full": "0.75rem"
+          },
+          "spacing": {
+            "space-xl": "1.5rem",
+            "margin": "1.5rem",
+            "space-sm": "0.5rem",
+            "gutter": "1rem",
+            "space-lg": "1rem",
+            "margin-sm": "1rem",
+            "space-2xl": "2rem",
+            "gutter-compact": "0.5rem",
+            "space-xs": "0.25rem",
+            "space-md": "0.75rem"
+          },
+          "fontFamily": {
+            "label-sm": ["Inter"],
+            "numeric-sm": ["Inter"],
+            "headline-xl-mobile": ["Plus Jakarta Sans"],
+            "numeric-lg": ["Inter"],
+            "headline-md": ["Plus Jakarta Sans"],
+            "label-md": ["Inter"],
+            "title-md": ["Plus Jakarta Sans"],
+            "body-sm": ["Inter"],
+            "numeric-md": ["Inter"],
+            "headline-sm": ["Plus Jakarta Sans"],
+            "headline-lg": ["Plus Jakarta Sans"],
+            "headline-xl": ["Plus Jakarta Sans"],
+            "body-lg": ["Inter"],
+            "body-md": ["Inter"]
+          },
+          "fontSize": {
+            "label-sm": ["11px", { "lineHeight": "14px", "letterSpacing": "0.04em", "fontWeight": "600" }],
+            "numeric-sm": ["12px", { "lineHeight": "16px", "fontWeight": "500" }],
+            "headline-xl-mobile": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "700" }],
+            "numeric-lg": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+            "headline-md": ["20px", { "lineHeight": "28px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+            "label-md": ["13px", { "lineHeight": "18px", "fontWeight": "500" }],
+            "title-md": ["14px", { "lineHeight": "20px", "fontWeight": "600" }],
+            "body-sm": ["12px", { "lineHeight": "16px", "fontWeight": "400" }],
+            "numeric-md": ["14px", { "lineHeight": "20px", "fontWeight": "500" }],
+            "headline-sm": ["16px", { "lineHeight": "24px", "fontWeight": "600" }],
+            "headline-lg": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.015em", "fontWeight": "600" }],
+            "headline-xl": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+            "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+            "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }]
+          }
+        },
+      },
+    }
+  </script>
+</head>
+<body class="bg-background text-on-surface antialiased font-body-md text-body-md min-h-screen flex flex-col">
+<!-- ==================== SHARED COMPONENT: SideNavBar ==================== -->
+<aside class="fixed top-0 left-0 bottom-0 z-40 w-64 flex flex-col justify-between p-4 bg-primary-container border-r border-outline select-none">
+<!-- Header Area -->
+<div class="flex flex-col gap-4">
+<div class="flex items-center gap-3 px-2 py-1">
+<div class="w-10 h-10 rounded-lg bg-secondary-container flex items-center justify-center text-primary-container font-headline-sm text-headline-sm font-bold shadow-sm">
+          GSK
+        </div>
+<div class="flex flex-col overflow-hidden">
+<span class="font-headline-sm text-headline-sm font-bold text-surface-container-lowest truncate">PT GSK Enterprise</span>
+<span class="font-body-sm text-body-sm text-on-primary-container truncate">Construction &amp; Industrial ERP</span>
+</div>
+</div>
+<!-- Unit Switcher CTA Button -->
+<button class="w-full flex items-center justify-between px-3 py-2 bg-surface-variant/10 hover:bg-surface-variant/20 text-surface-container-lowest rounded-lg border border-outline-variant/30 text-label-md font-label-md transition-colors active:scale-[0.98]">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-secondary-container text-[18px]" data-icon="domain">domain</span>
+<span>Switch Unit</span>
+</div>
+<span class="material-symbols-outlined text-on-primary-container text-[16px]" data-icon="unfold_more">unfold_more</span>
+</button>
+<!-- Main Operational Navigation (10 Tabs from JSON) -->
+<nav class="flex flex-col gap-1 overflow-y-auto max-h-[calc(100vh-270px)] pr-1">
+<!-- 1. Dashboard -->
+<a class="flex items-center gap-3 px-3 py-2 text-on-primary-container hover:text-surface-container-lowest hover:bg-surface-variant/10 rounded-lg transition-colors font-label-md text-label-md active:scale-[0.98]" href="#">
+<span class="material-symbols-outlined text-[20px]" data-icon="dashboard">dashboard</span>
+<span>Dashboard</span>
+</a>
+<!-- 2. Margin Matrix -->
+<a class="flex items-center gap-3 px-3 py-2 text-on-primary-container hover:text-surface-container-lowest hover:bg-surface-variant/10 rounded-lg transition-colors font-label-md text-label-md active:scale-[0.98]" href="#">
+<span class="material-symbols-outlined text-[20px]" data-icon="analytics">analytics</span>
+<span>Margin Matrix</span>
+</a>
+<!-- 3. BOM Studio -->
+<a class="flex items-center gap-3 px-3 py-2 text-on-primary-container hover:text-surface-container-lowest hover:bg-surface-variant/10 rounded-lg transition-colors font-label-md text-label-md active:scale-[0.98]" href="#">
+<span class="material-symbols-outlined text-[20px]" data-icon="precision_manufacturing">precision_manufacturing</span>
+<span>BOM Studio</span>
+</a>
+<!-- 4. Production Execution -->
+<a class="flex items-center gap-3 px-3 py-2 text-on-primary-container hover:text-surface-container-lowest hover:bg-surface-variant/10 rounded-lg transition-colors font-label-md text-label-md active:scale-[0.98]" href="#">
+<span class="material-symbols-outlined text-[20px]" data-icon="factory">factory</span>
+<span>Production Execution</span>
+</a>
+<!-- 5. Stock Cards -->
+<a class="flex items-center gap-3 px-3 py-2 text-on-primary-container hover:text-surface-container-lowest hover:bg-surface-variant/10 rounded-lg transition-colors font-label-md text-label-md active:scale-[0.98]" href="#">
+<span class="material-symbols-outlined text-[20px]" data-icon="inventory_2">inventory_2</span>
+<span>Stock Cards</span>
+</a>
+<!-- 6. Invoicing -->
+<a class="flex items-center gap-3 px-3 py-2 text-on-primary-container hover:text-surface-container-lowest hover:bg-surface-variant/10 rounded-lg transition-colors font-label-md text-label-md active:scale-[0.98]" href="#">
+<span class="material-symbols-outlined text-[20px]" data-icon="receipt_long">receipt_long</span>
+<span>Invoicing</span>
+</a>
+<!-- 7. Aging Receivables -->
+<a class="flex items-center gap-3 px-3 py-2 text-on-primary-container hover:text-surface-container-lowest hover:bg-surface-variant/10 rounded-lg transition-colors font-label-md text-label-md active:scale-[0.98]" href="#">
+<span class="material-symbols-outlined text-[20px]" data-icon="pending_actions">pending_actions</span>
+<span>Aging Receivables</span>
+</a>
+<!-- 8. Expenses -->
+<a class="flex items-center gap-3 px-3 py-2 text-on-primary-container hover:text-surface-container-lowest hover:bg-surface-variant/10 rounded-lg transition-colors font-label-md text-label-md active:scale-[0.98]" href="#">
+<span class="material-symbols-outlined text-[20px]" data-icon="payments">payments</span>
+<span>Expenses</span>
+</a>
+<!-- 9. Master COA -->
+<a class="flex items-center gap-3 px-3 py-2 text-on-primary-container hover:text-surface-container-lowest hover:bg-surface-variant/10 rounded-lg transition-colors font-label-md text-label-md active:scale-[0.98]" href="#">
+<span class="material-symbols-outlined text-[20px]" data-icon="account_balance">account_balance</span>
+<span>Master COA</span>
+</a>
+<!-- 10. Audit Log -->
+<a class="flex items-center gap-3 px-3 py-2 text-on-primary-container hover:text-surface-container-lowest hover:bg-surface-variant/10 rounded-lg transition-colors font-label-md text-label-md active:scale-[0.98]" href="#">
+<span class="material-symbols-outlined text-[20px]" data-icon="history">history</span>
+<span>Audit Log</span>
+</a>
+</nav>
+</div>
+<!-- Footer System Navigation (JSON: User RBAC is ACTIVE for this screen) -->
+<div class="border-t border-outline/50 pt-3 flex flex-col gap-1">
+<div class="px-3 pb-1 text-on-primary-container font-label-sm text-label-sm uppercase tracking-wider">Sistem &amp; Otoritas</div>
+<!-- Active Item: User RBAC -->
+<a class="flex items-center gap-3 px-3 py-2 text-surface-container-lowest bg-surface-variant/20 border-l-4 border-secondary-container font-semibold rounded-r-lg font-label-md text-label-md active:scale-[0.98]" href="#">
+<span class="material-symbols-outlined text-[20px] text-secondary-container" data-icon="admin_panel_settings">admin_panel_settings</span>
+<span>User RBAC</span>
+</a>
+<!-- Company Profile -->
+<a class="flex items-center gap-3 px-3 py-2 text-on-primary-container hover:text-surface-container-lowest hover:bg-surface-variant/10 rounded-lg transition-colors font-label-md text-label-md active:scale-[0.98]" href="#">
+<span class="material-symbols-outlined text-[20px]" data-icon="business">business</span>
+<span>Company Profile</span>
+</a>
+</div>
+</aside>
+<!-- ==================== MAIN CONTENT WRAPPER ==================== -->
+<div class="pl-64 flex flex-col flex-1 min-w-0">
+<!-- ==================== SHARED COMPONENT: TopNavBar ==================== -->
+<header class="flex justify-between items-center w-full px-6 h-14 border-b border-outline-variant bg-surface-container-lowest sticky top-0 z-30 shadow-sm">
+<!-- Search Bar on Left (JSON Mandate) -->
+<div class="flex items-center gap-4 flex-1 max-w-md">
+<span class="font-headline-sm text-headline-sm font-bold text-primary whitespace-nowrap">GSK Financial &amp; Manufacturing ERP</span>
+<div class="relative w-64 hidden xl:block">
+<span class="material-symbols-outlined absolute left-2.5 top-2 text-outline text-[18px]" data-icon="search">search</span>
+<input class="w-full pl-8 pr-3 py-1.5 bg-surface-container-low border border-outline-variant rounded-lg text-body-sm font-body-sm text-on-surface focus:outline-none focus:border-primary" placeholder="Cari modul, akun, ledger..." type="text"/>
+</div>
+</div>
+<!-- Navigation Links & Trailing Icon Actions -->
+<div class="flex items-center gap-4">
+<!-- Fiscal Period Pill (Navigation Link from JSON) -->
+<div class="flex items-center gap-1.5 px-3 py-1 bg-surface-container rounded-lg border border-outline-variant/60">
+<span class="material-symbols-outlined text-secondary text-[16px]" data-icon="event_note">event_note</span>
+<span class="font-label-md text-label-md font-semibold text-primary">FY 2026 - Q1</span>
+</div>
+<!-- Trailing Action Icons (from JSON: notifications, help, settings) -->
+<div class="flex items-center gap-1">
+<button class="p-2 text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low rounded-lg transition-colors active:scale-[0.99] relative" title="Notifications">
+<span class="material-symbols-outlined text-[20px]" data-icon="notifications">notifications</span>
+<span class="absolute top-1.5 right-1.5 w-2 h-2 bg-secondary-container rounded-full ring-2 ring-surface-container-lowest"></span>
+</button>
+<button class="p-2 text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low rounded-lg transition-colors active:scale-[0.99]" title="Help &amp; Documentation">
+<span class="material-symbols-outlined text-[20px]" data-icon="help">help</span>
+</button>
+<button class="p-2 text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low rounded-lg transition-colors active:scale-[0.99]" title="Global Settings">
+<span class="material-symbols-outlined text-[20px]" data-icon="settings">settings</span>
+</button>
+</div>
+<div class="h-6 w-px bg-outline-variant"></div>
+<!-- Plant Controller Profile Avatar Badge -->
+<div class="flex items-center gap-2 pl-1">
+<div class="w-8 h-8 rounded-full bg-primary-container text-surface-container-lowest flex items-center justify-center font-label-md font-bold ring-2 ring-outline-variant">
+            PC
+          </div>
+<div class="hidden sm:flex flex-col">
+<span class="font-label-md text-label-md font-semibold text-on-surface leading-tight">Plant Controller</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Kendari Site HQ</span>
+</div>
+</div>
+</div>
+</header>
+<!-- ==================== SUB-HEADER / HERO SECTION ==================== -->
+<div class="bg-surface-container-lowest border-b border-outline-variant px-6 pt-5 pb-0">
+<!-- Breadcrumb -->
+<nav class="flex items-center gap-2 text-label-sm font-label-sm text-on-surface-variant mb-2">
+<span class="hover:text-primary cursor-pointer">Admin Portal</span>
+<span class="material-symbols-outlined text-[14px]" data-icon="chevron_right">chevron_right</span>
+<span class="text-primary font-semibold">Manajemen Pengguna &amp; Hak Akses</span>
+</nav>
+<!-- Main Headline & Quick Status Metric -->
+<div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4">
+<div>
+<h1 class="font-headline-lg text-headline-lg font-bold text-primary tracking-tight">
+            Portal Super Admin &amp; Tata Kelola Sistem GSK
+          </h1>
+<p class="font-body-md text-body-md text-on-surface-variant mt-0.5">
+            Otoritas kendali tunggal hierarki Role-Based Access Control (RBAC), integritas pembukuan finansial, dan audit jejak transaksi digital.
+          </p>
+</div>
+<!-- System Governance Security Pill -->
+<div class="flex items-center gap-3">
+<div class="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-surface-container-low border border-outline-variant">
+<span class="w-2.5 h-2.5 rounded-full bg-on-tertiary-container animate-pulse"></span>
+<span class="font-label-sm text-label-sm text-on-surface font-semibold">Protokol Keamanan Level 3 Aktif</span>
+</div>
+</div>
+</div>
+<!-- Top Sub-Navigation Tabs (Explicit Prompt Specification) -->
+<div class="flex items-center gap-6 overflow-x-auto border-t border-outline-variant/60 -mb-[1px]">
+<!-- Tab 1: Active -->
+<button class="flex items-center gap-2 py-3 border-b-2 border-secondary-container font-label-md text-label-md font-bold text-primary transition-colors whitespace-nowrap">
+<span class="material-symbols-outlined text-[18px] text-secondary" data-icon="manage_accounts">manage_accounts</span>
+<span>Manajemen Pengguna (User RBAC)</span>
+<span class="ml-1 px-1.5 py-0.5 text-[10px] font-bold rounded-full bg-surface-container-high text-primary">4 Akun</span>
+</button>
+<!-- Tab 2 -->
+<button class="flex items-center gap-2 py-3 border-b-2 border-transparent hover:border-outline-variant font-label-md text-label-md text-on-surface-variant hover:text-on-surface transition-colors whitespace-nowrap">
+<span class="material-symbols-outlined text-[18px]" data-icon="account_balance_wallet">account_balance_wallet</span>
+<span>Master Bagan Akun (COA)</span>
+</button>
+<!-- Tab 3 -->
+<button class="flex items-center gap-2 py-3 border-b-2 border-transparent hover:border-outline-variant font-label-md text-label-md text-on-surface-variant hover:text-on-surface transition-colors whitespace-nowrap">
+<span class="material-symbols-outlined text-[18px]" data-icon="description">description</span>
+<span>Profil Perusahaan &amp; Kop Surat</span>
+</button>
+<!-- Tab 4 -->
+<button class="flex items-center gap-2 py-3 border-b-2 border-transparent hover:border-outline-variant font-label-md text-label-md text-on-surface-variant hover:text-on-surface transition-colors whitespace-nowrap">
+<span class="material-symbols-outlined text-[18px]" data-icon="verified_user">verified_user</span>
+<span>Log Audit &amp; Keamanan Transaksi</span>
+</button>
+<!-- Tab 5 -->
+<button class="flex items-center gap-2 py-3 border-b-2 border-transparent hover:border-outline-variant font-label-md text-label-md text-on-surface-variant hover:text-on-surface transition-colors whitespace-nowrap">
+<span class="material-symbols-outlined text-[18px]" data-icon="cloud_sync">cloud_sync</span>
+<span>Backup Database Sheets</span>
+</button>
+</div>
+</div>
+<!-- ==================== MAIN PAGE CANVAS ==================== -->
+<main class="p-6 space-y-6 max-w-[1680px] w-full mx-auto">
+<!-- ==================== SECURITY POLICY & RBAC COMPLIANCE BANNER ==================== -->
+<div class="rounded-xl border border-secondary-container/40 bg-surface-container-lowest p-4 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4 relative overflow-hidden">
+<div class="absolute left-0 top-0 bottom-0 w-1.5 bg-secondary-container"></div>
+<div class="flex items-start gap-3.5 pl-2">
+<div class="w-9 h-9 rounded-lg bg-surface-container flex items-center justify-center shrink-0 border border-outline-variant">
+<span class="material-symbols-outlined text-secondary text-[22px]" data-icon="shield">shield</span>
+</div>
+<div>
+<div class="flex items-center gap-2">
+<h2 class="font-title-md text-title-md font-bold text-primary">Kebijakan Isolasi Finansial &amp; Kepatuhan RBAC GSK</h2>
+<span class="px-2 py-0.5 text-label-sm font-label-sm rounded bg-surface-container text-on-surface-variant border border-outline-variant">
+                Enforced Strict Partition
+              </span>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant mt-0.5">
+              Staf Gudang &amp; Produksi diisolasi dari nominal saldo kas/bank dan laba bersih perusahaan sesuai protokol kerahasiaan keuangan internal GSK.
+            </p>
+</div>
+</div>
+<div class="flex items-center gap-2 shrink-0 pl-11 md:pl-0">
+<button class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-surface-container hover:bg-surface-container-high text-primary border border-outline-variant rounded text-label-md font-label-md transition-colors active:scale-[0.98]">
+<span class="material-symbols-outlined text-[16px]" data-icon="lock_open">lock_open</span>
+<span>Ubah Kebijakan Partisi</span>
+</button>
+<button class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-surface-container-lowest hover:bg-surface-container-low text-on-surface-variant border border-outline-variant rounded text-label-md font-label-md transition-colors">
+<span class="material-symbols-outlined text-[16px]" data-icon="policy">policy</span>
+<span>SOP Tata Kelola</span>
+</button>
+</div>
+</div>
+<!-- ==================== USER MANAGEMENT CONTROLS & DATA TABLE ==================== -->
+<section class="bg-surface-container-lowest border border-outline-variant rounded-xl shadow-sm overflow-hidden">
+<!-- Filter Toolbar Header -->
+<div class="p-4 border-b border-outline-variant flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-surface-bright">
+<!-- Left: Filters & Search -->
+<div class="flex flex-wrap items-center gap-3 flex-1">
+<!-- Search User Input -->
+<div class="relative min-w-[260px]">
+<span class="material-symbols-outlined absolute left-2.5 top-2.5 text-outline text-[18px]" data-icon="search">search</span>
+<input class="w-full pl-8 pr-3 py-1.5 h-9 bg-surface-container-lowest border border-outline-variant rounded text-body-sm font-body-sm text-primary focus:border-primary focus:ring-1 focus:ring-secondary-container" placeholder="Cari nama pengguna atau email..." type="text"/>
+</div>
+<!-- Role Filter Select -->
+<div class="flex items-center gap-1.5">
+<label class="font-label-sm text-label-sm text-on-surface-variant whitespace-nowrap">Role:</label>
+<select class="h-9 px-3 py-1.5 bg-surface-container-lowest border border-outline-variant rounded text-label-md font-label-md text-primary focus:border-primary focus:ring-1 focus:ring-secondary-container">
+<option selected="">Semua Role</option>
+<option>Direktur/Owner</option>
+<option>Finance &amp; Penjualan</option>
+<option>Gudang &amp; Produksi</option>
+<option>Super Admin</option>
+</select>
+</div>
+<!-- Status Filter Select -->
+<div class="flex items-center gap-1.5">
+<label class="font-label-sm text-label-sm text-on-surface-variant whitespace-nowrap">Status:</label>
+<select class="h-9 px-3 py-1.5 bg-surface-container-lowest border border-outline-variant rounded text-label-md font-label-md text-primary focus:border-primary focus:ring-1 focus:ring-secondary-container">
+<option selected="">Semua Status</option>
+<option>Aktif</option>
+<option>Ditangguhkan</option>
+<option>Perlu Verifikasi</option>
+</select>
+</div>
+<!-- Clear/Refresh Button -->
+<button class="p-2 h-9 text-on-surface-variant hover:text-primary hover:bg-surface-container rounded border border-outline-variant transition-colors" title="Reset Filter">
+<span class="material-symbols-outlined text-[18px]" data-icon="refresh">refresh</span>
+</button>
+</div>
+<!-- Right: Action Button (+ Tambah Akun Pengguna Baru) -->
+<div class="flex items-center gap-2">
+<button class="inline-flex items-center gap-2 px-4 py-2 h-9 bg-primary text-on-primary hover:bg-surface-tint rounded font-label-md text-label-md font-semibold transition-all active:scale-[0.98] shadow-sm">
+<span class="material-symbols-outlined text-[18px]" data-icon="person_add">person_add</span>
+<span>+ Tambah Akun Pengguna Baru</span>
+</button>
+</div>
+</div>
+<!-- Data Table: System Users -->
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-container-low border-b-2 border-outline-variant text-on-surface-variant font-label-sm text-label-sm uppercase tracking-wider">
+<th class="py-3 px-4 w-12 text-center">No</th>
+<th class="py-3 px-4 min-w-[220px]">Nama Pengguna &amp; Email</th>
+<th class="py-3 px-4 min-w-[180px]">Role Otoritas</th>
+<th class="py-3 px-4 min-w-[260px]">Matriks Hak Akses Modul</th>
+<th class="py-3 px-4 min-w-[160px]">Keamanan PIN</th>
+<th class="py-3 px-4 min-w-[100px] text-center">Status</th>
+<th class="py-3 px-4 min-w-[140px] text-right">Aksi Manajemen</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant text-body-md font-body-md">
+<!-- ROW 1: Ir. H. Sudirman -->
+<tr class="hover:bg-surface-container-low/60 transition-colors">
+<td class="py-3.5 px-4 text-center text-on-surface-variant font-label-sm">01</td>
+<td class="py-3.5 px-4">
+<div class="flex items-center gap-3">
+<div class="w-9 h-9 rounded-full bg-surface-container-high text-primary flex items-center justify-center font-bold text-label-md border border-outline-variant">
+                      HS
+                    </div>
+<div>
+<div class="font-title-md text-title-md font-bold text-primary">Ir. H. Sudirman</div>
+<div class="font-body-sm text-body-sm text-on-surface-variant flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]" data-icon="mail">mail</span>
+<span>sudirman@griyasultra.co.id</span>
+</div>
+</div>
+</div>
+</td>
+<td class="py-3.5 px-4">
+<!-- Purple Badge for Owner / Direktur -->
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-label-sm font-label-sm font-semibold bg-surface-container-highest text-primary-container border border-outline-variant">
+<span class="w-1.5 h-1.5 rounded-full bg-primary-container"></span>
+                    Owner / Direktur
+                  </span>
+</td>
+<td class="py-3.5 px-4">
+<div class="flex flex-wrap gap-1.5">
+<span class="inline-flex items-center px-2 py-0.5 rounded bg-surface-container text-primary text-[11px] font-medium border border-outline-variant">
+                      Dashboard Finansial
+                    </span>
+<span class="inline-flex items-center px-2 py-0.5 rounded bg-surface-container text-primary text-[11px] font-medium border border-outline-variant">
+                      Laba Rugi Penuh
+                    </span>
+<span class="inline-flex items-center px-2 py-0.5 rounded bg-surface-container text-primary text-[11px] font-medium border border-outline-variant">
+                      Approval Biaya
+                    </span>
+</div>
+</td>
+<td class="py-3.5 px-4">
+<div class="flex items-center gap-1.5 text-on-tertiary-container font-label-md text-label-md font-semibold">
+<span class="material-symbols-outlined text-[16px]" data-icon="lock">lock</span>
+<span>6 Digit Terverifikasi</span>
+</div>
+<span class="font-body-sm text-body-sm text-on-surface-variant block mt-0.5">Biometrik Aktif</span>
+</td>
+<td class="py-3.5 px-4 text-center">
+<!-- Toggle Active (Hijau) -->
+<div class="inline-flex items-center cursor-pointer">
+<div class="w-10 h-5 bg-on-tertiary-container rounded-full p-0.5 flex items-center justify-end shadow-inner">
+<div class="w-4 h-4 bg-surface-container-lowest rounded-full shadow-sm"></div>
+</div>
+</div>
+<span class="block text-[10px] font-bold text-on-tertiary-container uppercase tracking-wider mt-0.5">Aktif</span>
+</td>
+<td class="py-3.5 px-4 text-right">
+<div class="inline-flex items-center gap-1.5">
+<button class="px-2.5 py-1 bg-surface-container hover:bg-surface-container-high text-primary border border-outline-variant rounded text-label-sm font-label-sm font-semibold transition-colors">
+                      Reset PIN
+                    </button>
+<button class="p-1 text-on-surface-variant hover:text-primary hover:bg-surface-container rounded transition-colors" title="Edit Pengguna">
+<span class="material-symbols-outlined text-[18px]" data-icon="edit">edit</span>
+</button>
+</div>
+</td>
+</tr>
+<!-- ROW 2: Siti Rahmawati, S.Ak -->
+<tr class="hover:bg-surface-container-low/60 transition-colors">
+<td class="py-3.5 px-4 text-center text-on-surface-variant font-label-sm">02</td>
+<td class="py-3.5 px-4">
+<div class="flex items-center gap-3">
+<div class="w-9 h-9 rounded-full bg-surface-container-high text-primary flex items-center justify-center font-bold text-label-md border border-outline-variant">
+                      SR
+                    </div>
+<div>
+<div class="font-title-md text-title-md font-bold text-primary">Siti Rahmawati, S.Ak</div>
+<div class="font-body-sm text-body-sm text-on-surface-variant flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]" data-icon="mail">mail</span>
+<span>finance@griyasultra.co.id</span>
+</div>
+</div>
+</div>
+</td>
+<td class="py-3.5 px-4">
+<!-- Blue Badge for Admin Keuangan & Billing -->
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-label-sm font-label-sm font-semibold bg-surface-container-high text-on-primary-fixed-variant border border-outline-variant">
+<span class="w-1.5 h-1.5 rounded-full bg-surface-tint"></span>
+                    Admin Keuangan &amp; Billing
+                  </span>
+</td>
+<td class="py-3.5 px-4">
+<div class="flex flex-wrap gap-1.5">
+<span class="inline-flex items-center px-2 py-0.5 rounded bg-surface-container text-primary text-[11px] font-medium border border-outline-variant">
+                      Invoice
+                    </span>
+<span class="inline-flex items-center px-2 py-0.5 rounded bg-surface-container text-primary text-[11px] font-medium border border-outline-variant">
+                      Kas/Bank
+                    </span>
+<span class="inline-flex items-center px-2 py-0.5 rounded bg-surface-container text-primary text-[11px] font-medium border border-outline-variant">
+                      Piutang
+                    </span>
+<span class="inline-flex items-center px-2 py-0.5 rounded bg-surface-container text-primary text-[11px] font-medium border border-outline-variant">
+                      Laporan Margin
+                    </span>
+</div>
+</td>
+<td class="py-3.5 px-4">
+<div class="flex items-center gap-1.5 text-on-tertiary-container font-label-md text-label-md font-semibold">
+<span class="material-symbols-outlined text-[16px]" data-icon="lock">lock</span>
+<span>6 Digit Terverifikasi</span>
+</div>
+<span class="font-body-sm text-body-sm text-on-surface-variant block mt-0.5">Dual-Approval</span>
+</td>
+<td class="py-3.5 px-4 text-center">
+<!-- Toggle Active (Hijau) -->
+<div class="inline-flex items-center cursor-pointer">
+<div class="w-10 h-5 bg-on-tertiary-container rounded-full p-0.5 flex items-center justify-end shadow-inner">
+<div class="w-4 h-4 bg-surface-container-lowest rounded-full shadow-sm"></div>
+</div>
+</div>
+<span class="block text-[10px] font-bold text-on-tertiary-container uppercase tracking-wider mt-0.5">Aktif</span>
+</td>
+<td class="py-3.5 px-4 text-right">
+<div class="inline-flex items-center gap-1.5">
+<button class="px-2.5 py-1 bg-surface-container hover:bg-surface-container-high text-primary border border-outline-variant rounded text-label-sm font-label-sm font-semibold transition-colors">
+                      Reset PIN
+                    </button>
+<button class="p-1 text-on-surface-variant hover:text-primary hover:bg-surface-container rounded transition-colors" title="Edit Pengguna">
+<span class="material-symbols-outlined text-[18px]" data-icon="edit">edit</span>
+</button>
+</div>
+</td>
+</tr>
+<!-- ROW 3: La Ode Bahtiar -->
+<tr class="hover:bg-surface-container-low/60 transition-colors">
+<td class="py-3.5 px-4 text-center text-on-surface-variant font-label-sm">03</td>
+<td class="py-3.5 px-4">
+<div class="flex items-center gap-3">
+<div class="w-9 h-9 rounded-full bg-secondary-fixed text-on-secondary-fixed flex items-center justify-center font-bold text-label-md border border-outline-variant">
+                      LB
+                    </div>
+<div>
+<div class="font-title-md text-title-md font-bold text-primary">La Ode Bahtiar</div>
+<div class="font-body-sm text-body-sm text-on-surface-variant flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]" data-icon="mail">mail</span>
+<span>gudang@griyasultra.co.id</span>
+</div>
+</div>
+</div>
+</td>
+<td class="py-3.5 px-4">
+<!-- Amber Badge for Mandor Gudang & Produksi -->
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-label-sm font-label-sm font-semibold bg-secondary-fixed text-on-secondary-fixed border border-secondary-container">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>
+                    Mandor Gudang &amp; Produksi
+                  </span>
+</td>
+<td class="py-3.5 px-4">
+<div class="flex flex-wrap gap-1.5">
+<span class="inline-flex items-center px-2 py-0.5 rounded bg-surface-container text-primary text-[11px] font-medium border border-outline-variant">
+                      BOM Eksekusi
+                    </span>
+<span class="inline-flex items-center px-2 py-0.5 rounded bg-surface-container text-primary text-[11px] font-medium border border-outline-variant">
+                      Mutasi Stok
+                    </span>
+<span class="inline-flex items-center px-2 py-0.5 rounded bg-error-container text-on-error-container text-[11px] font-medium border border-outline-variant">
+<span class="material-symbols-outlined text-[12px] mr-1" data-icon="lock">lock</span>
+                      Saldo Kas &amp; Margin Terkunci
+                    </span>
+</div>
+</td>
+<td class="py-3.5 px-4">
+<div class="flex items-center gap-1.5 text-on-tertiary-container font-label-md text-label-md font-semibold">
+<span class="material-symbols-outlined text-[16px]" data-icon="lock">lock</span>
+<span>6 Digit Terverifikasi</span>
+</div>
+<span class="font-body-sm text-body-sm text-on-surface-variant block mt-0.5">Sesi Terminal Site</span>
+</td>
+<td class="py-3.5 px-4 text-center">
+<!-- Toggle Active (Hijau) -->
+<div class="inline-flex items-center cursor-pointer">
+<div class="w-10 h-5 bg-on-tertiary-container rounded-full p-0.5 flex items-center justify-end shadow-inner">
+<div class="w-4 h-4 bg-surface-container-lowest rounded-full shadow-sm"></div>
+</div>
+</div>
+<span class="block text-[10px] font-bold text-on-tertiary-container uppercase tracking-wider mt-0.5">Aktif</span>
+</td>
+<td class="py-3.5 px-4 text-right">
+<div class="inline-flex items-center gap-1.5">
+<button class="px-2.5 py-1 bg-surface-container hover:bg-surface-container-high text-primary border border-outline-variant rounded text-label-sm font-label-sm font-semibold transition-colors">
+                      Reset PIN
+                    </button>
+<button class="p-1 text-on-surface-variant hover:text-primary hover:bg-surface-container rounded transition-colors" title="Edit Pengguna">
+<span class="material-symbols-outlined text-[18px]" data-icon="edit">edit</span>
+</button>
+</div>
+</td>
+</tr>
+<!-- ROW 4: Ahmad Fauzi -->
+<tr class="hover:bg-surface-container-low/60 transition-colors">
+<td class="py-3.5 px-4 text-center text-on-surface-variant font-label-sm">04</td>
+<td class="py-3.5 px-4">
+<div class="flex items-center gap-3">
+<div class="w-9 h-9 rounded-full bg-primary-container text-surface-container-lowest flex items-center justify-center font-bold text-label-md border border-outline">
+                      AF
+                    </div>
+<div>
+<div class="font-title-md text-title-md font-bold text-primary">Ahmad Fauzi</div>
+<div class="font-body-sm text-body-sm text-on-surface-variant flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]" data-icon="mail">mail</span>
+<span>fauzi.it@griyasultra.co.id</span>
+</div>
+</div>
+</div>
+</td>
+<td class="py-3.5 px-4">
+<!-- Slate Badge for Super Admin / IT -->
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-label-sm font-label-sm font-semibold bg-surface-container text-primary border border-outline">
+<span class="w-1.5 h-1.5 rounded-full bg-primary"></span>
+                    Super Admin / IT
+                  </span>
+</td>
+<td class="py-3.5 px-4">
+<div class="flex flex-wrap gap-1.5">
+<span class="inline-flex items-center px-2 py-0.5 rounded bg-surface-container text-primary text-[11px] font-medium border border-outline-variant">
+                      Full System Configuration &amp; DB Sync
+                    </span>
+<span class="inline-flex items-center px-2 py-0.5 rounded bg-surface-container text-primary text-[11px] font-medium border border-outline-variant">
+                      Audit Trail Root
+                    </span>
+</div>
+</td>
+<td class="py-3.5 px-4">
+<div class="flex items-center gap-1.5 text-on-tertiary-container font-label-md text-label-md font-semibold">
+<span class="material-symbols-outlined text-[16px]" data-icon="lock">lock</span>
+<span>6 Digit Terverifikasi</span>
+</div>
+<span class="font-body-sm text-body-sm text-on-surface-variant block mt-0.5">2FA Hardware Key</span>
+</td>
+<td class="py-3.5 px-4 text-center">
+<!-- Toggle Active (Hijau) -->
+<div class="inline-flex items-center cursor-pointer">
+<div class="w-10 h-5 bg-on-tertiary-container rounded-full p-0.5 flex items-center justify-end shadow-inner">
+<div class="w-4 h-4 bg-surface-container-lowest rounded-full shadow-sm"></div>
+</div>
+</div>
+<span class="block text-[10px] font-bold text-on-tertiary-container uppercase tracking-wider mt-0.5">Aktif</span>
+</td>
+<td class="py-3.5 px-4 text-right">
+<div class="inline-flex items-center gap-1.5">
+<button class="px-2.5 py-1 bg-surface-container hover:bg-surface-container-high text-primary border border-outline-variant rounded text-label-sm font-label-sm font-semibold transition-colors">
+                      Reset PIN
+                    </button>
+<button class="p-1 text-on-surface-variant hover:text-primary hover:bg-surface-container rounded transition-colors" title="Edit Pengguna">
+<span class="material-symbols-outlined text-[18px]" data-icon="edit">edit</span>
+</button>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Table Pagination & Metadata Footer -->
+<div class="p-3 bg-surface-bright border-t border-outline-variant flex flex-col sm:flex-row items-center justify-between gap-3 text-label-sm font-label-sm text-on-surface-variant">
+<div class="flex items-center gap-2">
+<span>Menampilkan 4 dari 4 pengguna sistem terdaftar</span>
+<span class="w-1 h-1 bg-outline-variant rounded-full"></span>
+<span class="text-on-tertiary-container font-semibold">Semua sesi aktif terenkripsi SHA-256</span>
+</div>
+<div class="flex items-center gap-1">
+<button class="px-2.5 py-1 border border-outline-variant rounded bg-surface-container-lowest text-on-surface-variant hover:text-primary hover:bg-surface-container disabled:opacity-50" disabled="">
+              Sebelumnya
+            </button>
+<span class="px-3 py-1 bg-primary text-on-primary rounded font-bold">1</span>
+<button class="px-2.5 py-1 border border-outline-variant rounded bg-surface-container-lowest text-on-surface-variant hover:text-primary hover:bg-surface-container disabled:opacity-50" disabled="">
+              Selanjutnya
+            </button>
+</div>
+</div>
+</section>
+<!-- ==================== BENTO GRID: RECENT AUDIT TRAIL & SYSTEM INTEGRITY ==================== -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+<!-- Left: Recent Audit Trail Preview (8 Columns) -->
+<section class="lg:col-span-8 bg-surface-container-lowest border border-outline-variant rounded-xl shadow-sm overflow-hidden flex flex-col">
+<div class="p-4 border-b border-outline-variant flex items-center justify-between bg-surface-bright">
+<div class="flex items-center gap-2.5">
+<span class="material-symbols-outlined text-primary text-[20px]" data-icon="history">history</span>
+<h3 class="font-title-md text-title-md font-bold text-primary">Jejak Audit Sistem Terbaru (Live Audit Trail)</h3>
+</div>
+<a class="font-label-sm text-label-sm text-secondary hover:text-secondary-container font-bold flex items-center gap-1 transition-colors" href="#">
+<span>Buka Log Audit Lengkap</span>
+<span class="material-symbols-outlined text-[14px]" data-icon="arrow_forward">arrow_forward</span>
+</a>
+</div>
+<div class="overflow-x-auto flex-1">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-container-low border-b border-outline-variant text-on-surface-variant font-label-sm text-label-sm uppercase tracking-wider">
+<th class="py-2.5 px-3.5 min-w-[130px]">Waktu (WITA)</th>
+<th class="py-2.5 px-3.5 min-w-[150px]">Pengguna</th>
+<th class="py-2.5 px-3.5 min-w-[120px]">Modul</th>
+<th class="py-2.5 px-3.5 min-w-[200px]">Aktivitas</th>
+<th class="py-2.5 px-3.5 min-w-[160px] text-right">IP &amp; Hash Verifikasi</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant text-body-sm font-body-sm">
+<!-- Audit Record 1 -->
+<tr class="hover:bg-surface-container-low/50 transition-colors">
+<td class="py-2.5 px-3.5 text-on-surface font-numeric-sm">24/02 10:42:15</td>
+<td class="py-2.5 px-3.5 font-semibold text-primary">Ahmad Fauzi (IT)</td>
+<td class="py-2.5 px-3.5">
+<span class="px-2 py-0.5 rounded bg-surface-container text-primary text-[11px] font-medium border border-outline-variant">
+                      RBAC Security
+                    </span>
+</td>
+<td class="py-2.5 px-3.5 text-on-surface">Pembaruan matriks hak akses modul Stock Cards</td>
+<td class="py-2.5 px-3.5 text-right font-mono text-[11px] text-on-surface-variant">
+                    182.1.24.89 <span class="text-secondary font-bold">#a7f29b</span>
+</td>
+</tr>
+<!-- Audit Record 2 -->
+<tr class="hover:bg-surface-container-low/50 transition-colors">
+<td class="py-2.5 px-3.5 text-on-surface font-numeric-sm">24/02 09:18:02</td>
+<td class="py-2.5 px-3.5 font-semibold text-primary">Siti Rahmawati</td>
+<td class="py-2.5 px-3.5">
+<span class="px-2 py-0.5 rounded bg-surface-container text-primary text-[11px] font-medium border border-outline-variant">
+                      Invoicing
+                    </span>
+</td>
+<td class="py-2.5 px-3.5 text-on-surface">Penerbitan Invoice Resmi #INV-2026-0819</td>
+<td class="py-2.5 px-3.5 text-right font-mono text-[11px] text-on-surface-variant">
+                    182.1.24.44 <span class="text-on-tertiary-container font-bold">#c430e8</span>
+</td>
+</tr>
+<!-- Audit Record 3 -->
+<tr class="hover:bg-surface-container-low/50 transition-colors">
+<td class="py-2.5 px-3.5 text-on-surface font-numeric-sm">24/02 08:35:40</td>
+<td class="py-2.5 px-3.5 font-semibold text-primary">La Ode Bahtiar</td>
+<td class="py-2.5 px-3.5">
+<span class="px-2 py-0.5 rounded bg-surface-container text-primary text-[11px] font-medium border border-outline-variant">
+                      BOM Studio
+                    </span>
+</td>
+<td class="py-2.5 px-3.5 text-on-surface">Eksekusi Batch Produksi Precast Saluran Box Culvert</td>
+<td class="py-2.5 px-3.5 text-right font-mono text-[11px] text-on-surface-variant">
+                    182.1.24.12 <span class="text-secondary font-bold">#5fe92a</span>
+</td>
+</tr>
+<!-- Audit Record 4 -->
+<tr class="hover:bg-surface-container-low/50 transition-colors">
+<td class="py-2.5 px-3.5 text-on-surface font-numeric-sm">23/02 17:50:11</td>
+<td class="py-2.5 px-3.5 font-semibold text-primary">Ir. H. Sudirman</td>
+<td class="py-2.5 px-3.5">
+<span class="px-2 py-0.5 rounded bg-surface-container text-primary text-[11px] font-medium border border-outline-variant">
+                      Expenses
+                    </span>
+</td>
+<td class="py-2.5 px-3.5 text-on-surface">Otorisasi Pembayaran PO Alat Berat Excavator CAT 320</td>
+<td class="py-2.5 px-3.5 text-right font-mono text-[11px] text-on-surface-variant">
+                    180.252.1.10 <span class="text-on-tertiary-container font-bold">#9d881e</span>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<!-- Right: Security Health & DB Sync Telemetry (4 Columns) -->
+<section class="lg:col-span-4 bg-surface-container-lowest border border-outline-variant rounded-xl shadow-sm p-4 flex flex-col justify-between">
+<div>
+<div class="flex items-center justify-between pb-3 border-b border-outline-variant mb-4">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-secondary text-[20px]" data-icon="database">database</span>
+<h3 class="font-title-md text-title-md font-bold text-primary">Status Database &amp; Backup</h3>
+</div>
+<span class="px-2 py-0.5 rounded bg-surface-container text-on-tertiary-container font-label-sm text-label-sm font-bold border border-outline-variant">
+                Sinkron
+              </span>
+</div>
+<!-- Telemetry Items -->
+<div class="space-y-3">
+<div class="p-3 bg-surface-bright rounded-lg border border-outline-variant">
+<div class="flex items-center justify-between mb-1">
+<span class="font-label-sm text-label-sm text-on-surface-variant">SINKRONISASI GOOGLE SHEETS CORE</span>
+<span class="font-numeric-sm text-numeric-sm font-bold text-primary">100% Valid</span>
+</div>
+<div class="w-full bg-surface-container-high h-1.5 rounded-full overflow-hidden">
+<div class="bg-on-tertiary-container h-full rounded-full w-full"></div>
+</div>
+<div class="flex justify-between items-center text-[11px] text-on-surface-variant mt-1.5">
+<span>Replikasi Terakhir: 4 menit lalu</span>
+<span class="font-mono text-primary">ID: GSK-DB-2026</span>
+</div>
+</div>
+<div class="p-3 bg-surface-bright rounded-lg border border-outline-variant">
+<div class="flex items-center justify-between mb-1">
+<span class="font-label-sm text-label-sm text-on-surface-variant">ENKRIPSI LEDGER FINANSIAL</span>
+<span class="font-numeric-sm text-numeric-sm font-bold text-secondary">AES-256</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant">
+                  Kunci enkripsi hardware HSM aktif. Seluruh mutasi kas terlindungi dari ekspor tidak sah.
+                </p>
+</div>
+<div class="p-3 bg-surface-bright rounded-lg border border-outline-variant">
+<div class="flex items-center justify-between mb-1">
+<span class="font-label-sm text-label-sm text-on-surface-variant">CADANGAN OTOMATIS BERIKUTNYA</span>
+<span class="font-numeric-sm text-numeric-sm font-bold text-primary">23:59 WITA</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant">
+                  Snapshot harian otomatis dialirkan ke cold storage offline internal perusahaan.
+                </p>
+</div>
+</div>
+</div>
+<!-- Bottom Action -->
+<div class="pt-4 border-t border-outline-variant mt-4">
+<button class="w-full py-2 px-3 bg-surface-container hover:bg-surface-container-high text-primary border border-outline-variant rounded font-label-md text-label-md font-semibold flex items-center justify-center gap-2 transition-colors active:scale-[0.98]">
+<span class="material-symbols-outlined text-[18px]" data-icon="cloud_download">cloud_download</span>
+<span>Cadangkan Database Manual Sekarang</span>
+</button>
+</div>
+</section>
+</div>
+</main>
+<!-- ==================== FOOTER ==================== -->
+<footer class="mt-auto border-t border-outline-variant bg-surface-container-lowest px-6 py-3 text-label-sm font-label-sm text-on-surface-variant flex flex-col sm:flex-row items-center justify-between gap-2">
+<div>
+        © 2026 PT Griya Sultra Konstruksi • Dedicated Enterprise Core System • Versi Rilis 4.8.2-PROD
+      </div>
+<div class="flex items-center gap-4">
+<span>Zona Waktu: Asia/Makassar (WITA)</span>
+<span class="w-1 h-1 bg-outline-variant rounded-full"></span>
+<span class="text-on-tertiary-container font-semibold flex items-center gap-1">
+<span class="w-2 h-2 rounded-full bg-on-tertiary-container"></span>
+          Server Kendari Operational
+        </span>
+</div>
+</footer>
+</div>
+</body></html>

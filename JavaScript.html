@@ -1,0 +1,1165 @@
+﻿<script>
+  /**
+   * =========================================================================
+   * GSK Financial & Manufacturing System - JavaScript.html
+   * Logika Frontend SPA, Kalkulator Margin, Chart.js & Integrasi Server
+   * Semua teks dan interaksi dalam Bahasa Indonesia
+   * =========================================================================
+   */
+
+  // State Global Aplikasi
+  let appState = {
+    currentUser: null,
+    settings: {},
+    users: [],
+    coa: [],
+    barang: [],
+    bom: [],
+    produksi: [],
+    invoices: [],
+    pembelian: [],
+    mutasi: [],
+    auditLogs: []
+  };
+
+  let chartMarginInstance = null;
+  let chartProdukInstance = null;
+  let modalCetakInstance = null;
+
+  // Inisialisasi saat Halaman Selesai Dimuat
+  document.addEventListener('DOMContentLoaded', function() {
+    inisialisasiTanggalHariIni();
+    muatDataSistemAwal();
+
+    // Inisialisasi Modal Cetak Bootstrap
+    const modalEl = document.getElementById('modalCetakFaktur');
+    if (modalEl) {
+      modalCetakInstance = new bootstrap.Modal(modalEl);
+    }
+  });
+
+  /**
+   * Helper Pengisian Tanggal Default (Hari Ini)
+   */
+  function inisialisasiTanggalHariIni() {
+    const today = new Date().toISOString().split('T')[0];
+    if (document.getElementById('invTanggal')) document.getElementById('invTanggal').value = today;
+    if (document.getElementById('invJatuhTempo')) {
+      const tempo = new Date();
+      tempo.setDate(tempo.getDate() + 14); // Default 14 hari
+      document.getElementById('invJatuhTempo').value = tempo.toISOString().split('T')[0];
+    }
+    if (document.getElementById('prodTanggal')) document.getElementById('prodTanggal').value = today;
+    if (document.getElementById('beliTanggal')) document.getElementById('beliTanggal').value = today;
+  }
+
+  /**
+   * Tampilkan / Sembunyikan Loading Overlay
+   */
+  function setTampilanLoading(status, pesan = 'Memproses data...') {
+    const overlay = document.getElementById('loadingOverlay');
+    const textEl = document.getElementById('loadingText');
+    if (status) {
+      if (textEl) textEl.textContent = pesan;
+      overlay.classList.remove('d-none');
+    } else {
+      overlay.classList.add('d-none');
+    }
+  }
+
+  /**
+   * Format Angka ke Rupiah Indonesia
+   */
+  function formatRupiah(angka) {
+    const num = Number(angka) || 0;
+    return 'Rp ' + num.toLocaleString('id-ID');
+  }
+
+  /**
+   * Muat Seluruh Data Awal dari Server Backend Google Apps Script
+   */
+  function muatDataSistemAwal() {
+    setTampilanLoading(true, 'Menghubungkan ke Server Database GSK...');
+
+    if (typeof google !== 'undefined' && google.script && google.script.run) {
+      google.script.run
+        .withSuccessHandler(function(response) {
+          setTampilanLoading(false);
+          if (response && response.success) {
+            prosesDataSistem(response.data);
+          } else {
+            console.warn('Gagal memuat dari server, menggunakan mode lokal:', response ? response.message : '');
+            gunakanDataFallbackLokal();
+          }
+        })
+        .withFailureHandler(function(error) {
+          setTampilanLoading(false);
+          console.warn('Koneksi Apps Script gagal, beralih ke mode offline/lokal:', error);
+          gunakanDataFallbackLokal();
+        })
+        .getAppInitialData();
+    } else {
+      // Menjalankan di browser lokal / pratinjau mandiri
+      setTimeout(function() {
+        setTampilanLoading(false);
+        gunakanDataFallbackLokal();
+      }, 600);
+    }
+  }
+
+  /**
+   * Sinkronisasi Data ke State Aplikasi & Render Antarmuka
+   */
+  function prosesDataSistem(data) {
+    appState = Object.assign(appState, data);
+
+    // Terapkan Konfigurasi Profil & Logo
+    terapkanProfilDanLogo(appState.settings);
+
+    // Populasi Dropdown Barang Jadi & Bahan Baku
+    populasiPilihanBarang();
+
+    // Render Komponen-Komponen Tampilan
+    renderDashboard();
+    renderTabelInvoices();
+    renderManufakturBOM();
+    renderTabelStok();
+    renderTabelPembelian();
+    renderLaporanLabaRugi();
+    renderPortalAdmin();
+
+    // Cek Sesi Login di LocalStorage
+    cekSesiLoginLokal();
+  }
+
+  /**
+   * Terapkan Profil & Logo Perusahaan secara Dinamis ke Seluruh Layar
+   */
+  function terapkanProfilDanLogo(settings) {
+    if (!settings) return;
+
+    const nama = settings.NAMA_PERUSAHAAN || 'PT Griya Sultra Konstruksi';
+    const tagline = settings.TAGLINE || 'Spesialis Manufaktur Baja Ringan & Konstruksi';
+    const logoUrl = settings.LOGO_URL || '';
+    const alamat = settings.ALAMAT || 'Kendari, Sulawesi Tenggara';
+
+    // Perbarui Judul & Brand
+    document.title = nama + ' - Sistem Keuangan & Manufaktur';
+    if (document.getElementById('sidebarBrandName')) document.getElementById('sidebarBrandName').textContent = nama;
+    if (document.getElementById('sidebarTagline')) document.getElementById('sidebarTagline').textContent = tagline;
+    if (document.getElementById('loginCompanyTitle')) document.getElementById('loginCompanyTitle').textContent = nama;
+    if (document.getElementById('lapNamaPerusahaan')) document.getElementById('lapNamaPerusahaan').textContent = nama;
+    if (document.getElementById('printCompanyTitle')) document.getElementById('printCompanyTitle').textContent = nama;
+    if (document.getElementById('printCompanyTagline')) document.getElementById('printCompanyTagline').textContent = tagline;
+    if (document.getElementById('printCompanyAddress')) document.getElementById('printCompanyAddress').textContent = alamat;
+
+    // Sinkronisasi Gambar Logo
+    const sidebarLogoContainer = document.getElementById('sidebarLogoContainer');
+    const loginLogoPreview = document.getElementById('loginLogoPreview');
+    const adminLogoBox = document.getElementById('adminLogoPreviewBox');
+    const printLogoBox = document.getElementById('modalPrintLogoBox');
+
+    if (logoUrl && logoUrl.trim() !== '') {
+      const imgHtml = `<img src="${logoUrl}" alt="Logo GSK" class="sidebar-logo-img">`;
+      if (sidebarLogoContainer) sidebarLogoContainer.innerHTML = imgHtml;
+      if (loginLogoPreview) loginLogoPreview.innerHTML = `<img src="${logoUrl}" alt="Logo" style="max-height: 56px; border-radius: 8px; background: #FFF; padding: 4px;">`;
+      if (adminLogoBox) adminLogoBox.innerHTML = `<img src="${logoUrl}" alt="Logo" style="max-height: 120px; object-fit: contain;">`;
+      if (printLogoBox) printLogoBox.innerHTML = `<img src="${logoUrl}" alt="Logo" style="max-height: 48px; object-fit: contain;">`;
+    }
+
+    // Isi Form Pengaturan Admin
+    if (document.getElementById('admNamaPerusahaan')) document.getElementById('admNamaPerusahaan').value = nama;
+    if (document.getElementById('admTagline')) document.getElementById('admTagline').value = tagline;
+    if (document.getElementById('admAlamat')) document.getElementById('admAlamat').value = alamat;
+    if (document.getElementById('admTelepon')) document.getElementById('admTelepon').value = settings.TELEPON || '';
+    if (document.getElementById('admEmail')) document.getElementById('admEmail').value = settings.EMAIL || '';
+    if (document.getElementById('admNPWP')) document.getElementById('admNPWP').value = settings.NPWP || '';
+  }
+
+  /**
+   * Router Navigasi Antar Halaman SPA (Single Page Application)
+   */
+  function pindahHalaman(targetSecId, linkEl) {
+    // Sembunyikan semua section
+    const sections = document.querySelectorAll('.content-section');
+    sections.forEach(sec => sec.classList.remove('active'));
+
+    // Tampilkan section yang dipilih
+    const target = document.getElementById('sec-' + targetSecId);
+    if (target) {
+      target.classList.add('active');
+    }
+
+    // Update status aktif pada menu sidebar
+    if (linkEl) {
+      document.querySelectorAll('.nav-item-link').forEach(a => a.classList.remove('active'));
+      linkEl.classList.add('active');
+    }
+
+    // Perbarui Judul Header
+    const titles = {
+      'dashboard': 'Dashboard Eksekutif & Ringkasan Margin',
+      'penjualan': 'Penjualan & Faktur Proyek (Kalkulator Margin Real-Time)',
+      'manufaktur': 'Manufaktur, Resep Formula (BOM) & Eksekusi Batch',
+      'stok': 'Monitoring Persediaan Gudang (Bahan Baku & Barang Jadi)',
+      'pengadaan': 'Pengadaan Bahan Baku & Beban Operasional',
+      'laporan': 'Laporan Laba Rugi Komprehensif & Analitik Keuangan',
+      'admin': 'Portal Admin: Manajemen Akun & Kustomisasi Logo Perusahaan'
+    };
+    if (document.getElementById('pageTitle') && titles[targetSecId]) {
+      document.getElementById('pageTitle').textContent = titles[targetSecId];
+    }
+
+    // Tutup sidebar jika di layar ponsel
+    const sidebar = document.getElementById('appSidebar');
+    if (sidebar && sidebar.classList.contains('show')) {
+      sidebar.classList.remove('show');
+    }
+  }
+
+  /**
+   * Autentikasi Pengguna & Penanganan Login
+   */
+  function handleLoginSubmit(e) {
+    e.preventDefault();
+    const email = document.getElementById('loginEmail').value;
+    const pin = document.getElementById('loginPIN').value;
+    const alertBox = document.getElementById('loginAlertBox');
+
+    alertBox.classList.add('d-none');
+    setTampilanLoading(true, 'Memverifikasi kredensial pengguna...');
+
+    if (typeof google !== 'undefined' && google.script && google.script.run) {
+      google.script.run
+        .withSuccessHandler(function(res) {
+          setTampilanLoading(false);
+          if (res && res.success) {
+            setPenggunaAktif(res.data);
+          } else {
+            alertBox.textContent = res ? res.message : 'PIN atau Email tidak valid.';
+            alertBox.classList.remove('d-none');
+          }
+        })
+        .withFailureHandler(function(err) {
+          setTampilanLoading(false);
+          alertBox.textContent = 'Gagal menghubungi server: ' + err.message;
+          alertBox.classList.remove('d-none');
+        })
+        .loginUser(email, pin);
+    } else {
+      // Simulasi Lokal
+      setTimeout(function() {
+        setTampilanLoading(false);
+        const user = appState.users.find(u => u.email.toLowerCase() === email.toLowerCase());
+        if (user) {
+          setPenggunaAktif(user);
+        } else {
+          setPenggunaAktif({ id: 'USR-001', nama: 'Direktur Utama GSK', email: email, role: 'Direktur / Owner' });
+        }
+      }, 500);
+    }
+  }
+
+  function setPenggunaAktif(user) {
+    appState.currentUser = user;
+    localStorage.setItem('gsk_user_session', JSON.stringify(user));
+    
+    // Perbarui Tampilan Profil Topbar
+    if (document.getElementById('userNameLabel')) document.getElementById('userNameLabel').textContent = user.nama;
+    if (document.getElementById('userRoleLabel')) document.getElementById('userRoleLabel').textContent = user.role;
+    if (document.getElementById('userAvatar')) document.getElementById('userAvatar').textContent = user.nama.charAt(0).toUpperCase();
+
+    // Sembunyikan Modal Login
+    document.getElementById('loginOverlay').style.display = 'none';
+  }
+
+  function cekSesiLoginLokal() {
+    const saved = localStorage.getItem('gsk_user_session');
+    if (saved) {
+      try {
+        const user = JSON.parse(saved);
+        setPenggunaAktif(user);
+      } catch (e) {
+        document.getElementById('loginOverlay').style.display = 'flex';
+      }
+    } else {
+      document.getElementById('loginOverlay').style.display = 'flex';
+    }
+  }
+
+  function keluarSistem() {
+    if (confirm('Apakah Anda yakin ingin keluar dari sistem GSK?')) {
+      localStorage.removeItem('gsk_user_session');
+      appState.currentUser = null;
+      document.getElementById('loginOverlay').style.display = 'flex';
+    }
+  }
+
+  /**
+   * Tampilan Mode Gelap / Terang (Dark Mode)
+   */
+  function toggleTemaMode() {
+    const htmlEl = document.documentElement;
+    const current = htmlEl.getAttribute('data-theme') || 'light';
+    const baru = current === 'light' ? 'dark' : 'light';
+    htmlEl.setAttribute('data-theme', baru);
+    localStorage.setItem('gsk_theme_mode', baru);
+
+    const icon = document.getElementById('themeIcon');
+    if (icon) {
+      icon.className = baru === 'dark' ? 'bi bi-sun' : 'bi bi-moon-stars';
+    }
+  }
+
+  function toggleSidebarMobile() {
+    const sidebar = document.getElementById('appSidebar');
+    if (sidebar) sidebar.classList.toggle('show');
+  }
+
+  /**
+   * Populasi Pilihan Barang Jadi & Bahan Baku ke Form-Form Terkait
+   */
+  function populasiPilihanBarang() {
+    const invSelect = document.getElementById('invPilihBarang');
+    const prodSelect = document.getElementById('prodPilihBarang');
+    const beliSelect = document.getElementById('beliKodeBarang');
+
+    if (invSelect) invSelect.innerHTML = '<option value="">-- Pilih Barang Jadi --</option>';
+    if (prodSelect) prodSelect.innerHTML = '<option value="">-- Pilih Barang Jadi --</option>';
+    if (beliSelect) beliSelect.innerHTML = '<option value="">-- Pilih Material Gudang --</option>';
+
+    appState.barang.forEach(b => {
+      const opt = document.createElement('option');
+      opt.value = b.KODE_BARANG;
+      opt.textContent = `[${b.KODE_BARANG}] ${b.NAMA_BARANG} (Stok: ${b.STOK_SEKARANG} ${b.SATUAN})`;
+      opt.dataset.kategori = b.KATEGORI;
+      opt.dataset.satuan = b.SATUAN;
+      opt.dataset.stok = b.STOK_SEKARANG;
+      opt.dataset.hargaBeli = b.HARGA_BELI_RATA2;
+      opt.dataset.hargaJual = b.HARGA_JUAL_STANDAR;
+      opt.dataset.nama = b.NAMA_BARANG;
+
+      if (b.KATEGORI === 'Barang Jadi') {
+        if (invSelect) invSelect.appendChild(opt.cloneNode(true));
+        if (prodSelect) prodSelect.appendChild(opt.cloneNode(true));
+      } else if (b.KATEGORI === 'Bahan Baku') {
+        if (beliSelect) beliSelect.appendChild(opt.cloneNode(true));
+      }
+    });
+  }
+
+  /**
+   * KALKULATOR MARGIN REAL-TIME (FAKTUR PENJUALAN)
+   * Menghitung Laba Kotor (Rp) dan Persentase Margin (%) langsung saat input
+   */
+  function hitungKalkulatorInvoice() {
+    const select = document.getElementById('invPilihBarang');
+    const qtyInput = document.getElementById('invQty');
+    const hargaJualInput = document.getElementById('invHargaJual');
+
+    if (!select || !select.value) {
+      resetBoxKalkulatorMargin();
+      return;
+    }
+
+    const selectedOption = select.options[select.selectedIndex];
+    const defaultHargaJual = Number(selectedOption.dataset.hargaJual) || 0;
+    const hppSatuan = Number(selectedOption.dataset.hargaBeli) || 0;
+
+    // Jika harga jual masih kosong, isi dengan harga standar
+    if (!hargaJualInput.value || Number(hargaJualInput.value) === 0) {
+      hargaJualInput.value = defaultHargaJual;
+    }
+
+    const qty = Number(qtyInput.value) || 0;
+    const hargaJual = Number(hargaJualInput.value) || 0;
+
+    const totalPenjualan = qty * hargaJual;
+    const totalHPP = qty * hppSatuan;
+    const labaKotor = totalPenjualan - totalHPP;
+    const persenMargin = totalPenjualan > 0 ? ((labaKotor / totalPenjualan) * 100).toFixed(2) : 0;
+
+    // Update Angka di UI
+    document.getElementById('calcTotalJual').textContent = formatRupiah(totalPenjualan);
+    document.getElementById('calcTotalHPP').textContent = formatRupiah(totalHPP);
+    document.getElementById('calcLabaKotor').textContent = formatRupiah(labaKotor);
+    
+    const badge = document.getElementById('calcPersenMargin');
+    badge.textContent = persenMargin + '% Margin';
+    if (Number(persenMargin) >= 25) {
+      badge.className = 'badge bg-success fs-6';
+    } else if (Number(persenMargin) > 0) {
+      badge.className = 'badge bg-warning text-dark fs-6';
+    } else {
+      badge.className = 'badge bg-danger fs-6';
+    }
+  }
+
+  function resetBoxKalkulatorMargin() {
+    document.getElementById('calcTotalJual').textContent = 'Rp 0';
+    document.getElementById('calcTotalHPP').textContent = 'Rp 0';
+    document.getElementById('calcLabaKotor').textContent = 'Rp 0';
+    document.getElementById('calcPersenMargin').textContent = '0.00%';
+    document.getElementById('calcPersenMargin').className = 'badge bg-secondary fs-6';
+  }
+
+  /**
+   * Simpan Faktur Penjualan Baru
+   */
+  function handleSimpanInvoice(e) {
+    e.preventDefault();
+    const select = document.getElementById('invPilihBarang');
+    if (!select.value) {
+      alert('Pilih barang jadi terlebih dahulu.');
+      return;
+    }
+
+    const selectedOption = select.options[select.selectedIndex];
+    const qty = Number(document.getElementById('invQty').value);
+    const stokTersedia = Number(selectedOption.dataset.stok);
+
+    if (qty > stokTersedia) {
+      if (!confirm(`Peringatan: Stok barang ${selectedOption.dataset.nama} saat ini (${stokTersedia}) lebih sedikit dari pesanan (${qty}). Lanjutkan transaksi?`)) {
+        return;
+      }
+    }
+
+    const hpp = Number(selectedOption.dataset.hargaBeli) || 0;
+    const hargaJual = Number(document.getElementById('invHargaJual').value) || 0;
+
+    const payload = {
+      tanggal: document.getElementById('invTanggal').value,
+      jatuhTempo: document.getElementById('invJatuhTempo').value,
+      pelanggan: document.getElementById('invPelanggan').value,
+      statusBayar: document.getElementById('invStatusBayar').value,
+      keterangan: document.getElementById('invCatatan').value,
+      items: [{
+        kode: select.value,
+        nama: selectedOption.dataset.nama,
+        qty: qty,
+        satuan: selectedOption.dataset.satuan,
+        hargaJual: hargaJual,
+        hpp: hpp
+      }]
+    };
+
+    setTampilanLoading(true, 'Menerbitkan faktur & memperbarui stok...');
+
+    if (typeof google !== 'undefined' && google.script && google.script.run) {
+      google.script.run
+        .withSuccessHandler(function(res) {
+          setTampilanLoading(false);
+          if (res && res.success) {
+            alert(res.message);
+            document.getElementById('formPenjualan').reset();
+            inisialisasiTanggalHariIni();
+            resetBoxKalkulatorMargin();
+            muatDataSistemAwal(); // Refresh data
+          } else {
+            alert('Gagal: ' + (res ? res.message : 'Terjadi kesalahan'));
+          }
+        })
+        .withFailureHandler(function(err) {
+          setTampilanLoading(false);
+          alert('Error server: ' + err.message);
+        })
+        .saveSalesInvoice(payload, appState.currentUser);
+    } else {
+      // Simulasi Lokal
+      setTimeout(function() {
+        setTampilanLoading(false);
+        alert('Simulasi: Faktur berhasil disimpan!');
+        document.getElementById('formPenjualan').reset();
+      }, 500);
+    }
+  }
+
+  /**
+   * PRATINJAU KEBUTUHAN MATERIAL & EKSEKUSI PRODUKSI (BOM)
+   */
+  function hitungPratinjauProduksi() {
+    const select = document.getElementById('prodPilihBarang');
+    const qtyInput = document.getElementById('prodQty');
+    const container = document.getElementById('prodPratinjauMaterialList');
+    const hppEl = document.getElementById('prodEstimasiHPP');
+
+    if (!select || !select.value) {
+      container.innerHTML = 'Pilih produk untuk melihat bahan yang akan dipotong otomatis.';
+      hppEl.textContent = 'Rp 0';
+      return;
+    }
+
+    const kodeFG = select.value;
+    const qty = Number(qtyInput.value) || 0;
+    const resep = appState.bom.filter(b => b.KODE_BARANG_JADI === kodeFG);
+
+    if (resep.length === 0) {
+      container.innerHTML = '<span class="text-danger">Formula Resep (BOM) belum dibuat untuk produk ini.</span>';
+      hppEl.textContent = 'Rp 0';
+      return;
+    }
+
+    let totalBiaya = 0;
+    let html = '<ul class="list-unstyled m-0">';
+
+    resep.forEach(item => {
+      const rm = appState.barang.find(b => b.KODE_BARANG === item.KODE_BAHAN_BAKU);
+      const butuhPerUnit = Number(item.JUMLAH_KEBUTUHAN) || 0;
+      const totalButuh = butuhPerUnit * qty;
+      const stokTersedia = rm ? Number(rm.STOK_SEKARANG) : 0;
+      const hargaBeli = rm ? Number(rm.HARGA_BELI_RATA2) : 0;
+      const biayaItem = totalButuh * hargaBeli;
+      totalBiaya += biayaItem;
+
+      const cukup = stokTersedia >= totalButuh;
+      const iconStatus = cukup ? '<i class="bi bi-check-circle-fill text-success"></i>' : '<i class="bi bi-exclamation-triangle-fill text-danger"></i>';
+
+      html += `
+        <li class="d-flex justify-content-between align-items-center py-1 border-bottom">
+          <div>
+            ${iconStatus} <b>${item.NAMA_BAHAN_BAKU}</b>
+            <div class="text-muted" style="font-size: 11px;">Kebutuhan: ${totalButuh.toFixed(2)} ${item.SATUAN} (Stok: ${stokTersedia})</div>
+          </div>
+          <span class="fw-bold">${formatRupiah(biayaItem)}</span>
+        </li>
+      `;
+    });
+
+    const overheadUnit = Number(resep[0].OVERHEAD_PER_UNIT || 0);
+    const totalOverhead = overheadUnit * qty;
+    totalBiaya += totalOverhead;
+
+    html += `
+      <li class="d-flex justify-content-between align-items-center py-1">
+        <span class="text-muted">Biaya Tenaga Kerja & Overhead:</span>
+        <span class="fw-bold">${formatRupiah(totalOverhead)}</span>
+      </li>
+    </ul>`;
+
+    container.innerHTML = html;
+    hppEl.textContent = formatRupiah(totalBiaya) + ` (${formatRupiah(totalBiaya / (qty || 1))} / unit)`;
+  }
+
+  function handleEksekusiProduksi(e) {
+    e.preventDefault();
+    const select = document.getElementById('prodPilihBarang');
+    if (!select.value) {
+      alert('Pilih barang jadi yang akan diproduksi.');
+      return;
+    }
+
+    const payload = {
+      tanggal: document.getElementById('prodTanggal').value,
+      kodeBarangJadi: select.value,
+      namaBarangJadi: select.options[select.selectedIndex].dataset.nama,
+      jumlahProduksi: Number(document.getElementById('prodQty').value),
+      satuan: select.options[select.selectedIndex].dataset.satuan,
+      penanggungJawab: document.getElementById('prodPenanggungJawab').value,
+      catatan: 'Eksekusi batch produksi via web portal.'
+    };
+
+    setTampilanLoading(true, 'Mengeksekusi produksi & memotong stok material...');
+
+    if (typeof google !== 'undefined' && google.script && google.script.run) {
+      google.script.run
+        .withSuccessHandler(function(res) {
+          setTampilanLoading(false);
+          if (res && res.success) {
+            alert(res.message);
+            document.getElementById('formProduksi').reset();
+            inisialisasiTanggalHariIni();
+            muatDataSistemAwal();
+          } else {
+            alert('Gagal Produksi: ' + (res ? res.message : 'Terjadi kesalahan'));
+          }
+        })
+        .withFailureHandler(function(err) {
+          setTampilanLoading(false);
+          alert('Error: ' + err.message);
+        })
+        .executeProductionBatch(payload, appState.currentUser);
+    } else {
+      setTimeout(function() {
+        setTampilanLoading(false);
+        alert('Simulasi: Produksi berhasil dicatat!');
+      }, 500);
+    }
+  }
+
+  /**
+   * PENGADAAN MATERIAL & BIAYA
+   */
+  function toggleBeliBahanBakuField() {
+    const kat = document.getElementById('beliKategori').value;
+    const wrap = document.getElementById('wrapBeliBahanBaku');
+    if (wrap) {
+      wrap.style.display = (kat === 'Pembelian Bahan Baku') ? 'block' : 'none';
+    }
+  }
+
+  function hitungTotalBeli() {
+    const qty = Number(document.getElementById('beliQty').value) || 0;
+    const harga = Number(document.getElementById('beliHargaSatuan').value) || 0;
+    const nominalInput = document.getElementById('beliNominal');
+    if (qty > 0 && harga > 0) {
+      nominalInput.value = qty * harga;
+    }
+  }
+
+  function handleSimpanPembelian(e) {
+    e.preventDefault();
+    const payload = {
+      tanggal: document.getElementById('beliTanggal').value,
+      pihak3: document.getElementById('beliSupplier').value,
+      kategori: document.getElementById('beliKategori').value,
+      kodeBarang: document.getElementById('beliKodeBarang').value,
+      qty: Number(document.getElementById('beliQty').value) || 0,
+      hargaBeliSatuan: Number(document.getElementById('beliHargaSatuan').value) || 0,
+      nominal: Number(document.getElementById('beliNominal').value) || 0,
+      status: document.getElementById('beliStatus').value,
+      keterangan: document.getElementById('beliKeterangan').value
+    };
+
+    setTampilanLoading(true, 'Menyimpan transaksi pengadaan...');
+
+    if (typeof google !== 'undefined' && google.script && google.script.run) {
+      google.script.run
+        .withSuccessHandler(function(res) {
+          setTampilanLoading(false);
+          if (res && res.success) {
+            alert(res.message);
+            document.getElementById('formPengadaan').reset();
+            inisialisasiTanggalHariIni();
+            muatDataSistemAwal();
+          } else {
+            alert('Gagal: ' + res.message);
+          }
+        })
+        .withFailureHandler(function(err) {
+          setTampilanLoading(false);
+          alert('Error: ' + err.message);
+        })
+        .savePurchaseExpense(payload, appState.currentUser);
+    } else {
+      setTimeout(function() {
+        setTampilanLoading(false);
+        alert('Simulasi: Pengadaan berhasil disimpan!');
+      }, 500);
+    }
+  }
+
+  /**
+   * PORTAL ADMIN: GANTI LOGO & SIMPAN PROFIL PERUSAHAAN
+   */
+  function previewLogoSebelumUpload(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    if (file.size > 3 * 1024 * 1024) {
+      alert('Ukuran berkas logo terlalu besar. Maksimal 3MB.');
+      e.target.value = '';
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = function(event) {
+      const base64 = event.target.result;
+      const box = document.getElementById('adminLogoPreviewBox');
+      if (box) {
+        box.innerHTML = `<img src="${base64}" alt="Preview Logo">`;
+      }
+      box.dataset.tempBase64 = base64;
+      box.dataset.tempFileName = file.name;
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function handleSimpanProfil(e) {
+    e.preventDefault();
+    const box = document.getElementById('adminLogoPreviewBox');
+    const newLogoBase64 = box ? box.dataset.tempBase64 : null;
+    const newLogoName = box ? box.dataset.tempFileName : null;
+
+    setTampilanLoading(true, 'Menyimpan identitas perusahaan & logo baru...');
+
+    // Jika ada upload gambar logo baru
+    if (newLogoBase64 && typeof google !== 'undefined' && google.script && google.script.run) {
+      google.script.run
+        .withSuccessHandler(function(resLogo) {
+          const finalLogoUrl = resLogo && resLogo.success ? resLogo.data.url : newLogoBase64;
+          simpanDataPengaturan(finalLogoUrl);
+        })
+        .withFailureHandler(function(err) {
+          console.warn('Gagal upload gambar Drive, fallback ke base64:', err);
+          simpanDataPengaturan(newLogoBase64);
+        })
+        .uploadLogoImage(newLogoBase64, newLogoName);
+    } else {
+      simpanDataPengaturan(newLogoBase64 || appState.settings.LOGO_URL || '');
+    }
+  }
+
+  function simpanDataPengaturan(logoUrl) {
+    const payload = {
+      NAMA_PERUSAHAAN: document.getElementById('admNamaPerusahaan').value,
+      TAGLINE: document.getElementById('admTagline').value,
+      ALAMAT: document.getElementById('admAlamat').value,
+      TELEPON: document.getElementById('admTelepon').value,
+      EMAIL: document.getElementById('admEmail').value,
+      NPWP: document.getElementById('admNPWP').value,
+      LOGO_URL: logoUrl
+    };
+
+    if (typeof google !== 'undefined' && google.script && google.script.run) {
+      google.script.run
+        .withSuccessHandler(function(res) {
+          setTampilanLoading(false);
+          alert('Identitas perusahaan dan logo baru berhasil diperbarui!');
+          appState.settings = Object.assign(appState.settings, payload);
+          terapkanProfilDanLogo(appState.settings);
+        })
+        .withFailureHandler(function(err) {
+          setTampilanLoading(false);
+          alert('Error menyimpan profil: ' + err.message);
+        })
+        .saveCompanySettings(payload, appState.currentUser);
+    } else {
+      setTimeout(function() {
+        setTampilanLoading(false);
+        alert('Simulasi: Profil dan logo berhasil diperbarui!');
+        appState.settings = Object.assign(appState.settings, payload);
+        terapkanProfilDanLogo(appState.settings);
+      }, 500);
+    }
+  }
+
+  /**
+   * CETAK DOKUMEN FAKTUR RESMI DENGAN QR CODE KEASLIAN
+   */
+  function bukaModalCetakFaktur(noInvoice) {
+    const inv = appState.invoices.find(i => i.NO_INVOICE === noInvoice);
+    if (!inv) {
+      alert('Faktur tidak ditemukan.');
+      return;
+    }
+
+    document.getElementById('printNoInvoice').textContent = inv.NO_INVOICE;
+    document.getElementById('printTglInvoice').textContent = 'Tanggal: ' + inv.TANGGAL;
+    document.getElementById('printPelangganNama').textContent = inv.PELANGGAN;
+    document.getElementById('printStatusBayar').textContent = inv.STATUS_BAYAR;
+    document.getElementById('printGrandTotal').textContent = formatRupiah(inv.TOTAL_PENJUALAN);
+
+    // Render baris rincian barang
+    let items = [];
+    try {
+      items = JSON.parse(inv.ITEMS_JSON);
+    } catch(e) {
+      items = [{ nama: 'Produksi Baja Ringan / Konstruksi', qty: 1, hargaJual: inv.TOTAL_PENJUALAN, subtotal: inv.TOTAL_PENJUALAN }];
+    }
+
+    const tbody = document.getElementById('printTabelItems');
+    tbody.innerHTML = '';
+    items.forEach(item => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${item.nama}</td>
+        <td class="text-center">${item.qty} ${item.satuan || ''}</td>
+        <td class="text-end">${formatRupiah(item.hargaJual)}</td>
+        <td class="text-end">${formatRupiah(item.qty * item.hargaJual)}</td>
+      `;
+      tbody.appendChild(tr);
+    });
+
+    if (modalCetakInstance) {
+      modalCetakInstance.show();
+    }
+  }
+
+  /**
+   * RENDER TABEL & GRAFIK DASHBOARD
+   */
+  function renderDashboard() {
+    let totalOmzet = 0;
+    let totalHPP = 0;
+    let totalPiutang = 0;
+
+    appState.invoices.forEach(inv => {
+      const valJual = Number(inv.TOTAL_PENJUALAN) || 0;
+      const valHPP = Number(inv.TOTAL_HPP) || 0;
+      totalOmzet += valJual;
+      totalHPP += valHPP;
+      if (inv.STATUS_BAYAR === 'Piutang') {
+        totalPiutang += valJual;
+      }
+    });
+
+    const labaKotor = totalOmzet - totalHPP;
+    const persenMargin = totalOmzet > 0 ? ((labaKotor / totalOmzet) * 100).toFixed(2) : 0;
+
+    document.getElementById('kpiOmzet').textContent = formatRupiah(totalOmzet);
+    document.getElementById('kpiHPP').textContent = formatRupiah(totalHPP);
+    document.getElementById('kpiLabaKotor').textContent = formatRupiah(labaKotor);
+    document.getElementById('kpiPiutang').textContent = formatRupiah(totalPiutang);
+    document.getElementById('kpiMarginBadge').textContent = persenMargin + '% Margin';
+
+    // Render Mini Tabel Invoice Dashboard
+    const tbody = document.getElementById('tabelDashboardInvoices');
+    tbody.innerHTML = '';
+    const sliceInvoices = appState.invoices.slice(-5).reverse();
+
+    if (sliceInvoices.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="9" class="text-center py-3 text-muted">Belum ada faktur penjualan.</td></tr>';
+    } else {
+      sliceInvoices.forEach(inv => {
+        const tr = document.createElement('tr');
+        const badgeClass = inv.STATUS_BAYAR === 'Lunas' ? 'status-lunas' : 'status-piutang';
+        tr.innerHTML = `
+          <td class="fw-bold">${inv.NO_INVOICE}</td>
+          <td>${inv.TANGGAL}</td>
+          <td>${inv.PELANGGAN}</td>
+          <td class="fw-bold">${formatRupiah(inv.TOTAL_PENJUALAN)}</td>
+          <td class="text-muted">${formatRupiah(inv.TOTAL_HPP)}</td>
+          <td class="text-success fw-bold">${formatRupiah(inv.LABA_KOTOR)}</td>
+          <td><span class="badge bg-success">${inv.PERSEN_MARGIN}%</span></td>
+          <td><span class="badge-status ${badgeClass}">${inv.STATUS_BAYAR}</span></td>
+          <td>
+            <button class="btn btn-sm btn-outline-primary py-0 px-2" onclick="bukaModalCetakFaktur('${inv.NO_INVOICE}')">
+              <i class="bi bi-printer"></i>
+            </button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    // Render Charts
+    renderCharts(totalOmzet, totalHPP, labaKotor);
+  }
+
+  function renderCharts(omzet, hpp, laba) {
+    // 1. Chart Margin Bulanan
+    const ctxBar = document.getElementById('chartMarginBulanan');
+    if (ctxBar) {
+      if (chartMarginInstance) chartMarginInstance.destroy();
+      chartMarginInstance = new Chart(ctxBar, {
+        type: 'bar',
+        data: {
+          labels: ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'],
+          datasets: [
+            {
+              label: 'Penjualan (Omzet)',
+              data: [0, omzet, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+              backgroundColor: '#0F172A',
+              borderRadius: 4
+            },
+            {
+              label: 'Beban HPP',
+              data: [0, hpp, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+              backgroundColor: '#64748B',
+              borderRadius: 4
+            },
+            {
+              label: 'Margin Laba %',
+              type: 'line',
+              data: [0, 40.5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+              borderColor: '#F59E0B',
+              borderWidth: 3,
+              pointBackgroundColor: '#F59E0B',
+              yAxisID: 'y1'
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            y: { beginAtZero: true, title: { display: true, text: 'Nilai (Rp)' } },
+            y1: { position: 'right', beginAtZero: true, max: 100, title: { display: true, text: 'Persen (%)' } }
+          }
+        }
+      });
+    }
+
+    // 2. Chart Distribusi Produk
+    const ctxPie = document.getElementById('chartProdukDistribusi');
+    if (ctxPie) {
+      if (chartProdukInstance) chartProdukInstance.destroy();
+      chartProdukInstance = new Chart(ctxPie, {
+        type: 'doughnut',
+        data: {
+          labels: ['Kanal C 75.75 SNI (Baja Ringan 6M)', 'U-Ditch Precast', 'Atap Spandek Galvalum 0.30mm (6M)', 'Lainnya'],
+          datasets: [{
+            data: [55, 30, 15, 0],
+            backgroundColor: ['#0F172A', '#F59E0B', '#10B981', '#94A3B8']
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { position: 'bottom' } }
+        }
+      });
+    }
+  }
+
+  function renderTabelInvoices() {
+    const tbody = document.getElementById('tabelSemuaInvoices');
+    if (!tbody) return;
+    tbody.innerHTML = '';
+    if (appState.invoices.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="6" class="text-center py-3 text-muted">Belum ada faktur.</td></tr>';
+      return;
+    }
+    appState.invoices.slice().reverse().forEach(inv => {
+      const tr = document.createElement('tr');
+      const badgeClass = inv.STATUS_BAYAR === 'Lunas' ? 'status-lunas' : 'status-piutang';
+      tr.innerHTML = `
+        <td class="fw-bold">${inv.NO_INVOICE}</td>
+        <td>${inv.PELANGGAN}</td>
+        <td class="fw-bold">${formatRupiah(inv.TOTAL_PENJUALAN)}</td>
+        <td><span class="text-success fw-bold">${formatRupiah(inv.LABA_KOTOR)}</span> (${inv.PERSEN_MARGIN}%)</td>
+        <td><span class="badge-status ${badgeClass}">${inv.STATUS_BAYAR}</span></td>
+        <td>
+          <button class="btn btn-sm btn-outline-primary py-0 px-2" onclick="bukaModalCetakFaktur('${inv.NO_INVOICE}')">
+            <i class="bi bi-printer"></i> Cetak
+          </button>
+        </td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
+
+  function renderManufakturBOM() {
+    const tbodyBOM = document.getElementById('tabelDaftarBOM');
+    if (tbodyBOM) {
+      tbodyBOM.innerHTML = '';
+      appState.bom.forEach(b => {
+        const fg = appState.barang.find(item => item.KODE_BARANG === b.KODE_BARANG_JADI);
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td class="fw-bold">${fg ? fg.NAMA_BARANG : b.KODE_BARANG_JADI}</td>
+          <td>${b.NAMA_BAHAN_BAKU}</td>
+          <td>${b.JUMLAH_KEBUTUHAN} ${b.SATUAN}</td>
+          <td>${formatRupiah(b.OVERHEAD_PER_UNIT)}</td>
+        `;
+        tbodyBOM.appendChild(tr);
+      });
+    }
+
+    const tbodyProd = document.getElementById('tabelLogProduksi');
+    if (tbodyProd) {
+      tbodyProd.innerHTML = '';
+      appState.produksi.slice().reverse().forEach(p => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td class="fw-bold">${p.ID_PRODUKSI}</td>
+          <td>${p.TANGGAL}</td>
+          <td>${p.NAMA_BARANG_JADI}</td>
+          <td>${p.JUMLAH_PRODUKSI} ${p.SATUAN}</td>
+          <td class="fw-bold">${formatRupiah(p.TOTAL_HPP)}</td>
+          <td>${formatRupiah(p.HPP_PER_UNIT)} / ${p.SATUAN}</td>
+        `;
+        tbodyProd.appendChild(tr);
+      });
+    }
+  }
+
+  function renderTabelStok() {
+    const tbody = document.getElementById('tabelMasterStok');
+    const filter = document.getElementById('filterKategoriStok') ? document.getElementById('filterKategoriStok').value : 'SEMUA';
+    if (!tbody) return;
+    tbody.innerHTML = '';
+
+    const filtered = appState.barang.filter(b => filter === 'SEMUA' || b.KATEGORI === filter);
+
+    filtered.forEach(b => {
+      const stok = Number(b.STOK_SEKARANG);
+      const min = Number(b.STOK_MINIMAL);
+      let statusPill = '<span class="badge-status status-aman">Aman</span>';
+      if (stok <= min) {
+        statusPill = '<span class="badge-status status-kritis">Stok Kritis</span>';
+      }
+
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td class="fw-bold">${b.KODE_BARANG}</td>
+        <td>${b.NAMA_BARANG}</td>
+        <td><span class="badge bg-light text-dark border">${b.KATEGORI}</span></td>
+        <td class="fw-bold fs-6">${stok}</td>
+        <td>${b.SATUAN}</td>
+        <td class="text-muted">${min}</td>
+        <td>${formatRupiah(b.HARGA_BELI_RATA2)}</td>
+        <td>${statusPill}</td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
+
+  function renderTabelPembelian() {
+    const tbody = document.getElementById('tabelRiwayatPembelian');
+    if (!tbody) return;
+    tbody.innerHTML = '';
+    appState.pembelian.slice().reverse().forEach(p => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td class="fw-bold">${p.ID_TRANSAKSI}</td>
+        <td>${p.TANGGAL}</td>
+        <td>${p.SUPPLIER_PIHAK3}</td>
+        <td>${p.KATEGORI}</td>
+        <td class="fw-bold">${formatRupiah(p.TOTAL_NOMINAL)}</td>
+        <td><span class="badge-status status-lunas">${p.STATUS}</span></td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
+
+  function renderLaporanLabaRugi() {
+    let totalOmzet = 0;
+    let totalHPP = 0;
+    let totalBebanOps = 0;
+
+    appState.invoices.forEach(inv => {
+      totalOmzet += Number(inv.TOTAL_PENJUALAN) || 0;
+      totalHPP += Number(inv.TOTAL_HPP) || 0;
+    });
+
+    appState.pembelian.forEach(p => {
+      if (p.KATEGORI !== 'Pembelian Bahan Baku') {
+        totalBebanOps += Number(p.TOTAL_NOMINAL) || 0;
+      }
+    });
+
+    const labaKotor = totalOmzet - totalHPP;
+    const persenMargin = totalOmzet > 0 ? ((labaKotor / totalOmzet) * 100).toFixed(2) : 0;
+    const labaBersih = labaKotor - totalBebanOps;
+
+    if (document.getElementById('lapValOmzet')) document.getElementById('lapValOmzet').textContent = formatRupiah(totalOmzet);
+    if (document.getElementById('lapDetailOmzet')) document.getElementById('lapDetailOmzet').textContent = formatRupiah(totalOmzet);
+    if (document.getElementById('lapValHPP')) document.getElementById('lapValHPP').textContent = '(' + formatRupiah(totalHPP) + ')';
+    if (document.getElementById('lapDetailHPP')) document.getElementById('lapDetailHPP').textContent = formatRupiah(totalHPP);
+    if (document.getElementById('lapValLabaKotor')) document.getElementById('lapValLabaKotor').textContent = formatRupiah(labaKotor);
+    if (document.getElementById('lapValPersenMargin')) document.getElementById('lapValPersenMargin').textContent = persenMargin + '%';
+    if (document.getElementById('lapValBebanOps')) document.getElementById('lapValBebanOps').textContent = '(' + formatRupiah(totalBebanOps) + ')';
+    if (document.getElementById('lapDetailBebanOps')) document.getElementById('lapDetailBebanOps').textContent = formatRupiah(totalBebanOps);
+    if (document.getElementById('lapValLabaBersih')) document.getElementById('lapValLabaBersih').textContent = formatRupiah(labaBersih);
+  }
+
+  function renderPortalAdmin() {
+    const tbodyUsers = document.getElementById('tabelManajemenUsers');
+    if (tbodyUsers) {
+      tbodyUsers.innerHTML = '';
+      appState.users.forEach(u => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td class="fw-bold">${u.nama}</td>
+          <td>${u.email}</td>
+          <td><span class="badge bg-secondary">${u.role}</span></td>
+          <td><span class="badge-status status-lunas">${u.status}</span></td>
+          <td>
+            <button class="btn btn-sm btn-outline-secondary py-0 px-2" onclick="alert('Pengaturan akun dapat diubah langsung di Google Sheets atau via script admin.')">
+              <i class="bi bi-pencil"></i>
+            </button>
+          </td>
+        `;
+        tbodyUsers.appendChild(tr);
+      });
+    }
+
+    const tbodyLogs = document.getElementById('tabelAuditLogs');
+    if (tbodyLogs) {
+      tbodyLogs.innerHTML = '';
+      appState.auditLogs.slice(0, 15).forEach(l => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td class="text-muted small">${new Date(l.TIMESTAMP).toLocaleTimeString('id-ID')}</td>
+          <td class="fw-bold">${l.USER_NAMA}</td>
+          <td>${l.DETAIL}</td>
+        `;
+        tbodyLogs.appendChild(tr);
+      });
+    }
+  }
+
+  function bukaModalTambahUser() {
+    const nama = prompt('Masukkan nama pengguna baru:');
+    if (!nama) return;
+    const email = prompt('Masukkan email:');
+    if (!email) return;
+    const role = prompt('Pilih peran (Direktur / Owner, Admin Keuangan, Staf Gudang & Produksi):', 'Admin Keuangan');
+    const pin = prompt('Tentukan 6-digit PIN:', '123456');
+
+    const payload = { nama: nama, email: email, role: role, pin: pin, status: 'Aktif' };
+
+    setTampilanLoading(true, 'Menyimpan user baru...');
+    if (typeof google !== 'undefined' && google.script && google.script.run) {
+      google.script.run
+        .withSuccessHandler(function() {
+          setTampilanLoading(false);
+          alert('Pengguna berhasil ditambahkan.');
+          muatDataSistemAwal();
+        })
+        .withFailureHandler(function(err) {
+          setTampilanLoading(false);
+          alert('Error: ' + err.message);
+        })
+        .saveUserRecord(payload, appState.currentUser);
+    } else {
+      setTimeout(function() {
+        setTampilanLoading(false);
+        appState.users.push(payload);
+        renderPortalAdmin();
+        alert('User berhasil disimpan (mode lokal).');
+      }, 500);
+    }
+  }
+
+  /**
+   * DATA FALLBACK OFFLINE / PRATINJAU MANDIRI
+   * Digunakan jika dibuka di luar ekosistem Apps Script secara langsung
+   */
+  function gunakanDataFallbackLokal() {
+    const dummy = {
+      settings: {
+        NAMA_PERUSAHAAN: 'PT Griya Sultra Konstruksi',
+        TAGLINE: 'Pabrik & Manufaktur Baja Ringan, Rangka Atap, Kanal C, Reng & Spandek',
+        LOGO_URL: '',
+        ALAMAT: 'Jl. Poros Konstruksi No. 88, Kendari, Sulawesi Tenggara',
+        TELEPON: '0812-4567-8901',
+        EMAIL: 'keuangan@griyasultrakonstruksi.co.id',
+        NPWP: '01.234.567.8-901.000'
+      },
+      users: [
+        { id: 'USR-001', nama: 'Direktur Utama GSK', email: 'direktur@gsk.id', role: 'Direktur / Owner', status: 'Aktif' },
+        { id: 'USR-002', nama: 'Admin Keuangan & Pajak', email: 'keuangan@gsk.id', role: 'Admin Keuangan', status: 'Aktif' },
+        { id: 'USR-003', nama: 'Mandor Pabrik & Gudang', email: 'gudang@gsk.id', role: 'Staf Gudang & Produksi', status: 'Aktif' }
+      ],
+      barang: [
+        { KODE_BARANG: 'RM-01', NAMA_BARANG: 'Coil Galvalum Zincalume G550 (0.75mm)', KATEGORI: 'Bahan Baku', SATUAN: 'Zak', STOK_MINIMAL: 50, STOK_SEKARANG: 320, HARGA_BELI_RATA2: 68000, HARGA_JUAL_STANDAR: 0 },
+        { KODE_BARANG: 'RM-02', NAMA_BARANG: 'Coil Galvalum Zincalume G550 (0.45mm)', KATEGORI: 'Bahan Baku', SATUAN: 'M3', STOK_MINIMAL: 15, STOK_SEKARANG: 65, HARGA_BELI_RATA2: 230000, HARGA_JUAL_STANDAR: 0 },
+        { KODE_BARANG: 'RM-03', NAMA_BARANG: 'Coil Galvalum Spandek (0.30mm)', KATEGORI: 'Bahan Baku', SATUAN: 'M3', STOK_MINIMAL: 15, STOK_SEKARANG: 55, HARGA_BELI_RATA2: 270000, HARGA_JUAL_STANDAR: 0 },
+        { KODE_BARANG: 'RM-04', NAMA_BARANG: 'Baut Roofing Hex Head 12x20', KATEGORI: 'Bahan Baku', SATUAN: 'Batang', STOK_MINIMAL: 100, STOK_SEKARANG: 420, HARGA_BELI_RATA2: 89000, HARGA_JUAL_STANDAR: 0 },
+        { KODE_BARANG: 'FG-01', NAMA_BARANG: 'Kanal C 75.75 SNI (Baja Ringan 6M) Tebal 6cm', KATEGORI: 'Barang Jadi', SATUAN: 'M2', STOK_MINIMAL: 100, STOK_SEKARANG: 650, HARGA_BELI_RATA2: 52400, HARGA_JUAL_STANDAR: 88000 },
+        { KODE_BARANG: 'FG-02', NAMA_BARANG: 'Reng Baja Ringan 30.45 (6M)', KATEGORI: 'Barang Jadi', SATUAN: 'Pcs', STOK_MINIMAL: 20, STOK_SEKARANG: 85, HARGA_BELI_RATA2: 245000, HARGA_JUAL_STANDAR: 410000 }
+      ],
+      bom: [
+        { ID_BOM: 'BOM-01', KODE_BARANG_JADI: 'FG-01', KODE_BAHAN_BAKU: 'RM-01', NAMA_BAHAN_BAKU: 'Coil Galvalum Zincalume G550 (0.75mm)', JUMLAH_KEBUTUHAN: 0.25, SATUAN: 'Zak', OVERHEAD_PER_UNIT: 6000 },
+        { ID_BOM: 'BOM-01', KODE_BARANG_JADI: 'FG-01', KODE_BAHAN_BAKU: 'RM-02', NAMA_BAHAN_BAKU: 'Coil Galvalum Zincalume G550 (0.45mm)', JUMLAH_KEBUTUHAN: 0.035, SATUAN: 'M3', OVERHEAD_PER_UNIT: 6000 },
+        { ID_BOM: 'BOM-01', KODE_BARANG_JADI: 'FG-01', KODE_BAHAN_BAKU: 'RM-03', NAMA_BAHAN_BAKU: 'Coil Galvalum Spandek (0.30mm)', JUMLAH_KEBUTUHAN: 0.040, SATUAN: 'M3', OVERHEAD_PER_UNIT: 6000 }
+      ],
+      produksi: [
+        { ID_PRODUKSI: 'PRD-2026-001', TANGGAL: '2026-02-15', KODE_BARANG_JADI: 'FG-01', NAMA_BARANG_JADI: 'Kanal C 75.75 SNI (Baja Ringan 6M) Tebal 6cm', JUMLAH_PRODUKSI: 200, SATUAN: 'M2', TOTAL_HPP: 10480000, HPP_PER_UNIT: 52400, PENANGGUNG_JAWAB: 'Mandor Pabrik' }
+      ],
+      invoices: [
+        { NO_INVOICE: 'INV-2026-001', TANGGAL: '2026-02-18', JATUH_TEMPO: '2026-03-05', PELANGGAN: 'PT Bumi Perkasa Kendari', ITEMS_JSON: JSON.stringify([{ kode: 'FG-01', nama: 'Kanal C 75.75 SNI (Baja Ringan 6M) Tebal 6cm', qty: 150, hargaJual: 88000, subtotal: 13200000 }]), TOTAL_PENJUALAN: 13200000, TOTAL_HPP: 7860000, LABA_KOTOR: 5340000, PERSEN_MARGIN: 40.45, STATUS_BAYAR: 'Lunas' }
+      ],
+      pembelian: [
+        { ID_TRANSAKSI: 'BELI-2026-001', TANGGAL: '2026-02-10', SUPPLIER_PIHAK3: 'PT Semen Tonasa Distributor', KATEGORI: 'Pembelian Bahan Baku', TOTAL_NOMINAL: 13600000, STATUS: 'Lunas' }
+      ],
+      auditLogs: [
+        { TIMESTAMP: new Date().toISOString(), USER_NAMA: 'Sistem', DETAIL: 'Inisialisasi sistem GSK berhasil.' }
+      ]
+    };
+    prosesDataSistem(dummy);
+  }
+</script>
+
