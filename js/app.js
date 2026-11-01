@@ -444,12 +444,11 @@ function logoutERP() {
 }
 
 /**
- * Akses Langsung Menu Admin Frontend
+ * Akses Langsung Menu Admin Frontend (Super Admin Tunggal)
  */
 function bukaAdminPortalFrontend() {
-  // Masuk langsung sebagai admin
   localStorage.setItem('gsk_jwt_token', 'session.admin.token');
-  localStorage.setItem('gsk_user_info', JSON.stringify({ nama: 'Administrator GSK', role: 'Super Admin' }));
+  localStorage.setItem('gsk_user_info', JSON.stringify({ nama: 'Administrator Utama GSK', role: 'Super Admin (Akses Penuh)' }));
   
   const modalEl = document.getElementById('modalWorkspaceERP');
   if (modalEl && typeof bootstrap !== 'undefined') {
@@ -457,37 +456,61 @@ function bukaAdminPortalFrontend() {
     modalWorkspace.show();
   }
   bukaWorkspaceERP();
-  switchTabERP('admin');
-}
-  localStorage.setItem('gsk_user_info', JSON.stringify({ nama: 'Administrator GSK', role: 'Super Admin' }));
-  bukaWorkspaceERP();
-  switchTabERP('admin');
+  switchTabERP('dashboard');
 }
 
 function switchTabERP(tabName) {
-  const tabDash = document.getElementById('erpTabDashboard');
-  const tabAdm = document.getElementById('erpTabAdmin');
-  const btnDash = document.getElementById('tabBtnDashboard');
-  const btnAdm = document.getElementById('tabBtnAdmin');
+  const tabs = ['Dashboard', 'Manufaktur', 'Akuntansi', 'Admin'];
+  tabs.forEach(t => {
+    const tabEl = document.getElementById('erpTab' + t);
+    const btnEl = document.getElementById('tabBtn' + t);
+    if (tabEl) {
+      if (t.toLowerCase() === tabName.toLowerCase()) {
+        tabEl.classList.remove('d-none');
+      } else {
+        tabEl.classList.add('d-none');
+      }
+    }
+    if (btnEl) {
+      if (t.toLowerCase() === tabName.toLowerCase()) {
+        btnEl.classList.add('active');
+      } else {
+        btnEl.classList.remove('active');
+      }
+    }
+  });
 
-  if (tabName === 'admin') {
-    if (tabDash) tabDash.classList.add('d-none');
-    if (tabAdm) tabAdm.classList.remove('d-none');
-    if (btnDash) btnDash.classList.remove('active');
-    if (btnAdm) btnAdm.classList.add('active');
-
-    // Muat logo tersimpan jika ada
+  if (tabName.toLowerCase() === 'admin') {
     const savedLogo = localStorage.getItem('gsk_custom_logo');
     if (savedLogo) {
       const box = document.getElementById('frontendLogoPreviewBox');
       if (box) box.innerHTML = `<img src="${savedLogo}" alt="Logo" style="max-height: 100px; max-width: 100px; object-fit: contain;">`;
     }
-  } else {
-    if (tabDash) tabDash.classList.remove('d-none');
-    if (tabAdm) tabAdm.classList.add('d-none');
-    if (btnDash) btnDash.classList.add('active');
-    if (btnAdm) btnAdm.classList.remove('active');
+  } else if (tabName.toLowerCase() === 'manufaktur') {
+    hitungSimulasiManufaktur();
   }
+}
+
+function hitungSimulasiManufaktur() {
+  const select = document.getElementById('calcProduk');
+  const tipe = select ? select.value : 'kanal';
+  const qtyInput = document.getElementById('calcTargetQty');
+  const qty = qtyInput ? (Number(qtyInput.value) || 1) : 100;
+  
+  let beratStd = 4.85; // kg per 6M kanal 75.75
+  if (tipe === 'reng') beratStd = 1.85;
+  else if (tipe === 'spandek') beratStd = 2.30;
+
+  const totalCoilKg = (qty * beratStd).toFixed(1);
+  const hargaCoilPerKg = 14500; // Harga beli coil galvalum kg
+  const biayaBahan = Math.round(Number(totalCoilKg) * hargaCoilPerKg);
+  const overheadListrik = Math.round(qty * (tipe === 'reng' ? 2500 : 4500));
+  const totalHPP = biayaBahan + overheadListrik;
+
+  if (document.getElementById('simulasiCoilKg')) document.getElementById('simulasiCoilKg').textContent = totalCoilKg + ' kg';
+  if (document.getElementById('simulasiBiayaCoil')) document.getElementById('simulasiBiayaCoil').textContent = formatRupiah(biayaBahan);
+  if (document.getElementById('simulasiBiayaOverhead')) document.getElementById('simulasiBiayaOverhead').textContent = formatRupiah(overheadListrik);
+  if (document.getElementById('simulasiTotalHPP')) document.getElementById('simulasiTotalHPP').textContent = formatRupiah(totalHPP);
 }
 
 function previewLogoFrontend(e) {

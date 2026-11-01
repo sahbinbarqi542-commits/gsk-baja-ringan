@@ -201,46 +201,39 @@
     </div>
   </footer>
 
-  <!-- MODAL LOGIN PORTAL INTERNAL (HMAC PROTECTED) -->
+  <!-- MODAL LOGIN PORTAL INTERNAL (SUPER ADMIN TUNGGAL) -->
   <div class="modal fade" id="modalLoginInternal" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered" style="max-width: 400px;">
+    <div class="modal-dialog modal-dialog-centered" style="max-width: 420px;">
       <div class="modal-content p-3 border-0 shadow-lg" style="border-radius: 16px; background: #131B2E; color: #FFF;">
         <div class="modal-header border-0 pb-0">
-          <h5 class="modal-title fw-bold text-white">Login Portal Internal GSK</h5>
+          <h5 class="modal-title fw-bold text-white"><i class="bi bi-shield-lock-fill text-warning me-2"></i>Login Admin GSK</h5>
           <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
         </div>
         <div class="modal-body">
-          <p class="text-secondary small mb-3">Akses terbatas bagi Direktur, Admin Finance, dan Mandor Pabrik.</p>
+          <p class="text-secondary small mb-3">1 Akun Administrator Utama dengan akses penuh ke seluruh menu & sistem finansial.</p>
           <form onsubmit="handleLoginERP(event)">
             <div class="mb-3">
-              <label class="form-label text-light small fw-bold">Email Karyawan</label>
-              <input type="email" id="erpEmail" class="form-control bg-dark border-secondary text-white" value="direktur@gsk.id" required>
+              <label class="form-label text-light small fw-bold">Email / Username Admin</label>
+              <input type="text" id="erpEmail" class="form-control bg-dark border-secondary text-white" value="admin@gsk.id" required>
             </div>
             <div class="mb-3">
-              <label class="form-label text-light small fw-bold">PIN Keamanan (6 Digit)</label>
-              <input type="password" id="erpPIN" maxlength="6" class="form-control bg-dark border-secondary text-white" value="123456" required>
+              <label class="form-label text-light small fw-bold">PIN Keamanan (Password)</label>
+              <input type="password" id="erpPIN" maxlength="10" class="form-control bg-dark border-secondary text-white" value="123456" required>
             </div>
             <div id="loginAlertModal" class="alert alert-danger py-2 small d-none"></div>
-            <button type="submit" class="btn btn-gsk-amber w-100 py-2 fw-bold">
-              <i class="bi bi-box-arrow-in-right me-1"></i> Masuk Workspace ERP
+            <button type="submit" class="btn btn-gsk-amber w-100 py-2 fw-bold mb-2">
+              <i class="bi bi-box-arrow-in-right me-1"></i> Masuk Semua Menu
             </button>
           </form>
 
-          <!-- AKUN RESMI & LOGIN CEPAT -->
-          <div class="mt-4 pt-3 border-top border-secondary">
-            <div class="d-flex justify-content-between align-items-center mb-2">
-              <span class="text-warning small fw-bold"><i class="bi bi-shield-check me-1"></i> Akun Login Resmi GSK:</span>
-              <span class="badge bg-secondary small">PIN: 123456</span>
-            </div>
-            <div class="d-grid gap-2">
-              <button type="button" class="btn btn-sm btn-outline-light text-start d-flex justify-content-between align-items-center" onclick="loginCepat('direktur@gsk.id', '123456')">
-                <span><i class="bi bi-person-badge me-2 text-warning"></i><strong>Direktur Utama</strong> (direktur@gsk.id)</span>
-                <span class="badge bg-warning text-dark">Klik Masuk</span>
-              </button>
-              <button type="button" class="btn btn-sm btn-outline-light text-start d-flex justify-content-between align-items-center" onclick="loginCepat('keuangan@gsk.id', '123456')">
-                <span><i class="bi bi-cash-stack me-2 text-success"></i><strong>Admin Keuangan</strong> (keuangan@gsk.id)</span>
-                <span class="badge bg-success">Klik Masuk</span>
-              </button>
+          <!-- LOGIN CEPAT 1-KLIK -->
+          <div class="mt-3 pt-3 border-top border-secondary">
+            <button type="button" class="btn btn-outline-warning w-100 py-2 fw-bold text-start d-flex justify-content-between align-items-center" onclick="loginCepat('admin@gsk.id', '123456')">
+              <span><i class="bi bi-lightning-charge-fill me-2 text-warning"></i><strong>Masuk Cepat 1-Klik (Super Admin)</strong></span>
+              <span class="badge bg-warning text-dark">Buka Semua</span>
+            </button>
+            <div class="text-center mt-2">
+              <small class="text-muted" style="font-size: 11px;">Mencakup: Dashboard Margin, Pabrikasi Baja Ringan, Akuntansi COA & Pengaturan Logo.</small>
             </div>
           </div>
         </div>
@@ -248,31 +241,41 @@
     </div>
   </div>
 
-  <!-- MODAL WORKSPACE ERP INTERAKTIF (SETELAH LOGIN) -->
+  <!-- MODAL WORKSPACE ERP INTERAKTIF (SUPER ADMIN AKSES PENUH) -->
   <div class="modal fade" id="modalWorkspaceERP" tabindex="-1" data-bs-backdrop="static">
     <div class="modal-dialog modal-fullscreen">
       <div class="modal-content" style="background: var(--gsk-surface);">
         <div class="modal-header bg-dark text-white py-2 px-4">
           <div class="d-flex align-items-center gap-2">
-            <span class="badge bg-warning text-dark fw-bold">PORTAL KERJA GSK</span>
-            <span class="fw-bold small" id="wsUserName">Direktur Utama</span>
-            <span class="badge bg-secondary" id="wsUserRole">Direktur</span>
+            <span class="badge bg-warning text-dark fw-bold"><i class="bi bi-building-gear me-1"></i>PORTAL KERJA GSK</span>
+            <span class="fw-bold small" id="wsUserName">Administrator Utama</span>
+            <span class="badge bg-success" id="wsUserRole">Super Admin (Akses Penuh)</span>
           </div>
           <button type="button" class="btn btn-sm btn-outline-danger" data-bs-dismiss="modal" onclick="logoutERP()">
             <i class="bi bi-box-arrow-right me-1"></i> Keluar Portal
           </button>
         </div>
         <div class="modal-body p-4" style="overflow-y: auto;">
-          <!-- Navigasi Tab Internal -->
+          <!-- Navigasi Tab Internal Super Admin (Semua Menu) -->
           <ul class="nav nav-pills mb-4 border-bottom pb-3 gap-2">
             <li class="nav-item">
               <button class="nav-link active fw-bold" id="tabBtnDashboard" onclick="switchTabERP('dashboard')">
-                <i class="bi bi-speedometer2 me-1"></i> Dashboard Finansial
+                <i class="bi bi-speedometer2 me-1"></i> 1. Dashboard Finansial & Margin
+              </button>
+            </li>
+            <li class="nav-item">
+              <button class="nav-link fw-bold" id="tabBtnManufaktur" onclick="switchTabERP('manufaktur')">
+                <i class="bi bi-gear-wide-connected me-1"></i> 2. Pabrikasi & Produksi Baja Ringan
+              </button>
+            </li>
+            <li class="nav-item">
+              <button class="nav-link fw-bold" id="tabBtnAkuntansi" onclick="switchTabERP('akuntansi')">
+                <i class="bi bi-journal-bookmark-fill me-1"></i> 3. Akuntansi & Kas COA
               </button>
             </li>
             <li class="nav-item">
               <button class="nav-link fw-bold" id="tabBtnAdmin" onclick="switchTabERP('admin')">
-                <i class="bi bi-shield-shaded me-1"></i> Portal Admin & Ganti Logo
+                <i class="bi bi-sliders me-1"></i> 4. Profil Pabrik & Logo
               </button>
             </li>
           </ul>
@@ -319,7 +322,164 @@
             </div>
           </div>
 
-          <!-- TAB 2: PORTAL ADMIN & KUSTOMISASI LOGO -->
+          <!-- TAB 2: PABRIKASI & PRODUKSI BAJA RINGAN -->
+          <div id="erpTabManufaktur" class="d-none">
+            <div class="row g-3 mb-4">
+              <div class="col-md-4">
+                <div class="card p-3 border shadow-sm">
+                  <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                      <small class="text-secondary fw-bold">STOK BAHAN BAKU</small>
+                      <h4 class="fw-bold m-0 text-primary">14,250 kg</h4>
+                      <small class="text-muted">Coil Galvalum AZ100 G550</small>
+                    </div>
+                    <i class="bi bi-disc text-primary fs-1 opacity-50"></i>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="card p-3 border shadow-sm">
+                  <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                      <small class="text-secondary fw-bold">STOK KANAL C 75.75</small>
+                      <h4 class="fw-bold m-0 text-success">850 Btg</h4>
+                      <small class="text-muted">Panjang 6 Meter SNI</small>
+                    </div>
+                    <i class="bi bi-layers text-success fs-1 opacity-50"></i>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="card p-3 border shadow-sm">
+                  <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                      <small class="text-secondary fw-bold">STOK RENG 30.45</small>
+                      <h4 class="fw-bold m-0 text-warning">1,200 Btg</h4>
+                      <small class="text-muted">Panjang 6 Meter Galvalum</small>
+                    </div>
+                    <i class="bi bi-grid-3x3 text-warning fs-1 opacity-50"></i>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="row g-4">
+              <div class="col-12 col-lg-7">
+                <div class="card p-4 shadow-sm border h-100">
+                  <h6 class="fw-bold mb-3"><i class="bi bi-calculator text-primary me-2"></i>Kalkulator Roll-Forming & Margin HPP</h6>
+                  <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                      <label class="form-label small fw-bold">Pilih Tipe Profil</label>
+                      <select class="form-select form-select-sm" id="calcProduk" onchange="hitungSimulasiManufaktur()">
+                        <option value="kanal" selected>Kanal C 75.75 (Berat Std: 4.85 kg/btg)</option>
+                        <option value="reng">Reng 30.45 (Berat Std: 1.85 kg/btg)</option>
+                        <option value="spandek">Spandek 0.30mm (Berat Std: 2.30 kg/m)</option>
+                      </select>
+                    </div>
+                    <div class="col-md-6">
+                      <label class="form-label small fw-bold">Target Jumlah Produksi (Batang/Meter)</label>
+                      <input type="number" id="calcTargetQty" class="form-control form-control-sm" value="100" min="1" oninput="hitungSimulasiManufaktur()">
+                    </div>
+                  </div>
+                  <div class="p-3 bg-light rounded border mb-3">
+                    <div class="d-flex justify-content-between py-1 border-bottom">
+                      <span class="small">Kebutuhan Bahan Baku Coil:</span>
+                      <strong id="simulasiCoilKg" class="text-dark">485.0 kg</strong>
+                    </div>
+                    <div class="d-flex justify-content-between py-1 border-bottom">
+                      <span class="small">Biaya Bahan Baku (Rp 14.500/kg):</span>
+                      <strong id="simulasiBiayaCoil" class="text-dark">Rp 7.032.500</strong>
+                    </div>
+                    <div class="d-flex justify-content-between py-1 border-bottom">
+                      <span class="small">Overhead Listrik & Mandor Roll-Forming:</span>
+                      <strong id="simulasiBiayaOverhead" class="text-dark">Rp 450.000</strong>
+                    </div>
+                    <div class="d-flex justify-content-between py-1 pt-2">
+                      <span class="fw-bold">Estimasi Total HPP Pabrikasi:</span>
+                      <strong id="simulasiTotalHPP" class="text-success fs-6">Rp 7.482.500</strong>
+                    </div>
+                  </div>
+                  <button type="button" class="btn btn-sm btn-primary w-100" onclick="alert('Simulasi SPK Roll-Forming berhasil disimpan ke antrean pabrik.')">
+                    <i class="bi bi-file-earmark-plus me-1"></i> Terbitkan SPK Produksi Roll-Forming
+                  </button>
+                </div>
+              </div>
+
+              <div class="col-12 col-lg-5">
+                <div class="card p-4 shadow-sm border h-100">
+                  <h6 class="fw-bold mb-3"><i class="bi bi-list-check text-success me-2"></i>Master Bill of Materials (BOM)</h6>
+                  <div class="table-responsive">
+                    <table class="table table-sm table-bordered">
+                      <thead class="table-light">
+                        <tr><th>Produk</th><th>Standar Coil</th><th>Toleransi Scrap</th></tr>
+                      </thead>
+                      <tbody>
+                        <tr><td>Kanal C 75.75</td><td>4.85 kg / 6M</td><td>0.5%</td></tr>
+                        <tr><td>Reng 30.45</td><td>1.85 kg / 6M</td><td>0.5%</td></tr>
+                        <tr><td>Spandek 0.30mm</td><td>2.30 kg / Meter</td><td>0.8%</td></tr>
+                        <tr><td>Hollow 2x4 4M</td><td>1.10 kg / 4M</td><td>0.5%</td></tr>
+                      </tbody>
+                    </table>
+                  </div>
+                  <div class="alert alert-secondary py-2 small m-0">
+                    <i class="bi bi-info-circle me-1"></i> Pemakaian coil langsung memotong persediaan di sheet <code>Manufaktur_BOM</code>.
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- TAB 3: AKUNTANSI & KAS COA -->
+          <div id="erpTabAkuntansi" class="d-none">
+            <div class="row g-3 mb-4">
+              <div class="col-md-4">
+                <div class="card p-3 border shadow-sm">
+                  <small class="text-secondary fw-bold">KAS OPERASIONAL PABRIK</small>
+                  <h4 class="fw-bold text-success m-0">Rp 48.500.000</h4>
+                  <small class="text-muted">Kode Akun: 1-1001 (Kas Lancar)</small>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="card p-3 border shadow-sm">
+                  <small class="text-secondary fw-bold">BANK MANDIRI GIRO</small>
+                  <h4 class="fw-bold text-primary m-0">Rp 215.800.000</h4>
+                  <small class="text-muted">Kode Akun: 1-1003 (Rekening Pabrik)</small>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="card p-3 border shadow-sm">
+                  <small class="text-secondary fw-bold">PIUTANG PROYEK BERJALAN</small>
+                  <h4 class="fw-bold text-warning m-0">Rp 64.200.000</h4>
+                  <small class="text-muted">Kode Akun: 1-1005 (Tempo 30 Hari)</small>
+                </div>
+              </div>
+            </div>
+
+            <div class="card p-4 shadow-sm border mb-4">
+              <h6 class="fw-bold mb-3"><i class="bi bi-journal-text text-primary me-2"></i>Bagan Akun (Master Chart of Accounts - COA)</h6>
+              <div class="table-responsive">
+                <table class="table table-hover table-sm">
+                  <thead class="table-light">
+                    <tr><th>Kode Akun</th><th>Nama Akun</th><th>Kategori</th><th>Posisi Saldo Normal</th></tr>
+                  </thead>
+                  <tbody>
+                    <tr><td><code>1-1001</code></td><td>Kas Operasional Pabrik</td><td>Aset Lancar</td><td><span class="badge bg-primary">Debit</span></td></tr>
+                    <tr><td><code>1-1003</code></td><td>Bank Mandiri Giro Perusahaan</td><td>Aset Lancar</td><td><span class="badge bg-primary">Debit</span></td></tr>
+                    <tr><td><code>1-1005</code></td><td>Piutang Usaha Penjualan Proyek</td><td>Aset Lancar</td><td><span class="badge bg-primary">Debit</span></td></tr>
+                    <tr><td><code>1-1006</code></td><td>Persediaan Bahan Baku Coil Galvalum</td><td>Aset Lancar</td><td><span class="badge bg-primary">Debit</span></td></tr>
+                    <tr><td><code>1-1007</code></td><td>Persediaan Barang Jadi Baja Ringan</td><td>Aset Lancar</td><td><span class="badge bg-primary">Debit</span></td></tr>
+                    <tr><td><code>2-2001</code></td><td>Hutang Usaha Suplier Coil Zincalume</td><td>Kewajiban Lancar</td><td><span class="badge bg-secondary">Kredit</span></td></tr>
+                    <tr><td><code>3-3001</code></td><td>Modal Disetor Pemilik Pabrik</td><td>Ekuitas</td><td><span class="badge bg-secondary">Kredit</span></td></tr>
+                    <tr><td><code>4-4001</code></td><td>Pendapatan Penjualan Kanal C & Reng</td><td>Pendapatan</td><td><span class="badge bg-secondary">Kredit</span></td></tr>
+                    <tr><td><code>5-5001</code></td><td>HPP Pemakaian Bahan Baku Coil</td><td>Beban Pokok</td><td><span class="badge bg-primary">Debit</span></td></tr>
+                    <tr><td><code>5-5002</code></td><td>HPP Listrik & Tenaga Roll-Forming</td><td>Beban Pokok</td><td><span class="badge bg-primary">Debit</span></td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- TAB 4: PORTAL ADMIN & KUSTOMISASI LOGO -->
           <div id="erpTabAdmin" class="d-none">
             <div class="row g-4">
               <div class="col-12 col-lg-6">
@@ -367,21 +527,22 @@
 
               <div class="col-12 col-lg-6">
                 <div class="card p-4 shadow-sm border">
-                  <h5 class="fw-bold mb-3"><i class="bi bi-people text-primary me-2"></i> Manajemen Akun Pengguna & PIN</h5>
-                  <div class="table-responsive mb-3">
-                    <table class="table table-sm table-bordered">
-                      <thead class="table-light">
-                        <tr><th>Nama</th><th>Email</th><th>Peran</th><th>PIN</th></tr>
-                      </thead>
-                      <tbody>
-                        <tr><td>Direktur Utama GSK</td><td>direktur@gsk.id</td><td><span class="badge bg-secondary">Direktur</span></td><td><code>123456</code></td></tr>
-                        <tr><td>Admin Keuangan</td><td>keuangan@gsk.id</td><td><span class="badge bg-secondary">Finance</span></td><td><code>123456</code></td></tr>
-                        <tr><td>Mandor Pabrik</td><td>gudang@gsk.id</td><td><span class="badge bg-secondary">Produksi</span></td><td><code>123456</code></td></tr>
-                      </tbody>
-                    </table>
+                  <h5 class="fw-bold mb-3"><i class="bi bi-shield-check text-primary me-2"></i> Akun Administrator Tunggal</h5>
+                  <div class="p-3 bg-light rounded border mb-3">
+                    <div class="d-flex align-items-center gap-3">
+                      <div class="badge bg-warning text-dark p-3 fs-3 rounded-circle">
+                        <i class="bi bi-person-fill-lock"></i>
+                      </div>
+                      <div>
+                        <h6 class="fw-bold m-0">Administrator Utama GSK</h6>
+                        <span class="badge bg-success my-1">Super Admin (Akses Penuh Semua Menu)</span>
+                        <div class="small text-muted">Email / User: <strong>admin@gsk.id</strong></div>
+                        <div class="small text-muted">PIN Keamanan: <code>123456</code></div>
+                      </div>
+                    </div>
                   </div>
                   <div class="alert alert-info py-2 small m-0">
-                    <i class="bi bi-info-circle me-1"></i> Untuk menambah atau mereset PIN staf lain, Anda juga dapat mengeditnya di sheet <code>Sys_Users</code> pada Google Sheets.
+                    <i class="bi bi-info-circle me-1"></i> <strong>1 Akun untuk Semua Kebutuhan</strong>: Akun ini memiliki izin tertinggi yang mencakup Dashboard Finansial, Produksi Roll-Forming Pabrik, Akuntansi COA, dan Pengaturan Logo.
                   </div>
                 </div>
               </div>
