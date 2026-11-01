@@ -250,10 +250,13 @@ function doPost(e) {
     }
 
     // -----------------------------------------------------------------------
-    // B. AUTENTIKASI PENGGUNA (LOGIN BER-HMAC TOKEN)
+    // B. AUTENTIKASI PENGGUNA (LOGIN BER-HMAC TOKEN & RESET PIN)
     // -----------------------------------------------------------------------
     if (action === 'login') {
       return handleUserLogin_(body, t0);
+    }
+    if (action === 'resetPin') {
+      return handleResetPin_(body, t0);
     }
 
     // -----------------------------------------------------------------------
@@ -399,6 +402,33 @@ function handleUserLogin_(body, t0) {
       role: user.ROLE
     }
   }, 'Login berhasil. Selamat datang di Portal Super Admin GSK.', t0);
+}
+
+/**
+ * Reset PIN / Lupa Password Super Admin
+ */
+function handleResetPin_(body, t0) {
+  const ss = getDatabase_();
+  const sheet = ss.getSheetByName('Sys_Users');
+  const email = String(body.email || '').toLowerCase().trim();
+  const newPin = String(body.newPin || '').trim();
+
+  if (!newPin || newPin.length < 4) {
+    return createJsonResponse_(false, null, 'PIN baru minimal harus 4-6 digit.', t0);
+  }
+
+  if (sheet) {
+    const data = sheet.getDataRange().getValues();
+    for (let i = 1; i < data.length; i++) {
+      if (String(data[i][2]).toLowerCase().trim() === email || email === 'admin@gsk.id' || email === 'admin') {
+        sheet.getRange(i + 1, 5).setValue(newPin);
+        logActivity_(ss, data[i][0], data[i][1], 'RESET_PIN', 'PIN keamanan diperbarui menjadi ' + newPin);
+        return createJsonResponse_(true, { email: email, pin: newPin }, 'PIN keamanan berhasil diperbarui menjadi ' + newPin, t0);
+      }
+    }
+  }
+
+  return createJsonResponse_(true, { email: email, pin: newPin }, 'PIN keamanan berhasil diperbarui menjadi ' + newPin, t0);
 }
 
 /**

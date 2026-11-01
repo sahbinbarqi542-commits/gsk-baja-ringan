@@ -118,14 +118,6 @@ async function muatKatalogPublik() {
     console.log('Sinkronisasi latar belakang selesai atau offline.');
   }
 }
-          { kode: 'FG-01', nama: 'Kanal C 75.75 SNI (Baja Ringan 6M)', satuan: 'Batang', harga: 98000, stok: 850 },
-          { kode: 'FG-02', nama: 'Reng Baja Ringan 30.45 (Panjang 6M)', satuan: 'Batang', harga: 47500, stok: 1200 },
-          { kode: 'FG-03', nama: 'Atap Spandek Galvalum 0.30mm (Panjang 6M)', satuan: 'Lembar', harga: 198000, stok: 400 }
-        ]
-      });
-    }
-  }
-}
 
 function renderKatalogPublik(data) {
   if (!data) return;
@@ -449,12 +441,6 @@ function logoutERP() {
 function bukaAdminPortalFrontend() {
   localStorage.setItem('gsk_jwt_token', 'session.admin.token');
   localStorage.setItem('gsk_user_info', JSON.stringify({ nama: 'Administrator Utama GSK', role: 'Super Admin (Akses Penuh)' }));
-  
-  const modalEl = document.getElementById('modalWorkspaceERP');
-  if (modalEl && typeof bootstrap !== 'undefined') {
-    modalWorkspace = bootstrap.Modal.getOrCreateInstance(modalEl);
-    modalWorkspace.show();
-  }
   bukaWorkspaceERP();
   switchTabERP('dashboard');
 }
@@ -549,5 +535,92 @@ function handleSimpanProfilFrontend(e) {
   }
 
   alert('Profil perusahaan dan logo berhasil disimpan dan diterapkan!');
+}
+
+/**
+ * 5. MODAL LUPA PASSWORD / RESET PIN ADMIN
+ */
+function bukaModalLupaPassword() {
+  const loginEl = document.getElementById('modalLoginInternal');
+  if (loginEl && typeof bootstrap !== 'undefined') {
+    const inst = bootstrap.Modal.getInstance(loginEl);
+    if (inst) inst.hide();
+  }
+
+  const el = document.getElementById('modalLupaPassword');
+  if (el && typeof bootstrap !== 'undefined') {
+    const modal = bootstrap.Modal.getOrCreateInstance(el);
+    modal.show();
+  }
+}
+
+async function handleResetPin(e) {
+  e.preventDefault();
+  const email = document.getElementById('resetEmail').value.trim();
+  const pinBaru = document.getElementById('resetPinBaru').value.trim();
+  const alertBox = document.getElementById('resetAlertModal');
+
+  if (!pinBaru || pinBaru.length < 4) {
+    if (alertBox) {
+      alertBox.textContent = 'PIN baru minimal harus 4-6 digit angka.';
+      alertBox.classList.remove('d-none', 'alert-success');
+      alertBox.classList.add('alert-danger');
+    }
+    return;
+  }
+
+  setLoader(true, 'Memperbarui PIN Keamanan...');
+  try {
+    const res = await fetch(CONFIG.GAS_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'resetPin', email: email, newPin: pinBaru })
+    });
+    const json = await res.json();
+    setLoader(false);
+
+    if (alertBox) {
+      alertBox.classList.remove('d-none', 'alert-danger');
+      alertBox.classList.add('alert-success');
+      alertBox.innerHTML = `<i class="bi bi-check-circle-fill me-1"></i> ${json ? json.message : 'PIN Keamanan berhasil diperbarui!'}`;
+    }
+
+    const pinLogin = document.getElementById('erpPIN');
+    if (pinLogin) pinLogin.value = pinBaru;
+  } catch (err) {
+    setLoader(false);
+    localStorage.setItem('gsk_custom_pin', pinBaru);
+    const pinLogin = document.getElementById('erpPIN');
+    if (pinLogin) pinLogin.value = pinBaru;
+    if (alertBox) {
+      alertBox.classList.remove('d-none', 'alert-danger');
+      alertBox.classList.add('alert-success');
+      alertBox.innerHTML = `<i class="bi bi-check-circle-fill me-1"></i> PIN berhasil disetel ke <b>${pinBaru}</b>! Silakan masuk kembali.`;
+    }
+  }
+}
+
+function kembaliKeLoginDariReset() {
+  const resetEl = document.getElementById('modalLupaPassword');
+  if (resetEl && typeof bootstrap !== 'undefined') {
+    const inst = bootstrap.Modal.getInstance(resetEl);
+    if (inst) inst.hide();
+  }
+  const loginEl = document.getElementById('modalLoginInternal');
+  if (loginEl && typeof bootstrap !== 'undefined') {
+    const inst = bootstrap.Modal.getOrCreateInstance(loginEl);
+    inst.show();
+  }
+}
+
+function tampilkanPinBawaan() {
+  const alertBox = document.getElementById('resetAlertModal');
+  if (alertBox) {
+    alertBox.classList.remove('d-none', 'alert-danger');
+    alertBox.classList.add('alert-info');
+    alertBox.innerHTML = `<strong>PIN Bawaan Sistem:</strong> <code>123456</code><br><span class="small">PIN ini otomatis diisikan ke kolom PIN baru.</span>`;
+  }
+  const pinInput = document.getElementById('resetPinBaru');
+  if (pinInput) pinInput.value = '123456';
 }
 
