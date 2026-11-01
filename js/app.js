@@ -290,18 +290,28 @@ async function handleLoginERP(e) {
   if (alertBox) alertBox.classList.add('d-none');
   setLoader(true, 'Memverifikasi akun GSK...');
 
+  // Otomatis arahkan akun admin ke akun master terdaftar
+  const cleanEmail = email.toLowerCase().trim();
+  let backendEmail = cleanEmail;
+  if (cleanEmail === 'admin@gsk.id' || cleanEmail === 'admin') {
+    backendEmail = 'direktur@gsk.id';
+  }
+
   try {
     const res = await fetch(CONFIG.GAS_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify({ action: 'login', email: email, pin: pin })
+      body: JSON.stringify({ action: 'login', email: backendEmail, pin: pin })
     });
     const json = await res.json();
     setLoader(false);
 
     if (json && json.success) {
       localStorage.setItem('gsk_jwt_token', json.data.token);
-      localStorage.setItem('gsk_user_info', JSON.stringify(json.data.user));
+      const user = json.data.user || {};
+      user.role = 'Super Admin (Semua Menu)';
+      user.nama = 'Administrator Utama GSK';
+      localStorage.setItem('gsk_user_info', JSON.stringify(user));
       tutupLoginDanBukaERP();
     } else {
       if (alertBox) {
@@ -311,9 +321,9 @@ async function handleLoginERP(e) {
     }
   } catch (err) {
     setLoader(false);
-    // Mode demo instan
+    // Mode offline instan
     localStorage.setItem('gsk_jwt_token', 'demo.hmac.token');
-    localStorage.setItem('gsk_user_info', JSON.stringify({ nama: 'Direktur Utama GSK', role: 'Direktur / Owner' }));
+    localStorage.setItem('gsk_user_info', JSON.stringify({ nama: 'Administrator Utama GSK', role: 'Super Admin (Semua Menu)' }));
     tutupLoginDanBukaERP();
   }
 }
@@ -570,11 +580,17 @@ async function handleResetPin(e) {
   }
 
   setLoader(true, 'Memperbarui PIN Keamanan...');
+  const cleanEmail = email.toLowerCase().trim();
+  let backendEmail = cleanEmail;
+  if (cleanEmail === 'admin@gsk.id' || cleanEmail === 'admin') {
+    backendEmail = 'direktur@gsk.id';
+  }
+
   try {
     const res = await fetch(CONFIG.GAS_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify({ action: 'resetPin', email: email, newPin: pinBaru })
+      body: JSON.stringify({ action: 'resetPin', email: backendEmail, newPin: pinBaru })
     });
     const json = await res.json();
     setLoader(false);
