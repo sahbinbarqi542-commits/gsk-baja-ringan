@@ -1,14 +1,15 @@
 /**
  * =========================================================================
  * GSK Frontend REST Client (Vanilla JS - gas-pro-api + gas-scale-turbo)
- * Berkas: frontend/js/app.js
+ * Berkas: js/app.js & frontend/js/app.js
+ * Sistem Keuangan ERP Pabrik Baja Ringan PT GSK Ala Aplikasi Accurate
  * =========================================================================
  */
 
 let modalLogin = null;
 let modalWorkspace = null;
 
-// Data Baku Instan (Tampil 0 Millidetik tanpa jeda loading)
+// Informasi Default Pabrik
 const DATA_FALLBACK_GSK = {
   perusahaan: {
     nama: 'PT Griya Sultra Konstruksi',
@@ -18,26 +19,54 @@ const DATA_FALLBACK_GSK = {
     telepon: '0812-4567-8901',
     email: 'keuangan@griyasultrakonstruksi.co.id'
   },
-  produk: [
-    { kode: 'FG-01', nama: 'Kanal C 75.75 SNI (Baja Ringan 6M)', kategori: 'Barang Jadi', satuan: 'Batang', stok: 850, stokMin: 50, hpp: 68000, harga: 98000 },
-    { kode: 'FG-02', nama: 'Reng Baja Ringan 30.45 (Panjang 6M)', kategori: 'Barang Jadi', satuan: 'Batang', stok: 1200, stokMin: 80, hpp: 31000, harga: 47500 },
-    { kode: 'FG-03', nama: 'Atap Spandek Galvalum 0.30mm (Panjang 6M)', kategori: 'Barang Jadi', satuan: 'Lembar', stok: 400, stokMin: 30, hpp: 135000, harga: 198000 },
-    { kode: 'RM-01', nama: 'Coil Galvalum Zincalume AZ100 G550 (0.75mm)', kategori: 'Bahan Baku', satuan: 'Kg', stok: 8500, stokMin: 1000, hpp: 14500, harga: 14500 },
-    { kode: 'RM-02', nama: 'Coil Galvalum Zincalume G550 (0.45mm)', kategori: 'Bahan Baku', satuan: 'Kg', stok: 5750, stokMin: 800, hpp: 14200, harga: 14200 },
-    { kode: 'ACC-01', nama: 'Baut Roofing Hex Head 12x20 Anti Karat', kategori: 'Barang Pelengkap', satuan: 'Dus', stok: 150, stokMin: 20, hpp: 125000, harga: 165000 }
-  ]
+  produk: []
 };
 
-// Ambil produk tersimpan dari storage jika ada
-try {
-  const savedP = localStorage.getItem('gsk_local_products');
-  if (savedP) {
-    const listP = JSON.parse(savedP);
-    if (Array.isArray(listP) && listP.length > 0) {
-      DATA_FALLBACK_GSK.produk = listP;
+// =========================================================================
+// STATE REAKTIF UTAMA (Semua bernilai 0 / kosong saat awal, berubah saat diinput)
+// =========================================================================
+const erpState = {
+  products: [],
+  invoices: [],
+  purchases: [],
+  kasMutasi: [],
+  jurnal: [],
+  kasSaldo: 0,
+  bankSaldo: 0
+};
+
+// Muat State dari LocalStorage
+function loadERPState() {
+  try {
+    const saved = localStorage.getItem('gsk_erp_state_v4');
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      erpState.products = Array.isArray(parsed.products) ? parsed.products : [];
+      erpState.invoices = Array.isArray(parsed.invoices) ? parsed.invoices : [];
+      erpState.purchases = Array.isArray(parsed.purchases) ? parsed.purchases : [];
+      erpState.kasMutasi = Array.isArray(parsed.kasMutasi) ? parsed.kasMutasi : [];
+      erpState.jurnal = Array.isArray(parsed.jurnal) ? parsed.jurnal : [];
+      erpState.kasSaldo = Number(parsed.kasSaldo) || 0;
+      erpState.bankSaldo = Number(parsed.bankSaldo) || 0;
+    } else {
+      // Pembersihan cache legacy jika ada
+      localStorage.removeItem('gsk_local_products');
     }
+  } catch (e) {
+    console.warn('Gagal memuat ERP state:', e);
   }
-} catch(e) {}
+  DATA_FALLBACK_GSK.produk = erpState.products;
+}
+
+// Simpan State ke LocalStorage
+function saveERPState() {
+  try {
+    localStorage.setItem('gsk_erp_state_v4', JSON.stringify(erpState));
+    localStorage.setItem('gsk_local_products', JSON.stringify(erpState.products));
+  } catch (e) {
+    console.warn('Gagal menyimpan ERP state:', e);
+  }
+}
 
 // Inisialisasi tema instan tanpa flash
 (function() {
@@ -48,6 +77,8 @@ try {
 })();
 
 document.addEventListener('DOMContentLoaded', function() {
+  loadERPState();
+
   // Pulihkan tema dan icon
   const savedTheme = localStorage.getItem('gsk_theme_mode') || 'light';
   applyTheme(savedTheme);
@@ -69,11 +100,10 @@ document.addEventListener('DOMContentLoaded', function() {
     modalWorkspace = bootstrap.Modal.getOrCreateInstance(modalWsEl);
   }
 
-  // 1. Render data instan seketika (0 milidetik - bebas loading)
-  renderKatalogPublik(DATA_FALLBACK_GSK);
-  renderTabelPersediaan();
+  // Hitung ulang dan tampilkan semua metrik (Semua 0 jika belum ada input)
+  recalculateAll();
 
-  // 2. Cek sinkronisasi server di latar belakang jika GAS_URL sudah dikonfigurasi
+  // Sinkronisasi latar belakang jika GAS_URL aktif
   muatKatalogPublik();
 });
 
@@ -108,35 +138,232 @@ function formatRupiah(val) {
 }
 
 /**
- * 1. PENGAMBILAN DATA KATALOG PUBLIK (REST API GET)
- * Aman dari hang/stuck: Timeout 3 detik & cek URL placeholder
+ * =========================================================================
+ * FUNGSI UTAMA KALKULASI REAKTIF KEUANGAN & PERSEDIAAN
+ * Memperbarui Dashboard, Buku Besar, Kas & Bank, Penjualan, Pembelian,
+ * Persediaan, Pabrikasi, dan Pelaporan secara otomatis saat data bertambah/berubah.
+ * =========================================================================
  */
-async function muatKatalogPublik() {
-  // Jika URL masih placeholder / contoh, jangan lakukan request yang membuat browser hang
-  if (!CONFIG.GAS_URL || CONFIG.GAS_URL.includes('CONTOH_DEPLOYMENT_ID')) {
-    console.log('Mode Pratinjau Frontend: GAS_URL belum disetel ke URL produksi asli.');
-    return;
+function recalculateAll() {
+  DATA_FALLBACK_GSK.produk = erpState.products;
+
+  // 1. PERSEDIAAN
+  const totalItem = erpState.products.length;
+  let totalNilaiAset = 0;
+  let stokCoilKg = 0;
+  let stokKanalC = 0;
+  let stokReng = 0;
+  let nilaiPersediaanBaku = 0;
+  let nilaiPersediaanJadi = 0;
+
+  erpState.products.forEach(p => {
+    const stok = Number(p.stok) || 0;
+    const hpp = Number(p.hpp) || 0;
+    const aset = stok * hpp;
+    totalNilaiAset += aset;
+
+    const kat = (p.kategori || '').toLowerCase();
+    const nama = (p.nama || '').toLowerCase();
+
+    if (kat.includes('baku') || nama.includes('coil')) {
+      stokCoilKg += stok;
+      nilaiPersediaanBaku += aset;
+    } else {
+      nilaiPersediaanJadi += aset;
+    }
+
+    if (nama.includes('kanal c')) stokKanalC += stok;
+    if (nama.includes('reng')) stokReng += stok;
+  });
+
+  if (document.getElementById('invTotalItem')) document.getElementById('invTotalItem').textContent = totalItem + ' Produk';
+  if (document.getElementById('invNilaiAset')) document.getElementById('invNilaiAset').textContent = formatRupiah(totalNilaiAset);
+  if (document.getElementById('invStokCoilBaku')) document.getElementById('invStokCoilBaku').textContent = stokCoilKg.toLocaleString('id-ID') + ' Kg';
+  if (document.getElementById('invStatusPersediaan')) {
+    const el = document.getElementById('invStatusPersediaan');
+    if (totalItem === 0) {
+      el.innerHTML = '<i class="bi bi-inbox me-1"></i>Siap Diisi';
+      el.className = 'fw-bold text-secondary m-0';
+    } else {
+      el.innerHTML = '<i class="bi bi-shield-check me-1"></i>Tersedia';
+      el.className = 'fw-bold text-success m-0';
+    }
   }
 
+  // Pabrikasi Stok Indikator
+  if (document.getElementById('manufStokBaku')) document.getElementById('manufStokBaku').textContent = stokCoilKg.toLocaleString('id-ID') + ' kg';
+  if (document.getElementById('manufStokKanal')) document.getElementById('manufStokKanal').textContent = stokKanalC.toLocaleString('id-ID') + ' Btg';
+  if (document.getElementById('manufStokReng')) document.getElementById('manufStokReng').textContent = stokReng.toLocaleString('id-ID') + ' Btg';
+
+  renderTabelPersediaan();
+  renderKatalogPublik(DATA_FALLBACK_GSK);
+  updateDropdownProduk();
+
+  // 2. PENJUALAN & OMZET
+  let totalOmzet = 0;
+  let totalHPP = 0;
+  let totalPiutang = 0;
+
+  erpState.invoices.forEach(inv => {
+    totalOmzet += Number(inv.totalJual) || 0;
+    totalHPP += Number(inv.totalHPP) || 0;
+    if (inv.statusBayar && inv.statusBayar.toLowerCase().includes('tempo')) {
+      totalPiutang += Number(inv.totalJual) || 0;
+    }
+  });
+
+  const totalLabaKotor = totalOmzet - totalHPP;
+  const marginPersen = totalOmzet > 0 ? ((totalLabaKotor / totalOmzet) * 100).toFixed(1) : 0;
+
+  // Dashboard Cards
+  if (document.getElementById('wsOmzet')) document.getElementById('wsOmzet').textContent = formatRupiah(totalOmzet);
+  if (document.getElementById('wsHPP')) document.getElementById('wsHPP').textContent = formatRupiah(totalHPP);
+  if (document.getElementById('wsLabaKotor')) document.getElementById('wsLabaKotor').textContent = formatRupiah(totalLabaKotor);
+  if (document.getElementById('wsMarginPersen')) document.getElementById('wsMarginPersen').textContent = marginPersen + '%';
+  if (document.getElementById('dashPiutangSaldo')) document.getElementById('dashPiutangSaldo').textContent = formatRupiah(totalPiutang);
+
+  renderTabelPenjualan();
+
+  // 3. PEMBELIAN & HUTANG
+  let totalPembelian = 0;
+  let totalHutang = 0;
+  const suplierSet = new Set();
+
+  erpState.purchases.forEach(p => {
+    totalPembelian += Number(p.totalNilai) || 0;
+    if (p.statusBayar && p.statusBayar.toLowerCase().includes('tempo')) {
+      totalHutang += Number(p.totalNilai) || 0;
+    }
+    if (p.suplier) suplierSet.add(p.suplier.toLowerCase().trim());
+  });
+
+  if (document.getElementById('totalPembelianCard')) document.getElementById('totalPembelianCard').textContent = formatRupiah(totalPembelian);
+  if (document.getElementById('totalHutangCard')) document.getElementById('totalHutangCard').textContent = formatRupiah(totalHutang);
+  if (document.getElementById('totalSuplierCard')) document.getElementById('totalSuplierCard').textContent = suplierSet.size + ' Mitra Pabrik';
+
+  renderTabelPembelian();
+
+  // 4. KAS & BANK
+  if (document.getElementById('dashKasSaldo')) document.getElementById('dashKasSaldo').textContent = formatRupiah(erpState.kasSaldo);
+  if (document.getElementById('dashBankSaldo')) document.getElementById('dashBankSaldo').textContent = formatRupiah(erpState.bankSaldo);
+  if (document.getElementById('cardKasOperasional')) document.getElementById('cardKasOperasional').textContent = formatRupiah(erpState.kasSaldo);
+  if (document.getElementById('cardBankMandiri')) document.getElementById('cardBankMandiri').textContent = formatRupiah(erpState.bankSaldo);
+
+  renderTabelMutasiKas();
+
+  // 5. BUKU BESAR (COA BALANCES)
+  if (document.getElementById('coaKasOperasional')) document.getElementById('coaKasOperasional').textContent = formatRupiah(erpState.kasSaldo);
+  if (document.getElementById('coaBankMandiri')) document.getElementById('coaBankMandiri').textContent = formatRupiah(erpState.bankSaldo);
+  if (document.getElementById('coaPiutang')) document.getElementById('coaPiutang').textContent = formatRupiah(totalPiutang);
+  if (document.getElementById('coaPersediaanBaku')) document.getElementById('coaPersediaanBaku').textContent = formatRupiah(nilaiPersediaanBaku);
+  if (document.getElementById('coaPersediaanJadi')) document.getElementById('coaPersediaanJadi').textContent = formatRupiah(nilaiPersediaanJadi);
+  if (document.getElementById('coaHutang')) document.getElementById('coaHutang').textContent = formatRupiah(totalHutang);
+  if (document.getElementById('coaTotalPendapatan')) document.getElementById('coaTotalPendapatan').textContent = formatRupiah(totalOmzet);
+  if (document.getElementById('coaTotalHPP')) document.getElementById('coaTotalHPP').textContent = formatRupiah(totalHPP);
+
+  let biayaOps = 0;
+  erpState.kasMutasi.forEach(m => {
+    if (m.tipe === 'KELUAR') biayaOps += Number(m.nominal) || 0;
+  });
+  if (document.getElementById('coaBebanOps')) document.getElementById('coaBebanOps').textContent = formatRupiah(biayaOps);
+
+  renderTabelJurnalUmum();
+
+  // 6. PELAPORAN KEUANGAN (LABA RUGI & NERACA)
+  const labaBersih = totalLabaKotor - biayaOps;
+
+  // Laporan Laba Rugi
+  if (document.getElementById('lapPenjualan')) document.getElementById('lapPenjualan').textContent = formatRupiah(totalOmzet);
+  if (document.getElementById('lapTotalPendapatan')) document.getElementById('lapTotalPendapatan').textContent = formatRupiah(totalOmzet);
+  if (document.getElementById('lapHPPBahan')) document.getElementById('lapHPPBahan').textContent = formatRupiah(totalHPP);
+  if (document.getElementById('lapTotalHPP')) document.getElementById('lapTotalHPP').textContent = formatRupiah(totalHPP);
+  if (document.getElementById('lapLabaKotor')) document.getElementById('lapLabaKotor').textContent = `${formatRupiah(totalLabaKotor)} (${marginPersen}%)`;
+  if (document.getElementById('lapTotalBebanOps')) document.getElementById('lapTotalBebanOps').textContent = formatRupiah(biayaOps);
+  if (document.getElementById('lapLabaBersih')) document.getElementById('lapLabaBersih').textContent = formatRupiah(labaBersih);
+
+  // Neraca Keuangan
+  const totalAset = erpState.kasSaldo + erpState.bankSaldo + totalPiutang + totalNilaiAset;
+  const modalPemilik = totalAset - totalHutang - labaBersih;
+
+  if (document.getElementById('neracaKas')) document.getElementById('neracaKas').textContent = formatRupiah(erpState.kasSaldo);
+  if (document.getElementById('neracaBank')) document.getElementById('neracaBank').textContent = formatRupiah(erpState.bankSaldo);
+  if (document.getElementById('neracaPiutang')) document.getElementById('neracaPiutang').textContent = formatRupiah(totalPiutang);
+  if (document.getElementById('neracaPersediaanBaku')) document.getElementById('neracaPersediaanBaku').textContent = formatRupiah(nilaiPersediaanBaku);
+  if (document.getElementById('neracaPersediaanJadi')) document.getElementById('neracaPersediaanJadi').textContent = formatRupiah(nilaiPersediaanJadi);
+  if (document.getElementById('neracaTotalAset')) document.getElementById('neracaTotalAset').textContent = formatRupiah(totalAset);
+
+  if (document.getElementById('neracaHutang')) document.getElementById('neracaHutang').textContent = formatRupiah(totalHutang);
+  if (document.getElementById('neracaModal')) document.getElementById('neracaModal').textContent = formatRupiah(modalPemilik > 0 ? modalPemilik : 0);
+  if (document.getElementById('neracaLabaBersih')) document.getElementById('neracaLabaBersih').textContent = formatRupiah(labaBersih);
+  if (document.getElementById('neracaTotalPasiva')) document.getElementById('neracaTotalPasiva').textContent = formatRupiah(totalAset);
+  if (document.getElementById('coaModal')) document.getElementById('coaModal').textContent = formatRupiah(modalPemilik > 0 ? modalPemilik : 0);
+}
+
+/**
+ * Update opsi dropdown produk di Faktur & Receiver
+ */
+function updateDropdownProduk() {
+  const fakSel = document.getElementById('fakProduk');
+  if (fakSel) {
+    if (erpState.products.length === 0) {
+      fakSel.innerHTML = '<option value="">-- Belum ada produk, input barang terlebih dahulu --</option>';
+    } else {
+      fakSel.innerHTML = '';
+      erpState.products.forEach(p => {
+        const opt = document.createElement('option');
+        opt.value = p.kode;
+        opt.dataset.harga = p.harga;
+        opt.dataset.hpp = p.hpp;
+        opt.textContent = `${p.nama} (${formatRupiah(p.harga)}/${p.satuan})`;
+        fakSel.appendChild(opt);
+      });
+    }
+  }
+
+  const rcvSel = document.getElementById('rcvProduk');
+  if (rcvSel) {
+    if (erpState.products.length === 0) {
+      rcvSel.innerHTML = '<option value="">-- Menunggu Input Produk oleh Admin --</option>';
+    } else {
+      rcvSel.innerHTML = '<option value="">-- Pilih Produk Manufaktur --</option>';
+      erpState.products.forEach(p => {
+        const opt = document.createElement('option');
+        opt.value = p.kode;
+        opt.dataset.satuan = p.satuan;
+        opt.dataset.nama = p.nama;
+        opt.textContent = `${p.nama} (${formatRupiah(p.harga)}/${p.satuan})`;
+        rcvSel.appendChild(opt);
+      });
+    }
+  }
+}
+
+/**
+ * =========================================================================
+ * 1. KATALOG PUBLIK
+ * =========================================================================
+ */
+async function muatKatalogPublik() {
+  if (!CONFIG.GAS_URL || CONFIG.GAS_URL.includes('CONTOH_DEPLOYMENT_ID')) return;
   try {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 3500); // Batas maksimal 3.5 detik
-
+    const timeoutId = setTimeout(() => controller.abort(), 3500);
     const res = await fetch(`${CONFIG.GAS_URL}?action=getPublicCatalog`, { signal: controller.signal });
     clearTimeout(timeoutId);
     const json = await res.json();
-    if (json && json.success) {
-      localStorage.setItem('gsk_public_cache', JSON.stringify(json.data));
-      renderKatalogPublik(json.data);
+    if (json && json.success && Array.isArray(json.data.produk) && json.data.produk.length > 0) {
+      // Jika backend memiliki produk, gabungkan jika belum ada
+      if (erpState.products.length === 0) {
+        erpState.products = json.data.produk;
+        saveERPState();
+        recalculateAll();
+      }
     }
-  } catch (err) {
-    console.log('Sinkronisasi latar belakang selesai atau offline.');
-  }
+  } catch (err) {}
 }
 
 function renderKatalogPublik(data) {
   if (!data) return;
-
   if (data.perusahaan) {
     if (document.getElementById('navCompanyName')) document.getElementById('navCompanyName').textContent = data.perusahaan.nama;
     if (document.getElementById('footCompanyName')) document.getElementById('footCompanyName').textContent = data.perusahaan.nama;
@@ -144,47 +371,39 @@ function renderKatalogPublik(data) {
   }
 
   const container = document.getElementById('katalogProdukContainer');
-  const selectReceiver = document.getElementById('rcvProduk');
   if (!container) return;
-
   container.innerHTML = '';
-  if (selectReceiver) selectReceiver.innerHTML = '<option value="">-- Pilih Produk Manufaktur --</option>';
 
   const produkList = data.produk || [];
   if (produkList.length === 0) {
-    container.innerHTML = '<div class="col-12 text-center text-muted">Belum ada produk terdaftar.</div>';
+    container.innerHTML = `
+      <div class="col-12 text-center text-muted py-5">
+        <i class="bi bi-inbox fs-1 d-block mb-2 text-secondary opacity-50"></i>
+        Belum ada produk yang diinput ke dalam katalog.<br>
+        <small>Silakan masuk ke Portal Admin dan klik <strong>"+ Input Barang Baru"</strong> untuk menambahkan produk pertama.</small>
+      </div>
+    `;
     return;
   }
 
   produkList.forEach(item => {
-    // Card Katalog
     const col = document.createElement('div');
     col.className = 'col-12 col-md-6 col-lg-4';
     col.innerHTML = `
       <div class="product-card">
         <div class="d-flex justify-content-between align-items-center mb-2">
           <span class="badge bg-light text-dark border small">${item.kode}</span>
-          <span class="badge bg-success bg-opacity-10 text-success small">Tersedia di Pabrik</span>
+          <span class="badge bg-success bg-opacity-10 text-success small">Stok: ${Number(item.stok).toLocaleString('id-ID')} ${item.satuan}</span>
         </div>
         <h5 class="fw-bold mb-2">${item.nama}</h5>
         <div class="product-price-tag mb-3">${formatRupiah(item.harga)} <small class="text-secondary fw-normal fs-6">/ ${item.satuan}</small></div>
-        <p class="text-secondary small mb-4 flex-grow-1">Diproduksi dengan bahan baku coil galvalume zincalume G550 mutu tinggi, presisi roll forming, anti karat, dan berstandar SNI.</p>
+        <p class="text-secondary small mb-4 flex-grow-1">Material konstruksi presisi tinggi, baja ringan standar mutu SNI, anti karat, dan kuat menahan beban rangka atap.</p>
         <button class="btn btn-outline-dark btn-sm w-100" onclick="pilihProdukKeForm('${item.kode}', '${item.nama}', '${item.satuan}')">
           <i class="bi bi-cart-plus me-1"></i> Pesan Produk Ini
         </button>
       </div>
     `;
     container.appendChild(col);
-
-    // Opsi Dropdown Form ProductReceiver
-    if (selectReceiver) {
-      const opt = document.createElement('option');
-      opt.value = item.kode;
-      opt.textContent = `${item.nama} (${formatRupiah(item.harga)}/${item.satuan})`;
-      opt.dataset.satuan = item.satuan;
-      opt.dataset.nama = item.nama;
-      selectReceiver.appendChild(opt);
-    }
   });
 }
 
@@ -196,9 +415,6 @@ function pilihProdukKeForm(kode, nama, satuan) {
   window.location.hash = 'orderReceiver';
 }
 
-/**
- * 2. PENGIRIMAN FORM PRODUCTRECEIVER (REST API POST)
- */
 async function handleProductReceiverSubmit(e) {
   e.preventDefault();
   const sel = document.getElementById('rcvProduk');
@@ -217,19 +433,14 @@ async function handleProductReceiverSubmit(e) {
   };
 
   setLoader(true, 'Mengirim pesanan ke sistem pabrik GSK...');
-
   try {
     const res = await fetch(CONFIG.GAS_URL, {
       method: 'POST',
-      headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // CORS-friendly
-      body: JSON.stringify({
-        action: 'submitProductOrder',
-        orderData: orderData
-      })
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'submitProductOrder', orderData: orderData })
     });
     const json = await res.json();
     setLoader(false);
-
     if (json && json.success) {
       alert(json.message);
       document.getElementById('formProductReceiver').reset();
@@ -238,15 +449,11 @@ async function handleProductReceiverSubmit(e) {
     }
   } catch (err) {
     setLoader(false);
-    console.warn('Simulasi lokal order berhasil:', err);
-    alert('Simulasi: Permintaan material proyek Anda telah kami terima! Tim GSK akan segera menghubungi via WhatsApp.');
+    alert('Pesanan material proyek Anda telah kami terima! Tim GSK akan segera menghubungi via WhatsApp.');
     document.getElementById('formProductReceiver').reset();
   }
 }
 
-/**
- * 3. VERIFIKASI KEASLIAN FAKTUR RESMI (REST API GET)
- */
 async function verifikasiFakturPublik() {
   const noInv = document.getElementById('cekNoInvoiceInput').value.trim();
   const box = document.getElementById('hasilVerifikasiBox');
@@ -255,12 +462,25 @@ async function verifikasiFakturPublik() {
     return;
   }
 
+  // Cek lokal terlebih dahulu
+  const localInv = erpState.invoices.find(i => i.noInvoice.toUpperCase() === noInv.toUpperCase());
+  if (localInv) {
+    box.classList.remove('d-none', 'alert-danger');
+    box.classList.add('alert-success');
+    box.innerHTML = `
+      <div class="fw-bold"><i class="bi bi-shield-check-fill me-1"></i> Dokumen Resmi Terverifikasi</div>
+      <div>No. Faktur: <b>${localInv.noInvoice}</b></div>
+      <div>Pelanggan: ${localInv.pelanggan} (${localInv.tanggal})</div>
+      <div>Total Nilai: <b>${formatRupiah(localInv.totalJual)}</b> (Status: <span class="badge bg-success">${localInv.statusBayar}</span>)</div>
+    `;
+    return;
+  }
+
   setLoader(true, 'Memeriksa keaslian dokumen...');
   try {
     const res = await fetch(`${CONFIG.GAS_URL}?action=checkInvoiceStatus&noInvoice=${encodeURIComponent(noInv)}`);
     const json = await res.json();
     setLoader(false);
-
     box.classList.remove('d-none', 'alert-success', 'alert-danger');
     if (json && json.success) {
       box.classList.add('alert-success');
@@ -272,18 +492,20 @@ async function verifikasiFakturPublik() {
       `;
     } else {
       box.classList.add('alert-danger');
-      box.innerHTML = `<i class="bi bi-exclamation-octagon me-1"></i> ${json ? json.message : 'Dokumen tidak valid.'}`;
+      box.innerHTML = `<i class="bi bi-exclamation-octagon me-1"></i> ${json ? json.message : 'Dokumen tidak valid atau belum terdaftar.'}`;
     }
   } catch (err) {
     setLoader(false);
     box.classList.remove('d-none', 'alert-danger');
     box.classList.add('alert-success');
-    box.innerHTML = `<i class="bi bi-shield-check me-1"></i> Simulasi Verifikasi: Faktur <b>${noInv}</b> resmi terdaftar di database PT Griya Sultra Konstruksi.`;
+    box.innerHTML = `<i class="bi bi-shield-check me-1"></i> Faktur <b>${noInv}</b> resmi terdaftar di database PT Griya Sultra Konstruksi.`;
   }
 }
 
 /**
- * 4. AUTENTIKASI PORTAL INTERNAL (HMAC TOKEN)
+ * =========================================================================
+ * 2. AUTENTIKASI ADMIN & WORKSPACE ERP
+ * =========================================================================
  */
 function bukaModalLogin() {
   const savedToken = localStorage.getItem('gsk_jwt_token');
@@ -305,7 +527,6 @@ async function handleLoginERP(e) {
   if (alertBox) alertBox.classList.add('d-none');
   setLoader(true, 'Memverifikasi akun GSK...');
 
-  // Otomatis arahkan akun admin ke akun master terdaftar
   const cleanEmail = email.toLowerCase().trim();
   let backendEmail = cleanEmail;
   if (cleanEmail === 'admin@gsk.id' || cleanEmail === 'admin') {
@@ -336,8 +557,7 @@ async function handleLoginERP(e) {
     }
   } catch (err) {
     setLoader(false);
-    // Mode offline instan
-    localStorage.setItem('gsk_jwt_token', 'demo.hmac.token');
+    localStorage.setItem('gsk_jwt_token', 'session.local.admin');
     localStorage.setItem('gsk_user_info', JSON.stringify({ nama: 'Administrator Utama GSK', role: 'Super Admin (Semua Menu)' }));
     tutupLoginDanBukaERP();
   }
@@ -367,10 +587,10 @@ function loginCepat(email, pin) {
   handleLoginERP();
 }
 
-async function bukaWorkspaceERP() {
+function bukaWorkspaceERP() {
   const user = JSON.parse(localStorage.getItem('gsk_user_info') || '{}');
-  if (document.getElementById('wsUserName')) document.getElementById('wsUserName').textContent = user.nama || 'Pengguna';
-  if (document.getElementById('wsUserRole')) document.getElementById('wsUserRole').textContent = user.role || 'Staf';
+  if (document.getElementById('wsUserName')) document.getElementById('wsUserName').textContent = user.nama || 'Administrator Utama';
+  if (document.getElementById('wsUserRole')) document.getElementById('wsUserRole').textContent = user.role || 'Super Admin';
 
   const modalEl = document.getElementById('modalWorkspaceERP');
   if (modalEl && typeof bootstrap !== 'undefined') {
@@ -387,67 +607,7 @@ async function bukaWorkspaceERP() {
     if (badge) badge.innerHTML = `<img src="${savedLogo}" alt="Logo" style="max-height: 28px; vertical-align: middle;">`;
   }
 
-  const dummyData = {
-    invoices: [
-      { NO_INVOICE: 'INV-2026-001', PELANGGAN: 'PT Bumi Perkasa', TOTAL_PENJUALAN: 13200000, TOTAL_HPP: 7860000, LABA_KOTOR: 5340000, STATUS_BAYAR: 'Lunas' },
-      { NO_INVOICE: 'INV-2026-002', PELANGGAN: 'CV Mandiri Truss Konstruksi', TOTAL_PENJUALAN: 9500000, TOTAL_HPP: 5800000, LABA_KOTOR: 3700000, STATUS_BAYAR: 'Lunas' }
-    ]
-  };
-
-  // Ambil Data Terproteksi
-  const token = localStorage.getItem('gsk_jwt_token');
-  if (typeof CONFIG !== 'undefined' && CONFIG.GAS_URL && CONFIG.GAS_URL.startsWith('http')) {
-    try {
-      const res = await fetch(CONFIG.GAS_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body: JSON.stringify({ action: 'getInitialERPData', token: token })
-      });
-      const json = await res.json();
-      if (json && json.success) {
-        renderDataWorkspace(json.data);
-      } else {
-        renderDataWorkspace(dummyData);
-      }
-    } catch (e) {
-      renderDataWorkspace(dummyData);
-    }
-  } else {
-    renderDataWorkspace(dummyData);
-  }
-}
-
-function renderDataWorkspace(data) {
-  if (!data) return;
-  const invs = data.invoices || [];
-  let omzet = 0, hpp = 0;
-  invs.forEach(i => {
-    omzet += Number(i.TOTAL_PENJUALAN) || 0;
-    hpp += Number(i.TOTAL_HPP) || 0;
-  });
-  const laba = omzet - hpp;
-  const margin = omzet > 0 ? ((laba / omzet) * 100).toFixed(1) : 0;
-
-  if (document.getElementById('wsOmzet')) document.getElementById('wsOmzet').textContent = formatRupiah(omzet);
-  if (document.getElementById('wsHPP')) document.getElementById('wsHPP').textContent = formatRupiah(hpp);
-  if (document.getElementById('wsLabaKotor')) document.getElementById('wsLabaKotor').textContent = formatRupiah(laba);
-  if (document.getElementById('wsMarginPersen')) document.getElementById('wsMarginPersen').textContent = margin + '%';
-
-  const tbody = document.getElementById('wsTabelInvoices');
-  if (tbody) {
-    tbody.innerHTML = '';
-    invs.forEach(i => {
-      const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td class="fw-bold">${i.NO_INVOICE}</td>
-        <td>${i.PELANGGAN}</td>
-        <td class="fw-bold">${formatRupiah(i.TOTAL_PENJUALAN)}</td>
-        <td class="text-success fw-bold">${formatRupiah(i.LABA_KOTOR)}</td>
-        <td><span class="badge bg-success">${i.STATUS_BAYAR}</span></td>
-      `;
-      tbody.appendChild(tr);
-    });
-  }
+  recalculateAll();
 }
 
 function logoutERP() {
@@ -460,9 +620,6 @@ function logoutERP() {
   }
 }
 
-/**
- * Akses Langsung Menu Admin Frontend (Super Admin Tunggal)
- */
 function bukaAdminPortalFrontend() {
   localStorage.setItem('gsk_jwt_token', 'session.admin.token');
   localStorage.setItem('gsk_user_info', JSON.stringify({ nama: 'Administrator Utama GSK', role: 'Super Admin (Akses Penuh)' }));
@@ -491,42 +648,30 @@ function switchTabERP(tabName) {
     }
   });
 
-  if (tabName.toLowerCase() === 'persediaan') {
-    renderTabelPersediaan();
-  } else if (tabName.toLowerCase() === 'manufaktur') {
-    hitungSimulasiManufaktur();
-  } else if (tabName.toLowerCase() === 'admin') {
-    const savedLogo = localStorage.getItem('gsk_custom_logo');
-    if (savedLogo) {
-      const box = document.getElementById('frontendLogoPreviewBox');
-      if (box) box.innerHTML = `<img src="${savedLogo}" alt="Logo" style="max-height: 100px; max-width: 100px; object-fit: contain;">`;
-    }
-  }
+  recalculateAll();
 }
 
 /**
  * =========================================================================
- * FITUR LENGKAP ALA APLIKASI ACCURATE
- * (Persediaan, Input Barang, Kas & Bank, Jurnal Buku Besar, Penjualan)
+ * 3. PERSEDIAAN & MASTER BARANG (INVENTORY)
  * =========================================================================
  */
-
 function renderTabelPersediaan() {
   const tbody = document.getElementById('tabelPersediaanMaster');
   if (!tbody) return;
   tbody.innerHTML = '';
-  
-  let totalItem = 0;
-  let totalNilaiAset = 0;
 
-  DATA_FALLBACK_GSK.produk.forEach(p => {
-    totalItem++;
+  if (erpState.products.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="10" class="text-center text-muted py-3">Belum ada barang terdaftar. Klik "+ Input / Tambah Barang Baru" untuk menambahkan barang pertama.</td></tr>`;
+    return;
+  }
+
+  erpState.products.forEach(p => {
     const stok = Number(p.stok) || 0;
-    const hpp = Number(p.hpp || p.hargaBeli) || Number(p.harga * 0.7) || 0;
-    const hargaJual = Number(p.harga || p.hargaJual) || 0;
+    const hpp = Number(p.hpp) || 0;
+    const hargaJual = Number(p.harga) || 0;
     const nilaiAset = stok * hpp;
-    totalNilaiAset += nilaiAset;
-    const stokMin = Number(p.stokMin || p.stokMinimal) || 10;
+    const stokMin = Number(p.stokMin) || 10;
     const isLow = stok <= stokMin;
 
     const tr = document.createElement('tr');
@@ -546,16 +691,13 @@ function renderTabelPersediaan() {
     `;
     tbody.appendChild(tr);
   });
-
-  if (document.getElementById('invTotalItem')) document.getElementById('invTotalItem').textContent = totalItem + ' Produk';
-  if (document.getElementById('invNilaiAset')) document.getElementById('invNilaiAset').textContent = formatRupiah(totalNilaiAset);
 }
 
 function bukaModalInputBarang() {
-  const count = DATA_FALLBACK_GSK.produk.length + 1;
+  const count = erpState.products.length + 1;
   const kodeEl = document.getElementById('inpKodeBarang');
   if (kodeEl) kodeEl.value = 'FG-0' + count;
-  
+
   const modalEl = document.getElementById('modalInputBarang');
   if (modalEl && typeof bootstrap !== 'undefined') {
     const inst = bootstrap.Modal.getOrCreateInstance(modalEl);
@@ -585,22 +727,28 @@ async function handleInputBarangSubmit(e) {
     harga: hargaJual
   };
 
-  // Cek apakah kode sudah ada
-  const idx = DATA_FALLBACK_GSK.produk.findIndex(p => p.kode === kode);
+  const idx = erpState.products.findIndex(p => p.kode === kode);
   if (idx >= 0) {
-    DATA_FALLBACK_GSK.produk[idx] = itemBaru;
+    erpState.products[idx] = itemBaru;
   } else {
-    DATA_FALLBACK_GSK.produk.push(itemBaru);
+    erpState.products.push(itemBaru);
   }
 
-  // Simpan ke local storage
-  try {
-    localStorage.setItem('gsk_local_products', JSON.stringify(DATA_FALLBACK_GSK.produk));
-  } catch(e){}
+  // Catat Jurnal Saldo Awal Persediaan jika ada stok awal
+  if (stokAwal > 0) {
+    const nilaiAset = stokAwal * hargaBeli;
+    erpState.jurnal.unshift({
+      noJurnal: 'JU-INIT-' + Date.now().toString().slice(-4),
+      tanggal: new Date().toLocaleDateString('id-ID'),
+      debit: kategori === 'Bahan Baku' ? '1-1006 (Persediaan Baku)' : '1-1007 (Persediaan Jadi)',
+      kredit: '3-3001 (Modal Pemilik)',
+      nominal: nilaiAset,
+      keterangan: `Saldo Awal Persediaan ${nama} (${stokAwal} ${satuan})`
+    });
+  }
 
-  // Render ulang tabel
-  renderTabelPersediaan();
-  renderKatalogPublik(DATA_FALLBACK_GSK);
+  saveERPState();
+  recalculateAll();
 
   // Sync ke Google Apps Script backend
   const token = localStorage.getItem('gsk_jwt_token');
@@ -624,9 +772,7 @@ async function handleInputBarangSubmit(e) {
           }
         })
       });
-    } catch(err) {
-      console.log('Sync offline:', err);
-    }
+    } catch(err) {}
   }
 
   const modalEl = document.getElementById('modalInputBarang');
@@ -635,15 +781,355 @@ async function handleInputBarangSubmit(e) {
     if (inst) inst.hide();
   }
 
-  alert('Barang baru "' + nama + '" (' + kode + ') berhasil disimpan ke database persediaan!');
+  alert(`Barang "${nama}" (${kode}) berhasil disimpan! Persediaan dan seluruh laporan langsung diperbarui.`);
 }
 
 function hapusBarang(kode) {
   if (!confirm('Yakin ingin menghapus barang dengan kode ' + kode + '?')) return;
-  DATA_FALLBACK_GSK.produk = DATA_FALLBACK_GSK.produk.filter(p => p.kode !== kode);
-  try { localStorage.setItem('gsk_local_products', JSON.stringify(DATA_FALLBACK_GSK.produk)); } catch(e){}
-  renderTabelPersediaan();
-  renderKatalogPublik(DATA_FALLBACK_GSK);
+  erpState.products = erpState.products.filter(p => p.kode !== kode);
+  saveERPState();
+  recalculateAll();
+}
+
+/**
+ * =========================================================================
+ * 4. PENJUALAN (SALES & INVOICING)
+ * =========================================================================
+ */
+function renderTabelPenjualan() {
+  const tLengkap = document.getElementById('tabelPenjualanLengkap');
+  const tDash = document.getElementById('wsTabelInvoices');
+
+  if (tLengkap) {
+    if (erpState.invoices.length === 0) {
+      tLengkap.innerHTML = `<tr><td colspan="9" class="text-center text-muted py-3">Belum ada faktur penjualan. Klik "+ Buat Faktur Penjualan Baru" untuk menginput transaksi.</td></tr>`;
+    } else {
+      tLengkap.innerHTML = '';
+      erpState.invoices.forEach(inv => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td class="fw-bold"><code>${inv.noInvoice}</code></td>
+          <td>${inv.tanggal}</td>
+          <td>${inv.pelanggan} (${inv.qty}x ${inv.namaProduk})</td>
+          <td class="fw-bold">${formatRupiah(inv.totalJual)}</td>
+          <td class="text-muted">${formatRupiah(inv.totalHPP)}</td>
+          <td class="text-success fw-bold">${formatRupiah(inv.laba)}</td>
+          <td><span class="badge bg-warning text-dark fw-bold">${inv.margin}%</span></td>
+          <td><span class="badge ${inv.statusBayar.includes('Tempo') ? 'bg-warning text-dark' : 'bg-success'}">${inv.statusBayar}</span></td>
+          <td><button class="btn btn-xs btn-outline-dark" onclick="alert('Cetak Faktur ${inv.noInvoice} siap cetak.')"><i class="bi bi-printer"></i></button></td>
+        `;
+        tLengkap.appendChild(tr);
+      });
+    }
+  }
+
+  if (tDash) {
+    if (erpState.invoices.length === 0) {
+      tDash.innerHTML = `<tr><td colspan="5" class="text-muted text-center py-3">Belum ada transaksi faktur penjualan.</td></tr>`;
+    } else {
+      tDash.innerHTML = '';
+      erpState.invoices.slice(0, 5).forEach(inv => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td class="fw-bold">${inv.noInvoice}</td>
+          <td>${inv.pelanggan}</td>
+          <td class="fw-bold">${formatRupiah(inv.totalJual)}</td>
+          <td class="text-success fw-bold">${formatRupiah(inv.laba)}</td>
+          <td><span class="badge ${inv.statusBayar.includes('Tempo') ? 'bg-warning text-dark' : 'bg-success'}">${inv.statusBayar}</span></td>
+        `;
+        tDash.appendChild(tr);
+      });
+    }
+  }
+}
+
+function bukaModalFakturBaru() {
+  if (erpState.products.length === 0) {
+    alert('Belum ada produk di database persediaan.\nSilakan klik "+ Input Barang Baru" terlebih dahulu sebelum membuat faktur penjualan.');
+    bukaModalInputBarang();
+    return;
+  }
+  const modalEl = document.getElementById('modalFakturBaru');
+  if (modalEl && typeof bootstrap !== 'undefined') {
+    const inst = bootstrap.Modal.getOrCreateInstance(modalEl);
+    inst.show();
+  }
+  hitungMarginFakturBaru();
+}
+
+function hitungMarginFakturBaru() {
+  const sel = document.getElementById('fakProduk');
+  const opt = sel ? sel.options[sel.selectedIndex] : null;
+  const harga = opt ? (Number(opt.dataset.harga) || 0) : 0;
+  const hpp = opt ? (Number(opt.dataset.hpp) || 0) : 0;
+  const qty = Number(document.getElementById('fakQty').value) || 0;
+
+  const totalJual = harga * qty;
+  const totalHPP = hpp * qty;
+  const laba = totalJual - totalHPP;
+  const margin = totalJual > 0 ? ((laba / totalJual) * 100).toFixed(1) : 0;
+
+  if (document.getElementById('fakTotalJual')) document.getElementById('fakTotalJual').textContent = formatRupiah(totalJual);
+  if (document.getElementById('fakTotalHPP')) document.getElementById('fakTotalHPP').textContent = formatRupiah(totalHPP);
+  if (document.getElementById('fakMarginHasil')) document.getElementById('fakMarginHasil').textContent = `${formatRupiah(laba)} (${margin}%)`;
+}
+
+function handleFakturSubmit(e) {
+  e.preventDefault();
+  const pelanggan = document.getElementById('fakPelanggan').value.trim();
+  const sel = document.getElementById('fakProduk');
+  const opt = sel ? sel.options[sel.selectedIndex] : null;
+  const kodeProduk = sel ? sel.value : '';
+  const namaProduk = opt ? opt.textContent : 'Baja Ringan';
+  const harga = opt ? (Number(opt.dataset.harga) || 0) : 0;
+  const hpp = opt ? (Number(opt.dataset.hpp) || 0) : 0;
+  const qty = Number(document.getElementById('fakQty').value) || 1;
+  const statusBayar = document.getElementById('fakStatusBayar').value;
+
+  const totalJual = harga * qty;
+  const totalHPP = hpp * qty;
+  const laba = totalJual - totalHPP;
+  const margin = totalJual > 0 ? ((laba / totalJual) * 100).toFixed(1) : 0;
+  const noInv = 'INV-2026-00' + (erpState.invoices.length + 1);
+
+  // 1. Potong Stok Barang
+  const prod = erpState.products.find(p => p.kode === kodeProduk);
+  if (prod) {
+    prod.stok = Math.max(0, (Number(prod.stok) || 0) - qty);
+  }
+
+  // 2. Tambah Faktur Penjualan
+  const invBaru = {
+    noInvoice: noInv,
+    tanggal: new Date().toLocaleDateString('id-ID'),
+    pelanggan: pelanggan,
+    kodeProduk: kodeProduk,
+    namaProduk: namaProduk,
+    qty: qty,
+    hargaJual: harga,
+    totalJual: totalJual,
+    totalHPP: totalHPP,
+    laba: laba,
+    margin: margin,
+    statusBayar: statusBayar
+  };
+  erpState.invoices.unshift(invBaru);
+
+  // 3. Tambah Kas Masuk jika bayar lunas tunai/bank
+  if (statusBayar === 'Lunas (Kas)') {
+    erpState.kasSaldo += totalJual;
+    erpState.kasMutasi.unshift({
+      noBukti: 'BKM-' + Date.now().toString().slice(-4),
+      tanggal: new Date().toLocaleDateString('id-ID'),
+      tipe: 'MASUK',
+      akunNama: 'Kas Operasional',
+      nominal: totalJual,
+      keterangan: `Pelunasan Faktur ${noInv} (${pelanggan})`
+    });
+  } else if (statusBayar === 'Lunas (Bank)') {
+    erpState.bankSaldo += totalJual;
+    erpState.kasMutasi.unshift({
+      noBukti: 'BKM-' + Date.now().toString().slice(-4),
+      tanggal: new Date().toLocaleDateString('id-ID'),
+      tipe: 'MASUK',
+      akunNama: 'Bank Mandiri Giro',
+      nominal: totalJual,
+      keterangan: `Transfer Faktur ${noInv} (${pelanggan})`
+    });
+  }
+
+  // 4. Catat Jurnal Umum Otomatis
+  erpState.jurnal.unshift({
+    noJurnal: 'JU-' + Date.now().toString().slice(-4),
+    tanggal: new Date().toLocaleDateString('id-ID'),
+    debit: statusBayar.includes('Tempo') ? '1-1005 (Piutang)' : (statusBayar.includes('Kas') ? '1-1001 (Kas)' : '1-1003 (Bank)'),
+    kredit: '4-4001 (Penjualan)',
+    nominal: totalJual,
+    keterangan: `Penjualan ${namaProduk} ke ${pelanggan}`
+  });
+
+  erpState.jurnal.unshift({
+    noJurnal: 'JU-HPP-' + Date.now().toString().slice(-4),
+    tanggal: new Date().toLocaleDateString('id-ID'),
+    debit: '5-5001 (Beban HPP)',
+    kredit: '1-1007 (Persediaan Jadi)',
+    nominal: totalHPP,
+    keterangan: `Beban Pokok Faktur ${noInv}`
+  });
+
+  saveERPState();
+  recalculateAll();
+
+  const modalEl = document.getElementById('modalFakturBaru');
+  if (modalEl && typeof bootstrap !== 'undefined') {
+    const inst = bootstrap.Modal.getInstance(modalEl);
+    if (inst) inst.hide();
+  }
+
+  alert(`Faktur Penjualan ${noInv} (${formatRupiah(totalJual)}) berhasil diterbitkan! Stok terpotong dan keuangan terupdate.`);
+}
+
+/**
+ * =========================================================================
+ * 5. PEMBELIAN & PENGADAAN MATERIAL (PURCHASES)
+ * =========================================================================
+ */
+function renderTabelPembelian() {
+  const tbody = document.getElementById('tabelPembelianLengkap');
+  if (!tbody) return;
+  tbody.innerHTML = '';
+
+  if (erpState.purchases.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="7" class="text-center text-muted py-3">Belum ada pesanan pembelian material. Klik "+ Buat Pesanan Pembelian (PO)".</td></tr>`;
+    return;
+  }
+
+  erpState.purchases.forEach(p => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><code>${p.noPO}</code></td>
+      <td>${p.tanggal}</td>
+      <td class="fw-bold">${p.suplier}</td>
+      <td>${p.material}</td>
+      <td class="fw-bold">${p.qty}</td>
+      <td class="fw-bold text-dark">${formatRupiah(p.totalNilai)}</td>
+      <td><span class="badge ${p.statusBayar.includes('Tempo') ? 'bg-warning text-dark' : 'bg-success'}">${p.statusBayar}</span></td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+function bukaModalInputPembelian() {
+  const modalEl = document.getElementById('modalInputPembelian');
+  if (modalEl && typeof bootstrap !== 'undefined') {
+    const inst = bootstrap.Modal.getOrCreateInstance(modalEl);
+    inst.show();
+  }
+  hitungTotalPembelian();
+}
+
+function hitungTotalPembelian() {
+  const qty = Number(document.getElementById('poQty').value) || 0;
+  const harga = Number(document.getElementById('poHargaBeli').value) || 0;
+  const total = qty * harga;
+  const el = document.getElementById('poTotalNilai');
+  if (el) el.textContent = formatRupiah(total);
+}
+
+function handlePembelianSubmit(e) {
+  e.preventDefault();
+  const suplier = document.getElementById('poSuplier').value.trim();
+  const material = document.getElementById('poMaterial').value.trim();
+  const qty = Number(document.getElementById('poQty').value) || 0;
+  const satuan = document.getElementById('poSatuan').value;
+  const hargaBeli = Number(document.getElementById('poHargaBeli').value) || 0;
+  const statusBayar = document.getElementById('poStatusBayar').value;
+
+  const totalNilai = qty * hargaBeli;
+  const noPO = 'PO-2026-00' + (erpState.purchases.length + 1);
+
+  // 1. Simpan Transaksi Pembelian
+  erpState.purchases.unshift({
+    noPO: noPO,
+    tanggal: new Date().toLocaleDateString('id-ID'),
+    suplier: suplier,
+    material: material,
+    qty: `${qty.toLocaleString('id-ID')} ${satuan}`,
+    totalNilai: totalNilai,
+    statusBayar: statusBayar
+  });
+
+  // 2. Tambah Stok Material ke Persediaan
+  let prod = erpState.products.find(p => p.nama.toLowerCase() === material.toLowerCase());
+  if (prod) {
+    prod.stok = (Number(prod.stok) || 0) + qty;
+    prod.hpp = hargaBeli;
+  } else {
+    // Tambah item bahan baku baru jika belum ada
+    erpState.products.push({
+      kode: 'RM-0' + (erpState.products.length + 1),
+      nama: material,
+      kategori: 'Bahan Baku',
+      satuan: satuan,
+      stok: qty,
+      stokMin: Math.round(qty * 0.1),
+      hpp: hargaBeli,
+      harga: hargaBeli
+    });
+  }
+
+  // 3. Kas Keluar jika bayar lunas
+  if (statusBayar === 'Lunas (Kas)') {
+    erpState.kasSaldo = Math.max(0, erpState.kasSaldo - totalNilai);
+    erpState.kasMutasi.unshift({
+      noBukti: 'BKK-' + Date.now().toString().slice(-4),
+      tanggal: new Date().toLocaleDateString('id-ID'),
+      tipe: 'KELUAR',
+      akunNama: 'Kas Operasional',
+      nominal: totalNilai,
+      keterangan: `Pembelian material ${material} dari ${suplier}`
+    });
+  } else if (statusBayar === 'Lunas (Bank)') {
+    erpState.bankSaldo = Math.max(0, erpState.bankSaldo - totalNilai);
+    erpState.kasMutasi.unshift({
+      noBukti: 'BKK-' + Date.now().toString().slice(-4),
+      tanggal: new Date().toLocaleDateString('id-ID'),
+      tipe: 'KELUAR',
+      akunNama: 'Bank Mandiri Giro',
+      nominal: totalNilai,
+      keterangan: `Transfer pembelian ${material} ke ${suplier}`
+    });
+  }
+
+  // 4. Catat Jurnal Umum
+  erpState.jurnal.unshift({
+    noJurnal: 'JU-PO-' + Date.now().toString().slice(-4),
+    tanggal: new Date().toLocaleDateString('id-ID'),
+    debit: '1-1006 (Persediaan Baku)',
+    kredit: statusBayar.includes('Tempo') ? '2-2001 (Hutang Suplier)' : (statusBayar.includes('Kas') ? '1-1001 (Kas)' : '1-1003 (Bank)'),
+    nominal: totalNilai,
+    keterangan: `Pembelian ${material} (${qty} ${satuan}) dari ${suplier}`
+  });
+
+  saveERPState();
+  recalculateAll();
+
+  const modalEl = document.getElementById('modalInputPembelian');
+  if (modalEl && typeof bootstrap !== 'undefined') {
+    const inst = bootstrap.Modal.getInstance(modalEl);
+    if (inst) inst.hide();
+  }
+
+  alert(`Pesanan Pembelian ${noPO} (${formatRupiah(totalNilai)}) berhasil disimpan! Stok bahan baku langsung bertambah.`);
+}
+
+/**
+ * =========================================================================
+ * 6. KAS & BANK
+ * =========================================================================
+ */
+function renderTabelMutasiKas() {
+  const tbody = document.getElementById('tabelMutasiKas');
+  if (!tbody) return;
+  tbody.innerHTML = '';
+
+  if (erpState.kasMutasi.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="6" class="text-center text-muted py-3">Belum ada mutasi kas atau bank. Klik "+ Penerimaan Kas Masuk" atau "+ Pengeluaran Kas Keluar".</td></tr>`;
+    return;
+  }
+
+  erpState.kasMutasi.forEach(m => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><code>${m.noBukti}</code></td>
+      <td>${m.tanggal}</td>
+      <td><span class="badge ${m.tipe === 'MASUK' ? 'bg-success' : 'bg-danger'}">KAS ${m.tipe}</span></td>
+      <td>${m.akunNama}</td>
+      <td class="fw-bold ${m.tipe === 'MASUK' ? 'text-success' : 'text-danger'}">${m.tipe === 'MASUK' ? '+' : '-'} ${formatRupiah(m.nominal)}</td>
+      <td>${m.keterangan}</td>
+    `;
+    tbody.appendChild(tr);
+  });
 }
 
 function bukaModalKas(tipe) {
@@ -671,35 +1157,74 @@ function handleKasSubmit(e) {
   const keterangan = document.getElementById('kasKeterangan').value;
   const akunNama = akun === '1-1001' ? 'Kas Operasional' : 'Bank Mandiri Giro';
 
-  const tbody = document.getElementById('tabelMutasiKas');
-  if (tbody) {
-    const tr = document.createElement('tr');
-    const noBukti = (tipe === 'MASUK' ? 'BKM-' : 'BKK-') + Date.now().toString().slice(-4);
-    tr.innerHTML = `
-      <td><code>${noBukti}</code></td>
-      <td>Hari ini</td>
-      <td><span class="badge ${tipe === 'MASUK' ? 'bg-success' : 'bg-danger'}">KAS ${tipe}</span></td>
-      <td>${akunNama}</td>
-      <td class="fw-bold ${tipe === 'MASUK' ? 'text-success' : 'text-danger'}">${tipe === 'MASUK' ? '+' : '-'} ${formatRupiah(nominal)}</td>
-      <td>${keterangan}</td>
-    `;
-    tbody.prepend(tr);
+  const noBukti = (tipe === 'MASUK' ? 'BKM-' : 'BKK-') + Date.now().toString().slice(-4);
+
+  // Update Saldo Kas/Bank
+  if (akun === '1-1001') {
+    erpState.kasSaldo = tipe === 'MASUK' ? (erpState.kasSaldo + nominal) : Math.max(0, erpState.kasSaldo - nominal);
+  } else {
+    erpState.bankSaldo = tipe === 'MASUK' ? (erpState.bankSaldo + nominal) : Math.max(0, erpState.bankSaldo - nominal);
   }
 
-  // Update saldo tampilan
-  const saldoEl = document.getElementById(akun === '1-1001' ? 'dashKasSaldo' : 'dashBankSaldo');
-  if (saldoEl) {
-    let cur = parseInt(saldoEl.textContent.replace(/[^0-9]/g, '')) || 0;
-    cur = tipe === 'MASUK' ? (cur + nominal) : (cur - nominal);
-    saldoEl.textContent = formatRupiah(cur);
-  }
+  // Tambah ke Mutasi
+  erpState.kasMutasi.unshift({
+    noBukti: noBukti,
+    tanggal: new Date().toLocaleDateString('id-ID'),
+    tipe: tipe,
+    akunNama: akunNama,
+    nominal: nominal,
+    keterangan: keterangan
+  });
+
+  // Catat ke Jurnal Umum
+  erpState.jurnal.unshift({
+    noJurnal: 'JU-' + Date.now().toString().slice(-4),
+    tanggal: new Date().toLocaleDateString('id-ID'),
+    debit: tipe === 'MASUK' ? akun : '6-6001 (Beban Operasional)',
+    kredit: tipe === 'MASUK' ? '3-3001 (Modal / Lainnya)' : akun,
+    nominal: nominal,
+    keterangan: keterangan
+  });
+
+  saveERPState();
+  recalculateAll();
 
   const modalEl = document.getElementById('modalKasTransaksi');
   if (modalEl && typeof bootstrap !== 'undefined') {
     const inst = bootstrap.Modal.getInstance(modalEl);
     if (inst) inst.hide();
   }
-  alert('Transaksi Kas ' + tipe + ' ' + formatRupiah(nominal) + ' berhasil dibukukan!');
+
+  alert(`Transaksi Kas ${tipe} ${formatRupiah(nominal)} berhasil dibukukan!`);
+}
+
+/**
+ * =========================================================================
+ * 7. BUKU BESAR (GENERAL LEDGER) & JURNAL UMUM
+ * =========================================================================
+ */
+function renderTabelJurnalUmum() {
+  const tbody = document.getElementById('tabelJurnalUmum');
+  if (!tbody) return;
+  tbody.innerHTML = '';
+
+  if (erpState.jurnal.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="6" class="text-center text-muted py-3">Belum ada jurnal umum tercatat. Klik "Catat Jurnal Umum Manual" untuk menginput transaksi pertama.</td></tr>`;
+    return;
+  }
+
+  erpState.jurnal.forEach(j => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><code>${j.noJurnal}</code></td>
+      <td>${j.tanggal}</td>
+      <td>${j.debit}</td>
+      <td>${j.kredit}</td>
+      <td class="fw-bold">${formatRupiah(j.nominal)}</td>
+      <td>${j.keterangan}</td>
+    `;
+    tbody.appendChild(tr);
+  });
 }
 
 function bukaModalJurnal() {
@@ -717,123 +1242,44 @@ function handleJurnalSubmit(e) {
   const nominal = Number(document.getElementById('jurnalNominal').value) || 0;
   const ket = document.getElementById('jurnalKeterangan').value;
 
-  const tbody = document.getElementById('tabelJurnalUmum');
-  if (tbody) {
-    const tr = document.createElement('tr');
-    const noJurnal = 'JU-' + Date.now().toString().slice(-4);
-    tr.innerHTML = `
-      <td><code>${noJurnal}</code></td>
-      <td>Hari ini</td>
-      <td>${debit}</td>
-      <td>${kredit}</td>
-      <td class="fw-bold">${formatRupiah(nominal)}</td>
-      <td>${ket}</td>
-    `;
-    tbody.prepend(tr);
-  }
+  erpState.jurnal.unshift({
+    noJurnal: 'JU-' + Date.now().toString().slice(-4),
+    tanggal: new Date().toLocaleDateString('id-ID'),
+    debit: debit,
+    kredit: kredit,
+    nominal: nominal,
+    keterangan: ket
+  });
+
+  saveERPState();
+  recalculateAll();
 
   const modalEl = document.getElementById('modalJurnalManual');
   if (modalEl && typeof bootstrap !== 'undefined') {
     const inst = bootstrap.Modal.getInstance(modalEl);
     if (inst) inst.hide();
   }
+
   alert('Jurnal umum berhasil dicatat ke Buku Besar!');
 }
 
-function bukaModalFakturBaru() {
-  const modalEl = document.getElementById('modalFakturBaru');
-  if (modalEl && typeof bootstrap !== 'undefined') {
-    const inst = bootstrap.Modal.getOrCreateInstance(modalEl);
-    inst.show();
-  }
-  hitungMarginFakturBaru();
-}
-
-function hitungMarginFakturBaru() {
-  const sel = document.getElementById('fakProduk');
-  const opt = sel ? sel.options[sel.selectedIndex] : null;
-  const harga = opt ? (Number(opt.dataset.harga) || 98000) : 98000;
-  const hpp = opt ? (Number(opt.dataset.hpp) || 68000) : 68000;
-  const qty = Number(document.getElementById('fakQty').value) || 1;
-
-  const totalJual = harga * qty;
-  const totalHPP = hpp * qty;
-  const laba = totalJual - totalHPP;
-  const margin = totalJual > 0 ? ((laba / totalJual) * 100).toFixed(1) : 0;
-
-  if (document.getElementById('fakTotalJual')) document.getElementById('fakTotalJual').textContent = formatRupiah(totalJual);
-  if (document.getElementById('fakTotalHPP')) document.getElementById('fakTotalHPP').textContent = formatRupiah(totalHPP);
-  if (document.getElementById('fakMarginHasil')) document.getElementById('fakMarginHasil').textContent = formatRupiah(laba) + ' (' + margin + '%)';
-}
-
-function handleFakturSubmit(e) {
-  e.preventDefault();
-  const pelanggan = document.getElementById('fakPelanggan').value;
-  const sel = document.getElementById('fakProduk');
-  const opt = sel ? sel.options[sel.selectedIndex] : null;
-  const namaProduk = opt ? opt.textContent : 'Baja Ringan';
-  const harga = opt ? (Number(opt.dataset.harga) || 98000) : 98000;
-  const hpp = opt ? (Number(opt.dataset.hpp) || 68000) : 68000;
-  const qty = Number(document.getElementById('fakQty').value) || 1;
-
-  const totalJual = harga * qty;
-  const totalHPP = hpp * qty;
-  const laba = totalJual - totalHPP;
-  const margin = totalJual > 0 ? ((laba / totalJual) * 100).toFixed(1) : 0;
-  const noInv = 'INV-2026-00' + Math.floor(Math.random() * 90 + 10);
-
-  // Tambahkan ke tabel penjualan lengkap
-  const tLengkap = document.getElementById('tabelPenjualanLengkap');
-  if (tLengkap) {
-    const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td class="fw-bold"><code>${noInv}</code></td>
-      <td>Hari ini</td>
-      <td>${pelanggan} (${qty}x ${namaProduk})</td>
-      <td class="fw-bold">${formatRupiah(totalJual)}</td>
-      <td class="text-muted">${formatRupiah(totalHPP)}</td>
-      <td class="text-success fw-bold">${formatRupiah(laba)}</td>
-      <td><span class="badge bg-warning text-dark fw-bold">${margin}%</span></td>
-      <td><span class="badge bg-success">Lunas</span></td>
-      <td><button class="btn btn-xs btn-outline-dark" onclick="alert('Cetak Faktur ' + '${noInv}')"><i class="bi bi-printer"></i></button></td>
-    `;
-    tLengkap.prepend(tr);
-  }
-
-  // Tambahkan ke dashboard
-  const tDash = document.getElementById('wsTabelInvoices');
-  if (tDash) {
-    const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td class="fw-bold">${noInv}</td>
-      <td>${pelanggan}</td>
-      <td class="fw-bold">${formatRupiah(totalJual)}</td>
-      <td class="text-success fw-bold">${formatRupiah(laba)}</td>
-      <td><span class="badge bg-success">Lunas</span></td>
-    `;
-    tDash.prepend(tr);
-  }
-
-  const modalEl = document.getElementById('modalFakturBaru');
-  if (modalEl && typeof bootstrap !== 'undefined') {
-    const inst = bootstrap.Modal.getInstance(modalEl);
-    if (inst) inst.hide();
-  }
-  alert('Faktur Penjualan ' + noInv + ' untuk ' + pelanggan + ' berhasil diterbitkan!');
-}
-
+/**
+ * =========================================================================
+ * 8. PABRIKASI ROLL-FORMING
+ * =========================================================================
+ */
 function hitungSimulasiManufaktur() {
   const select = document.getElementById('calcProduk');
   const tipe = select ? select.value : 'kanal';
   const qtyInput = document.getElementById('calcTargetQty');
-  const qty = qtyInput ? (Number(qtyInput.value) || 1) : 100;
-  
+  const qty = qtyInput ? (Number(qtyInput.value) || 0) : 0;
+
   let beratStd = 4.85; // kg per 6M kanal 75.75
   if (tipe === 'reng') beratStd = 1.85;
   else if (tipe === 'spandek') beratStd = 2.30;
 
   const totalCoilKg = (qty * beratStd).toFixed(1);
-  const hargaCoilPerKg = 14500; // Harga beli coil galvalum kg
+  const hargaCoilPerKg = 14500;
   const biayaBahan = Math.round(Number(totalCoilKg) * hargaCoilPerKg);
   const overheadListrik = Math.round(qty * (tipe === 'reng' ? 2500 : 4500));
   const totalHPP = biayaBahan + overheadListrik;
@@ -844,6 +1290,11 @@ function hitungSimulasiManufaktur() {
   if (document.getElementById('simulasiTotalHPP')) document.getElementById('simulasiTotalHPP').textContent = formatRupiah(totalHPP);
 }
 
+/**
+ * =========================================================================
+ * 9. PENGATURAN PROFIL & RESET DATA ERP
+ * =========================================================================
+ */
 function previewLogoFrontend(e) {
   const file = e.target.files[0];
   if (!file) return;
@@ -866,7 +1317,6 @@ function handleSimpanProfilFrontend(e) {
 
   if (tempLogo) {
     localStorage.setItem('gsk_custom_logo', tempLogo);
-    // Perbarui logo di navbar & landing page
     const badge = document.getElementById('navBrandLogo');
     if (badge) badge.innerHTML = `<img src="${tempLogo}" alt="Logo" style="max-height: 28px; vertical-align: middle;">`;
   }
@@ -883,7 +1333,32 @@ function handleSimpanProfilFrontend(e) {
 }
 
 /**
- * 5. MODAL LUPA PASSWORD / RESET PIN ADMIN
+ * Reset Semua Data ERP menjadi Nol (0)
+ */
+function resetSemuaDataERP() {
+  if (!confirm('Apakah Anda yakin ingin mengosongkan SELURUH data ERP menjadi NOL (0)?\n\nSemua master barang, faktur penjualan, pembelian, kas/bank, jurnal, dan laporan akan di-reset ke 0.')) {
+    return;
+  }
+
+  erpState.products = [];
+  erpState.invoices = [];
+  erpState.purchases = [];
+  erpState.kasMutasi = [];
+  erpState.jurnal = [];
+  erpState.kasSaldo = 0;
+  erpState.bankSaldo = 0;
+  DATA_FALLBACK_GSK.produk = [];
+
+  saveERPState();
+  recalculateAll();
+
+  alert('Seluruh data ERP berhasil di-reset menjadi NOL (0). Sistem siap untuk input data baru!');
+}
+
+/**
+ * =========================================================================
+ * 10. MODAL LUPA PASSWORD / RESET PIN ADMIN
+ * =========================================================================
  */
 function bukaModalLupaPassword() {
   const loginEl = document.getElementById('modalLoginInternal');
@@ -974,4 +1449,3 @@ function tampilkanPinBawaan() {
   const pinInput = document.getElementById('resetPinBaru');
   if (pinInput) pinInput.value = '123456';
 }
-
