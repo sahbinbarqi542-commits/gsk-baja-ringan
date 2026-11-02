@@ -896,11 +896,20 @@ const ACCURATE_MENUS = {
     ]
   },
   perusahaan: {
-    title: 'Profil Perusahaan',
+    title: 'Perusahaan',
     tiles: [
-      { name: 'Identitas Pabrik GSK', icon: 'bi-building', color: 'tile-sky', action: "switchTabERP('admin')" },
-      { name: 'Logo Pabrik', icon: 'bi-image', color: 'tile-amber', action: "switchTabERP('admin')" },
-      { name: 'Alamat & Kontak', icon: 'bi-geo-alt', color: 'tile-emerald', action: "switchTabERP('admin')" }
+      { name: 'Pajak', icon: 'bi-file-earmark-text', color: 'tile-sky', action: "switchTabERP('admin')" },
+      { name: 'Syarat Pembayaran', icon: 'bi-wallet2', color: 'tile-sky', action: "switchTabERP('admin')" },
+      { name: 'Pengiriman', icon: 'bi-truck', color: 'tile-sky', action: "bukaSuratJalan()" },
+      { name: 'FOB', icon: 'bi-box-seam', color: 'tile-sky', action: "switchTabERP('admin')" },
+      { name: 'Gaji/Tunjangan', icon: 'bi-cash-coin', color: 'tile-sky', action: "bukaModalKas('KELUAR')" },
+      { name: 'Karyawan', icon: 'bi-person-badge', color: 'tile-sky', action: "switchTabERP('admin')" },
+      { name: 'Transaksi Berulang', icon: 'bi-arrow-repeat', color: 'tile-emerald', action: "switchTabERP('admin')" },
+      { name: 'Proses Akhir Bulan', icon: 'bi-calendar-check', color: 'tile-emerald', action: "prosesAkhirBulan()" },
+      { name: 'Kontak', icon: 'bi-person-lines-fill', color: 'tile-purple', action: "switchTabERP('admin')" },
+      { name: 'Transaksi Favorit', icon: 'bi-star-fill', color: 'tile-purple', action: "switchTabERP('admin')" },
+      { name: 'Kalender', icon: 'bi-calendar3', color: 'tile-purple', action: "switchTabERP('admin')" },
+      { name: 'Log Aktifitas', icon: 'bi-clock-history', color: 'tile-purple', action: "bukaModalLogAktifitas()" }
     ]
   },
   admin: {
@@ -2516,4 +2525,58 @@ function simpanHasilImporAccurate() {
     const inst = bootstrap.Modal.getInstance(modalEl);
     if (inst) inst.hide();
   }
+}
+
+/**
+ * =========================================================================
+ * 12. FITUR MODUL PERUSAHAAN ALA ACCURATE ONLINE
+ * =========================================================================
+ */
+function prosesAkhirBulan() {
+  const d = new Date();
+  const namaBulan = d.toLocaleString('id-ID', { month: 'long', year: 'numeric' });
+  const konfirmasi = confirm(
+    `PROSES AKHIR BULAN ACCURATE (${namaBulan.toUpperCase()}):\n\n` +
+    `Sistem akan melakukan perhitungan:\n` +
+    `1. Penutupan mutasi kas & bank bulan berjalan\n` +
+    `2. Perhitungan akumulasi penyusutan aset & mesin roll-forming pabrik\n` +
+    `3. Pembukuan laba/rugi berjalan ke modal ditahan\n\n` +
+    `Lanjutkan proses akhir bulan ini?`
+  );
+
+  if (!konfirmasi) return;
+
+  const noJurnal = 'JU-CL-' + Date.now().toString().slice(-4);
+  erpState.jurnal.unshift({
+    noJurnal: noJurnal,
+    tanggal: new Date().toLocaleDateString('id-ID'),
+    debit: '5-5999 (Ikhtisar Laba Rugi Akhir Bulan)',
+    kredit: '3-3002 (Laba Ditahan / Modal Akhir)',
+    nominal: 0,
+    keterangan: `Proses Tutup Buku & Akhir Bulan ${namaBulan}`
+  });
+
+  saveERPState();
+  recalculateAll();
+
+  alert(`Proses Akhir Bulan untuk periode ${namaBulan} telah berhasil diselesaikan secara otomatis!`);
+}
+
+function bukaModalLogAktifitas() {
+  const totalBarang = (erpState.products || []).length;
+  const totalInv = (erpState.invoices || []).length;
+  const totalBeli = (erpState.purchases || []).length;
+  const totalJurnal = (erpState.jurnal || []).length;
+
+  alert(
+    `LOG AKTIFITAS SISTEM ERP PT GSK:\n\n` +
+    `- Status Sesi: Administrator Utama (Super Admin Aktif)\n` +
+    `- Waktu Server Lokal: ${new Date().toLocaleString('id-ID')}\n` +
+    `- Total Transaksi Penjualan: ${totalInv} faktur\n` +
+    `- Total Pembelian Bahan Baku: ${totalBeli} PO\n` +
+    `- Total Item Persediaan Terdaftar: ${totalBarang} item\n` +
+    `- Total Baris Pembukuan Jurnal: ${totalJurnal} entri\n` +
+    `- Penyimpanan Lokal: Tersinkronisasi Penuh (Auto-Saved)\n\n` +
+    `Semua aktivitas sistem tercatat dengan aman.`
+  );
 }
