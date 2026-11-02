@@ -627,6 +627,207 @@ function bukaAdminPortalFrontend() {
   switchTabERP('dashboard');
 }
 
+/**
+ * =========================================================================
+ * STRUKTUR MENU GRID KARTU FLYOUT (PERSIS FOTO LAPTOP ZEUS.ACCURATE.ID)
+ * =========================================================================
+ */
+const ACCURATE_MENUS = {
+  kasbank: {
+    title: 'Kas & Bank',
+    tiles: [
+      { name: 'Pembayaran', icon: 'bi-cash-coin', color: 'tile-emerald', action: "bukaModalKas('KELUAR')" },
+      { name: 'Penerimaan', icon: 'bi-cash-stack', color: 'tile-emerald', action: "bukaModalKas('MASUK')" },
+      { name: 'Transfer Bank', icon: 'bi-credit-card-2-front', color: 'tile-sky', action: "bukaModalKas('MASUK')" },
+      { name: 'SmartLink e-Banking', icon: 'bi-laptop', color: 'tile-sky', action: "switchTabERP('kasbank')" },
+      { name: 'Rekening Koran', icon: 'bi-file-earmark-spreadsheet', color: 'tile-sky', action: "switchTabERP('kasbank')" },
+      { name: 'Histori Bank', icon: 'bi-bank', color: 'tile-purple', action: "switchTabERP('kasbank')" },
+      { name: 'Rekonsiliasi Bank', icon: 'bi-check2-square', color: 'tile-purple', action: "switchTabERP('kasbank')" },
+      { name: 'SmartLink Virtual Account', icon: 'bi-upc-scan', color: 'tile-purple', action: "switchTabERP('kasbank')" },
+      { name: 'SmartLink e-Payment', icon: 'bi-credit-card', color: 'tile-purple', action: "switchTabERP('kasbank')" }
+    ]
+  },
+  penjualan: {
+    title: 'Penjualan',
+    tiles: [
+      { name: 'Penawaran Penjualan', icon: 'bi-file-earmark-text', color: 'tile-emerald', action: "bukaModalFakturBaru()" },
+      { name: 'Pesanan Penjualan', icon: 'bi-bag-check', color: 'tile-emerald', action: "bukaModalFakturBaru()" },
+      { name: 'Pengiriman Pesanan', icon: 'bi-truck', color: 'tile-sky', action: "switchTabERP('penjualan')" },
+      { name: 'Uang Muka Penjualan', icon: 'bi-wallet2', color: 'tile-sky', action: "bukaModalKas('MASUK')" },
+      { name: 'Faktur Penjualan', icon: 'bi-receipt', color: 'tile-emerald', action: "bukaModalFakturBaru()" },
+      { name: 'Penerimaan Penjualan', icon: 'bi-cash', color: 'tile-emerald', action: "bukaModalKas('MASUK')" },
+      { name: 'Retur Penjualan', icon: 'bi-arrow-return-left', color: 'tile-amber', action: "switchTabERP('penjualan')" },
+      { name: 'Kategori Pelanggan', icon: 'bi-people', color: 'tile-sky', action: "switchTabERP('penjualan')" },
+      { name: 'Kategori Penjualan', icon: 'bi-tags', color: 'tile-sky', action: "switchTabERP('penjualan')" },
+      { name: 'Pelanggan', icon: 'bi-person-circle', color: 'tile-sky', action: "switchTabERP('penjualan')" },
+      { name: 'Penyesuaian Harga/Diskon', icon: 'bi-percent', color: 'tile-rose', action: "switchTabERP('penjualan')" },
+      { name: 'Komisi Penjual', icon: 'bi-person-badge', color: 'tile-amber', action: "switchTabERP('penjualan')" },
+      { name: 'Target Penjualan', icon: 'bi-graph-up-arrow', color: 'tile-purple', action: "switchTabERP('penjualan')" },
+      { name: 'SmartLink e-Commerce', icon: 'bi-shop', color: 'tile-purple', action: "switchTabERP('penjualan')" },
+      { name: 'Check In', icon: 'bi-geo-alt', color: 'tile-purple', action: "switchTabERP('penjualan')" }
+    ]
+  },
+  pembelian: {
+    title: 'Pembelian',
+    tiles: [
+      { name: 'Pesanan Pembelian (PO)', icon: 'bi-bag-plus-fill', color: 'tile-emerald', action: "bukaModalInputPembelian()" },
+      { name: 'Penerimaan Barang', icon: 'bi-box-arrow-in-down', color: 'tile-emerald', action: "bukaModalInputPembelian()" },
+      { name: 'Uang Muka Pembelian', icon: 'bi-cash-coin', color: 'tile-amber', action: "bukaModalKas('KELUAR')" },
+      { name: 'Faktur Pembelian', icon: 'bi-receipt-cutoff', color: 'tile-emerald', action: "bukaModalInputPembelian()" },
+      { name: 'Pembayaran Pembelian', icon: 'bi-wallet', color: 'tile-emerald', action: "bukaModalKas('KELUAR')" },
+      { name: 'Retur Pembelian', icon: 'bi-arrow-return-right', color: 'tile-amber', action: "switchTabERP('pembelian')" },
+      { name: 'Harga Pemasok', icon: 'bi-currency-dollar', color: 'tile-rose', action: "switchTabERP('pembelian')" },
+      { name: 'Kategori Pemasok', icon: 'bi-diagram-3', color: 'tile-sky', action: "switchTabERP('pembelian')" },
+      { name: 'Pemasok', icon: 'bi-building-fill', color: 'tile-sky', action: "switchTabERP('pembelian')" },
+      { name: 'Perintah Pembayaran', icon: 'bi-journal-check', color: 'tile-purple', action: "bukaModalKas('KELUAR')" },
+      { name: 'Transfer Pemasok', icon: 'bi-arrow-left-right', color: 'tile-purple', action: "bukaModalKas('KELUAR')" }
+    ]
+  },
+  persediaan: {
+    title: 'Persediaan',
+    tiles: [
+      { name: 'Permintaan Barang', icon: 'bi-file-earmark-arrow-down', color: 'tile-emerald', action: "switchTabERP('persediaan')" },
+      { name: 'Penyesuaian Persediaan', icon: 'bi-sliders2', color: 'tile-emerald', action: "switchTabERP('persediaan')" },
+      { name: 'Pekerjaan Pesanan', icon: 'bi-clipboard-check', color: 'tile-emerald', action: "switchTabERP('persediaan')" },
+      { name: 'Penambahan Bahan Baku', icon: 'bi-plus-square-fill', color: 'tile-emerald', action: "bukaModalInputPembelian()" },
+      { name: 'Penyelesaian Pesanan', icon: 'bi-check-circle-fill', color: 'tile-emerald', action: "switchTabERP('persediaan')" },
+      { name: 'Perintah Stok Opname', icon: 'bi-search', color: 'tile-sky', action: "switchTabERP('persediaan')" },
+      { name: 'Hasil Stok Opname', icon: 'bi-clipboard-data', color: 'tile-sky', action: "switchTabERP('persediaan')" },
+      { name: 'Barang & Jasa (+ Input)', icon: 'bi-box-seam-fill', color: 'tile-emerald', action: "bukaModalInputBarang()" },
+      { name: 'Satuan Barang', icon: 'bi-rulers', color: 'tile-sky', action: "switchTabERP('persediaan')" },
+      { name: 'Kategori Barang', icon: 'bi-grid', color: 'tile-sky', action: "switchTabERP('persediaan')" },
+      { name: 'Merek Barang', icon: 'bi-award', color: 'tile-purple', action: "switchTabERP('persediaan')" },
+      { name: 'Pemenuhan Pesanan', icon: 'bi-box-arrow-up-right', color: 'tile-purple', action: "switchTabERP('persediaan')" },
+      { name: 'Barang Stok Minimum', icon: 'bi-exclamation-triangle-fill', color: 'tile-rose', action: "switchTabERP('persediaan')" }
+    ]
+  },
+  manufaktur: {
+    title: 'Aset Tetap & Pabrikasi',
+    tiles: [
+      { name: 'Aset Tetap', icon: 'bi-building', color: 'tile-sky', action: "switchTabERP('manufaktur')" },
+      { name: 'Kategori Aset', icon: 'bi-collection', color: 'tile-sky', action: "switchTabERP('manufaktur')" },
+      { name: 'Kategori Aset Pajak', icon: 'bi-file-earmark-text', color: 'tile-sky', action: "switchTabERP('manufaktur')" },
+      { name: 'Disposisi Aset Tetap', icon: 'bi-arrow-repeat', color: 'tile-emerald', action: "switchTabERP('manufaktur')" },
+      { name: 'Pindah Aset', icon: 'bi-arrow-left-right', color: 'tile-emerald', action: "switchTabERP('manufaktur')" },
+      { name: 'Aset per Lokasi', icon: 'bi-geo-alt', color: 'tile-purple', action: "switchTabERP('manufaktur')" },
+      { name: 'Kalkulator Roll-Forming', icon: 'bi-calculator-fill', color: 'tile-emerald', action: "switchTabERP('manufaktur')" },
+      { name: 'Bill of Materials (BOM)', icon: 'bi-list-stars', color: 'tile-amber', action: "switchTabERP('manufaktur')" }
+    ]
+  },
+  bukubesar: {
+    title: 'Buku Besar',
+    tiles: [
+      { name: 'Akun Perkiraan (COA)', icon: 'bi-journal-text', color: 'tile-sky', action: "switchTabERP('bukubesar')" },
+      { name: 'Jurnal Umum Manual', icon: 'bi-journal-plus', color: 'tile-emerald', action: "bukaModalJurnal()" },
+      { name: 'Histori Buku Besar', icon: 'bi-clock-history', color: 'tile-purple', action: "switchTabERP('bukubesar')" },
+      { name: 'Tutup Periode', icon: 'bi-calendar-check', color: 'tile-amber', action: "switchTabERP('bukubesar')" }
+    ]
+  },
+  pelaporan: {
+    title: 'Pelaporan Keuangan',
+    tiles: [
+      { name: 'Laporan Laba Rugi', icon: 'bi-graph-up', color: 'tile-emerald', action: "switchTabERP('pelaporan')" },
+      { name: 'Neraca Keuangan', icon: 'bi-shield-check', color: 'tile-sky', action: "switchTabERP('pelaporan')" },
+      { name: 'Arus Kas', icon: 'bi-currency-exchange', color: 'tile-purple', action: "switchTabERP('pelaporan')" },
+      { name: 'Cetak Dokumen Laporan', icon: 'bi-printer', color: 'tile-amber', action: "window.print()" }
+    ]
+  },
+  perusahaan: {
+    title: 'Profil Perusahaan',
+    tiles: [
+      { name: 'Identitas Pabrik GSK', icon: 'bi-building', color: 'tile-sky', action: "switchTabERP('admin')" },
+      { name: 'Logo Pabrik', icon: 'bi-image', color: 'tile-amber', action: "switchTabERP('admin')" },
+      { name: 'Alamat & Kontak', icon: 'bi-geo-alt', color: 'tile-emerald', action: "switchTabERP('admin')" }
+    ]
+  },
+  admin: {
+    title: 'Pengaturan & Admin',
+    tiles: [
+      { name: 'Profil Perusahaan', icon: 'bi-building', color: 'tile-sky', action: "switchTabERP('admin')" },
+      { name: 'Kustomisasi Logo', icon: 'bi-image', color: 'tile-amber', action: "switchTabERP('admin')" },
+      { name: 'Akses Super Admin', icon: 'bi-shield-lock', color: 'tile-emerald', action: "switchTabERP('admin')" },
+      { name: 'Reset Semua Data ke Nol', icon: 'bi-trash3-fill', color: 'tile-rose', action: "resetSemuaDataERP()" }
+    ]
+  }
+};
+
+let menuFlyoutAktif = null;
+
+function toggleFlyoutMenu(menuKey) {
+  const flyoutEl = document.getElementById('accurateFlyoutMenu');
+  if (!flyoutEl) return;
+
+  if (menuFlyoutAktif === menuKey && !flyoutEl.classList.contains('d-none')) {
+    tutupFlyoutMenu();
+    return;
+  }
+
+  const menu = ACCURATE_MENUS[menuKey];
+  if (!menu) return;
+
+  menuFlyoutAktif = menuKey;
+  document.getElementById('accurateFlyoutTitle').textContent = menu.title;
+
+  const grid = document.getElementById('accurateFlyoutGrid');
+  grid.innerHTML = '';
+
+  menu.tiles.forEach(tile => {
+    const card = document.createElement('div');
+    card.className = `accurate-tile ${tile.color}`;
+    card.innerHTML = `
+      <div class="tile-icon"><i class="bi ${tile.icon}"></i></div>
+      <div class="tile-label">${tile.name}</div>
+    `;
+    card.onclick = function(e) {
+      e.stopPropagation();
+      tutupFlyoutMenu();
+      try {
+        const fn = new Function(tile.action);
+        fn();
+      } catch(err) {
+        console.error('Error action tile:', err);
+      }
+    };
+    grid.appendChild(card);
+  });
+
+  // Highlight tombol sidebar
+  document.querySelectorAll('.accurate-nav-item').forEach(btn => btn.classList.remove('active'));
+  const targetBtn = document.querySelector(`.accurate-nav-item[onclick*="'${menuKey}'"]`);
+  if (targetBtn) targetBtn.classList.add('active');
+
+  flyoutEl.classList.remove('d-none');
+}
+
+function tutupFlyoutMenu() {
+  const flyoutEl = document.getElementById('accurateFlyoutMenu');
+  if (flyoutEl) flyoutEl.classList.add('d-none');
+  menuFlyoutAktif = null;
+  document.querySelectorAll('.accurate-nav-item').forEach(btn => btn.classList.remove('active'));
+}
+
+function updateTopTabAccurate(tabName) {
+  const tabs = ['Dashboard', 'BukuBesar', 'KasBank', 'Penjualan', 'Pembelian', 'Persediaan', 'Manufaktur', 'Pelaporan', 'Admin'];
+  tabs.forEach(t => {
+    const el = document.getElementById('accTopTab' + t);
+    if (el) {
+      if (t.toLowerCase() === tabName.toLowerCase()) {
+        el.classList.remove('d-none');
+        el.classList.add('active');
+      } else {
+        el.classList.remove('active');
+      }
+    }
+  });
+}
+
+function tutupTopTab(e, tabName) {
+  if (e) e.stopPropagation();
+  const el = document.getElementById('accTopTab' + (tabName.charAt(0).toUpperCase() + tabName.slice(1)));
+  if (el) el.classList.add('d-none');
+  switchTabERP('dashboard');
+}
+
 function switchTabERP(tabName) {
   const tabs = ['Dashboard', 'BukuBesar', 'KasBank', 'Penjualan', 'Pembelian', 'Persediaan', 'Manufaktur', 'Pelaporan', 'Admin'];
   tabs.forEach(t => {
@@ -648,6 +849,7 @@ function switchTabERP(tabName) {
     }
   });
 
+  updateTopTabAccurate(tabName);
   recalculateAll();
 }
 
