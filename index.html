@@ -19,7 +19,7 @@
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
   <!-- Style CSS Standar Desain Industri GSK -->
-  <link rel="stylesheet" href="css/style.css?v=12.0">
+  <link rel="stylesheet" href="css/style.css?v=13.0">
 </head>
 <body>
 
@@ -1806,14 +1806,40 @@
           <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
         </div>
         <div class="modal-body p-4">
-          <!-- PANDUAN CEPAT -->
-          <div class="alert alert-info border-0 p-3 mb-4 rounded-3 d-flex gap-3 align-items-start">
-            <i class="bi bi-lightbulb-fill text-primary fs-3"></i>
-            <div class="small">
-              <strong>Cara cepat ekspor dari Accurate Online:</strong><br>
-              1. Buka <strong>Accurate Online &rarr; Persediaan &rarr; Barang & Jasa</strong>.<br>
-              2. Klik ikon <strong>Daftar (List)</strong> di pojok kiri atas lalu klik tombol hijau <strong>Ekspor ke Excel</strong>.<br>
-              3. Unggah file Excel (.xlsx / .csv) tersebut di bawah ini, atau Copy-Paste isi tabelnya.
+          <!-- 3 PILIHAN KATEGORI DATA TERPISAH (AGAR TIDAK TERCAMPUR/BINGUNG) -->
+          <div class="mb-3">
+            <label class="form-label fw-bold text-dark small mb-2"><i class="bi bi-diagram-3-fill text-primary me-1"></i>Pilih Jenis Data yang Ingin Diimpor (Dipisahkan agar Rapi & Tidak Tertukar):</label>
+            <div class="row g-2">
+              <div class="col-4">
+                <button type="button" class="btn btn-outline-success w-100 py-2 active text-center" id="btnKatBarang" onclick="gantiKategoriImpor('barang')">
+                  <i class="bi bi-box-seam fs-3 d-block mb-1"></i>
+                  <div class="fw-bold small">1. Daftar Barang</div>
+                  <small class="text-muted d-block" style="font-size: 10px;">Stok, HPP & Harga</small>
+                </button>
+              </div>
+              <div class="col-4">
+                <button type="button" class="btn btn-outline-primary w-100 py-2 text-center" id="btnKatPembeli" onclick="gantiKategoriImpor('pembeli')">
+                  <i class="bi bi-people-fill fs-3 d-block mb-1"></i>
+                  <div class="fw-bold small">2. Pembeli / Customer</div>
+                  <small class="text-muted d-block" style="font-size: 10px;">Toko & Kontraktor</small>
+                </button>
+              </div>
+              <div class="col-4">
+                <button type="button" class="btn btn-outline-warning w-100 py-2 text-center" id="btnKatPemasok" onclick="gantiKategoriImpor('pemasok')">
+                  <i class="bi bi-truck fs-3 d-block mb-1"></i>
+                  <div class="fw-bold small">3. Pemasok / Supplier</div>
+                  <small class="text-muted d-block" style="font-size: 10px;">Pabrikan Coil / Baut</small>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- PANDUAN SPESIFIK BERDASARKAN KATEGORI -->
+          <div class="alert alert-info border-0 p-3 mb-3 rounded-3 d-flex gap-3 align-items-start" id="boxPanduanImpor">
+            <i class="bi bi-info-circle-fill text-primary fs-4"></i>
+            <div class="small" id="txtPanduanImpor">
+              <strong>Menu di Accurate Online untuk Daftar Barang:</strong><br>
+              Buka menu <strong>Persediaan &rarr; Barang & Jasa</strong> &rarr; Klik ikon <strong>Daftar (List)</strong> di pojok kiri atas &rarr; Klik hijau <strong>Ekspor ke Excel</strong>.
             </div>
           </div>
 
@@ -1834,7 +1860,7 @@
           <div class="tab-content border rounded-3 p-3 bg-light">
             <!-- PANEL 1: UPLOAD FILE -->
             <div class="tab-pane fade show active" id="panelUploadFile" role="tabpanel">
-              <label class="form-label fw-bold small text-dark mb-1">Pilih Berkas Excel dari Accurate Online:</label>
+              <label class="form-label fw-bold small text-dark mb-1" id="lblFilePilih">Pilih Berkas Excel Barang dari Accurate Online:</label>
               <input type="file" id="inpFileAccurateExcel" class="form-control mb-3" accept=".xlsx, .xls, .csv">
               <button type="button" class="btn btn-success fw-bold px-4 shadow-sm" onclick="bacaFileExcelAccurate()">
                 <i class="bi bi-search me-1"></i> Periksa & Pratinjau File Excel
@@ -1855,13 +1881,13 @@
           <div id="areaPreviewImpor" class="mt-4 d-none">
             <div class="d-flex justify-content-between align-items-center mb-2">
               <h6 class="fw-bold m-0 text-success">
-                <i class="bi bi-check-circle-fill me-1"></i> Data Berhasil Dikenali: <span id="prvJumlahBarang">0</span> Barang
+                <i class="bi bi-check-circle-fill me-1"></i> Data Berhasil Dikenali: <span id="prvJumlahBarang">0</span> Baris Data
               </h6>
               <span class="badge bg-primary">Pratinjau 5 Baris Pertama</span>
             </div>
             <div class="table-responsive border rounded bg-white mb-3" style="max-height: 220px;">
               <table class="table table-sm table-striped mb-0" style="font-size: 12px;">
-                <thead class="table-dark sticky-top">
+                <thead class="table-dark sticky-top" id="theadPreviewAccurate">
                   <tr>
                     <th>Kode Barang</th>
                     <th>Nama Produk</th>
@@ -1878,8 +1904,8 @@
 
             <div class="d-flex justify-content-end gap-2">
               <button type="button" class="btn btn-outline-secondary" onclick="batalPratinjauImpor()">Batal</button>
-              <button type="button" class="btn btn-success fw-bold shadow-sm px-4" onclick="simpanHasilImporAccurate()">
-                <i class="bi bi-check-lg me-1"></i> Simpan Semua Barang ke Sistem & Portal
+              <button type="button" class="btn btn-success fw-bold shadow-sm px-4" id="btnSimpanImpor" onclick="simpanHasilImporAccurate()">
+                <i class="bi bi-check-lg me-1"></i> Simpan Data ke Sistem
               </button>
             </div>
           </div>
@@ -1894,9 +1920,9 @@
   <!-- Bootstrap JS -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <!-- Konfigurasi API -->
-  <script src="js/config.js?v=12.0"></script>
+  <script src="js/config.js?v=13.0"></script>
   <!-- Logika Aplikasi Terpisah -->
-  <script src="js/app.js?v=12.0"></script>
+  <script src="js/app.js?v=13.0"></script>
 </body>
 </html>
 

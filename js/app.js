@@ -2162,9 +2162,12 @@ function prosesRestoreData() {
  * =========================================================================
  */
 let dataImporAccuratePending = [];
+let kategoriImporAktif = 'barang'; // 'barang' | 'pembeli' | 'pemasok'
 
-function bukaModalImporAccurate() {
+function bukaModalImporAccurate(kat = 'barang') {
   dataImporAccuratePending = [];
+  gantiKategoriImpor(kat);
+
   const areaPreview = document.getElementById('areaPreviewImpor');
   if (areaPreview) areaPreview.classList.add('d-none');
   const alertEl = document.getElementById('alertImporAccurate');
@@ -2178,6 +2181,48 @@ function bukaModalImporAccurate() {
   if (modalEl && typeof bootstrap !== 'undefined') {
     const inst = bootstrap.Modal.getOrCreateInstance(modalEl);
     inst.show();
+  }
+}
+
+function gantiKategoriImpor(kat) {
+  kategoriImporAktif = kat;
+  batalPratinjauImpor();
+
+  const btnBarang = document.getElementById('btnKatBarang');
+  const btnPembeli = document.getElementById('btnKatPembeli');
+  const btnPemasok = document.getElementById('btnKatPemasok');
+  const txtPanduan = document.getElementById('txtPanduanImpor');
+  const lblFile = document.getElementById('lblFilePilih');
+  const thead = document.getElementById('theadPreviewAccurate');
+
+  if (btnBarang) {
+    btnBarang.classList.toggle('active', kat === 'barang');
+    btnBarang.classList.toggle('btn-success', kat === 'barang');
+    btnBarang.classList.toggle('text-white', kat === 'barang');
+  }
+  if (btnPembeli) {
+    btnPembeli.classList.toggle('active', kat === 'pembeli');
+    btnPembeli.classList.toggle('btn-primary', kat === 'pembeli');
+    btnPembeli.classList.toggle('text-white', kat === 'pembeli');
+  }
+  if (btnPemasok) {
+    btnPemasok.classList.toggle('active', kat === 'pemasok');
+    btnPemasok.classList.toggle('btn-warning', kat === 'pemasok');
+    btnPemasok.classList.toggle('text-dark', kat === 'pemasok');
+  }
+
+  if (kat === 'barang') {
+    if (txtPanduan) txtPanduan.innerHTML = `<strong>Menu di Accurate Online untuk 1. Daftar Barang:</strong><br>Buka menu <strong>Persediaan &rarr; Barang & Jasa</strong> &rarr; Klik ikon <strong>Daftar (List)</strong> di pojok kiri atas &rarr; Klik tombol hijau <strong>Ekspor ke Excel</strong>.`;
+    if (lblFile) lblFile.textContent = 'Pilih Berkas Excel Barang dari Accurate Online:';
+    if (thead) thead.innerHTML = `<tr><th>Kode Barang</th><th>Nama Produk</th><th>Kategori</th><th>Satuan</th><th>Stok Awal</th><th>HPP (Rp)</th><th>Harga Jual (Rp)</th></tr>`;
+  } else if (kat === 'pembeli') {
+    if (txtPanduan) txtPanduan.innerHTML = `<strong>Menu di Accurate Online untuk 2. Pembeli / Pelanggan:</strong><br>Buka menu <strong>Penjualan &rarr; Pelanggan</strong> &rarr; Klik ikon <strong>Daftar (List)</strong> di pojok kiri atas &rarr; Klik tombol hijau <strong>Ekspor ke Excel</strong>.`;
+    if (lblFile) lblFile.textContent = 'Pilih Berkas Excel Pelanggan dari Accurate Online:';
+    if (thead) thead.innerHTML = `<tr><th>No. Pelanggan</th><th>Nama Pembeli / Toko / Kontraktor</th><th>No. Telepon / WA</th><th>Alamat / Wilayah Proyek</th></tr>`;
+  } else if (kat === 'pemasok') {
+    if (txtPanduan) txtPanduan.innerHTML = `<strong>Menu di Accurate Online untuk 3. Pemasok / Supplier:</strong><br>Buka menu <strong>Pembelian &rarr; Pemasok</strong> &rarr; Klik ikon <strong>Daftar (List)</strong> di pojok kiri atas &rarr; Klik tombol hijau <strong>Ekspor ke Excel</strong>.`;
+    if (lblFile) lblFile.textContent = 'Pilih Berkas Excel Pemasok dari Accurate Online:';
+    if (thead) thead.innerHTML = `<tr><th>No. Pemasok</th><th>Nama Perusahaan Supplier Coil</th><th>No. Telepon</th><th>Alamat / Kota Pabrik</th></tr>`;
   }
 }
 
@@ -2289,31 +2334,69 @@ function bacaTeksPasteAccurate() {
 
 function prosesBarisAccurate(rows) {
   const hasil = [];
-  rows.forEach((row, i) => {
-    const kode = cariNilaiKolom(row, ['nobarang', 'kodebarang', 'kode', 'itemno', 'itemnumber', 'no']) || ('FG-ACC-' + String(i + 1).padStart(3, '0'));
-    const nama = cariNilaiKolom(row, ['namabarang', 'deskripsi', 'namaitem', 'itemname', 'itemdescription', 'nama', 'keterangan']);
-    if (!nama || String(nama).trim() === '') return;
 
-    const kategori = cariNilaiKolom(row, ['kategori', 'kategoribarang', 'category']) || 'Barang Jadi';
-    const satuan = cariNilaiKolom(row, ['satuan', 'satuandasar', 'unit']) || 'Batang';
-    const stok = bersihkanAngka(cariNilaiKolom(row, ['kuantitas', 'stok', 'kuantitassaatini', 'saldokuantitas', 'qty', 'quantity']));
-    const hpp = bersihkanAngka(cariNilaiKolom(row, ['hargabeli', 'hargapokok', 'biayasatuan', 'biayaterakhir', 'hpp', 'cost']));
-    const hargaJual = bersihkanAngka(cariNilaiKolom(row, ['hargajual', 'hargajualdefault', 'hargasatuan1', 'hargasatuan', 'price', 'unitprice']));
+  if (kategoriImporAktif === 'barang') {
+    rows.forEach((row, i) => {
+      const kode = cariNilaiKolom(row, ['nobarang', 'kodebarang', 'kode', 'itemno', 'itemnumber', 'no']) || ('FG-ACC-' + String(i + 1).padStart(3, '0'));
+      const nama = cariNilaiKolom(row, ['namabarang', 'deskripsi', 'namaitem', 'itemname', 'itemdescription', 'nama', 'keterangan']);
+      if (!nama || String(nama).trim() === '') return;
 
-    hasil.push({
-      kode: String(kode).trim().toUpperCase(),
-      nama: String(nama).trim(),
-      kategori: String(kategori).trim(),
-      satuan: String(satuan).trim(),
-      stok: stok,
-      stokMin: 10,
-      hpp: hpp,
-      harga: hargaJual
+      const kategori = cariNilaiKolom(row, ['kategori', 'kategoribarang', 'category']) || 'Barang Jadi';
+      const satuan = cariNilaiKolom(row, ['satuan', 'satuandasar', 'unit']) || 'Batang';
+      const stok = bersihkanAngka(cariNilaiKolom(row, ['kuantitas', 'stok', 'kuantitassaatini', 'saldokuantitas', 'qty', 'quantity']));
+      const hpp = bersihkanAngka(cariNilaiKolom(row, ['hargabeli', 'hargapokok', 'biayasatuan', 'biayaterakhir', 'hpp', 'cost']));
+      const hargaJual = bersihkanAngka(cariNilaiKolom(row, ['hargajual', 'hargajualdefault', 'hargasatuan1', 'hargasatuan', 'price', 'unitprice']));
+
+      hasil.push({
+        tipe: 'barang',
+        kode: String(kode).trim().toUpperCase(),
+        nama: String(nama).trim(),
+        kategori: String(kategori).trim(),
+        satuan: String(satuan).trim(),
+        stok: stok,
+        stokMin: 10,
+        hpp: hpp,
+        harga: hargaJual
+      });
     });
-  });
+  } else if (kategoriImporAktif === 'pembeli') {
+    rows.forEach((row, i) => {
+      const noPelanggan = cariNilaiKolom(row, ['nopelanggan', 'kodepelanggan', 'idpelanggan', 'customerno', 'no']) || ('CUST-' + String(i + 1).padStart(3, '0'));
+      const nama = cariNilaiKolom(row, ['namapelanggan', 'customername', 'nama', 'perusahaan']);
+      if (!nama || String(nama).trim() === '') return;
+
+      const telepon = cariNilaiKolom(row, ['telepon', 'nohp', 'handphone', 'phone', 'wa', 'kontak']) || '-';
+      const alamat = cariNilaiKolom(row, ['alamat', 'address', 'alamatkirim', 'kota', 'wilayah']) || 'Kendari';
+
+      hasil.push({
+        tipe: 'pembeli',
+        id: String(noPelanggan).trim(),
+        nama: String(nama).trim(),
+        telepon: String(telepon).trim(),
+        alamat: String(alamat).trim()
+      });
+    });
+  } else if (kategoriImporAktif === 'pemasok') {
+    rows.forEach((row, i) => {
+      const noPemasok = cariNilaiKolom(row, ['nopemasok', 'kodepemasok', 'vendorno', 'supplierno', 'no']) || ('VEND-' + String(i + 1).padStart(3, '0'));
+      const nama = cariNilaiKolom(row, ['namapemasok', 'vendorname', 'suppliername', 'nama', 'perusahaan']);
+      if (!nama || String(nama).trim() === '') return;
+
+      const telepon = cariNilaiKolom(row, ['telepon', 'nohp', 'phone', 'kontak']) || '-';
+      const alamat = cariNilaiKolom(row, ['alamat', 'address', 'kota']) || 'Indonesia';
+
+      hasil.push({
+        tipe: 'pemasok',
+        id: String(noPemasok).trim(),
+        nama: String(nama).trim(),
+        telepon: String(telepon).trim(),
+        alamat: String(alamat).trim()
+      });
+    });
+  }
 
   if (hasil.length === 0) {
-    throw new Error('Tidak ada baris data barang yang cocok. Pastikan tabel memiliki kolom "Nama Barang" atau "Deskripsi".');
+    throw new Error(`Tidak ada baris data ${kategoriImporAktif} yang cocok. Pastikan memilih file Excel yang sesuai dengan jenis kategori di atas.`);
   }
 
   dataImporAccuratePending = hasil;
@@ -2332,15 +2415,31 @@ function tampilkanPreviewImpor(items) {
   const sample = items.slice(0, 5);
   sample.forEach(it => {
     const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td><code>${it.kode}</code></td>
-      <td class="fw-bold">${it.nama}</td>
-      <td><span class="badge bg-secondary">${it.kategori}</span></td>
-      <td>${it.satuan}</td>
-      <td class="fw-bold text-primary">${it.stok.toLocaleString('id-ID')}</td>
-      <td class="text-secondary">${formatRupiah(it.hpp)}</td>
-      <td class="fw-bold text-success">${formatRupiah(it.harga)}</td>
-    `;
+    if (it.tipe === 'barang') {
+      tr.innerHTML = `
+        <td><code>${it.kode}</code></td>
+        <td class="fw-bold">${it.nama}</td>
+        <td><span class="badge bg-secondary">${it.kategori}</span></td>
+        <td>${it.satuan}</td>
+        <td class="fw-bold text-primary">${it.stok.toLocaleString('id-ID')}</td>
+        <td class="text-secondary">${formatRupiah(it.hpp)}</td>
+        <td class="fw-bold text-success">${formatRupiah(it.harga)}</td>
+      `;
+    } else if (it.tipe === 'pembeli') {
+      tr.innerHTML = `
+        <td><code>${it.id}</code></td>
+        <td class="fw-bold text-primary">${it.nama}</td>
+        <td>${it.telepon}</td>
+        <td>${it.alamat}</td>
+      `;
+    } else if (it.tipe === 'pemasok') {
+      tr.innerHTML = `
+        <td><code>${it.id}</code></td>
+        <td class="fw-bold text-dark">${it.nama}</td>
+        <td>${it.telepon}</td>
+        <td>${it.alamat}</td>
+      `;
+    }
     tbody.appendChild(tr);
   });
 
@@ -2355,32 +2454,66 @@ function batalPratinjauImpor() {
 
 function simpanHasilImporAccurate() {
   if (!dataImporAccuratePending || dataImporAccuratePending.length === 0) {
-    alert('Tidak ada data barang yang siap diimpor!');
+    alert('Tidak ada data yang siap diimpor!');
     return;
   }
 
-  let ditambah = 0;
-  let diupdate = 0;
+  if (kategoriImporAktif === 'barang') {
+    let ditambah = 0;
+    let diupdate = 0;
 
-  dataImporAccuratePending.forEach(item => {
-    const idx = erpState.products.findIndex(p => p.kode === item.kode);
-    if (idx >= 0) {
-      erpState.products[idx] = item;
-      diupdate++;
-    } else {
-      erpState.products.push(item);
-      ditambah++;
-    }
-  });
+    dataImporAccuratePending.forEach(item => {
+      const idx = erpState.products.findIndex(p => p.kode === item.kode);
+      if (idx >= 0) {
+        erpState.products[idx] = item;
+        diupdate++;
+      } else {
+        erpState.products.push(item);
+        ditambah++;
+      }
+    });
 
-  saveERPState();
-  recalculateAll();
+    saveERPState();
+    recalculateAll();
+
+    alert(`Sukses Mengimpor Daftar Barang dari Accurate Online!\n\n- ${ditambah} Barang Baru Ditambahkan\n- ${diupdate} Barang Diperbarui\n\nSeluruh produk dan harga jual langsung aktif di Katalog Portal Publik & Form Order.`);
+  } else if (kategoriImporAktif === 'pembeli') {
+    if (!Array.isArray(erpState.customers)) erpState.customers = [];
+    let ditambah = 0;
+
+    dataImporAccuratePending.forEach(cust => {
+      const idx = erpState.customers.findIndex(c => c.nama.toLowerCase() === cust.nama.toLowerCase());
+      if (idx >= 0) {
+        erpState.customers[idx] = cust;
+      } else {
+        erpState.customers.push(cust);
+        ditambah++;
+      }
+    });
+
+    saveERPState();
+    alert(`Sukses Mengimpor ${dataImporAccuratePending.length} Data Pembeli / Customer dari Accurate Online!\n\nData pelanggan telah tersimpan di sistem.`);
+  } else if (kategoriImporAktif === 'pemasok') {
+    if (!Array.isArray(erpState.vendors)) erpState.vendors = [];
+    let ditambah = 0;
+
+    dataImporAccuratePending.forEach(vend => {
+      const idx = erpState.vendors.findIndex(v => v.nama.toLowerCase() === vend.nama.toLowerCase());
+      if (idx >= 0) {
+        erpState.vendors[idx] = vend;
+      } else {
+        erpState.vendors.push(vend);
+        ditambah++;
+      }
+    });
+
+    saveERPState();
+    alert(`Sukses Mengimpor ${dataImporAccuratePending.length} Data Pemasok / Supplier Coil dari Accurate Online!\n\nData pemasok telah tersimpan di sistem.`);
+  }
 
   const modalEl = document.getElementById('modalImporAccurate');
   if (modalEl && typeof bootstrap !== 'undefined') {
     const inst = bootstrap.Modal.getInstance(modalEl);
     if (inst) inst.hide();
   }
-
-  alert(`Sukses Mengimpor dari Accurate Online!\n\n- ${ditambah} Barang Baru Ditambahkan\n- ${diupdate} Barang Diperbarui\n\nSeluruh produk dan harga jual langsung aktif di Katalog Portal Publik & Form Order.`);
 }
