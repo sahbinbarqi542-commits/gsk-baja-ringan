@@ -18,7 +18,7 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
   <!-- Style CSS Standar Desain Industri GSK -->
-  <link rel="stylesheet" href="css/style.css?v=5.0">
+  <link rel="stylesheet" href="css/style.css?v=6.0">
 </head>
 <body>
 
@@ -306,73 +306,467 @@
           </button>
         </div>
         <div class="modal-body p-4" style="overflow-y: auto;">
-          <!-- Navigasi Tab Internal Super Admin (Semua Menu) -->
-          <ul class="nav nav-pills mb-4 border-bottom pb-3 gap-2">
+          <!-- TOOLBAR AKSI CEPAT ALA ACCURATE -->
+          <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 p-3 bg-white rounded border shadow-sm mb-4">
+            <div class="d-flex align-items-center gap-2">
+              <span class="badge bg-dark px-3 py-2 fs-6"><i class="bi bi-cpu me-1 text-warning"></i> ACCURATE WORKSPACE GSK</span>
+              <span class="text-secondary small d-none d-md-inline">Sistem Akuntansi, Manufaktur & Manajemen Terpadu</span>
+            </div>
+            <div class="d-flex flex-wrap align-items-center gap-2">
+              <button class="btn btn-warning btn-sm fw-bold shadow-sm" onclick="bukaModalInputBarang()">
+                <i class="bi bi-plus-circle-fill me-1"></i> + Input Barang Baru
+              </button>
+              <button class="btn btn-outline-success btn-sm fw-bold shadow-sm" onclick="bukaModalKas('MASUK')">
+                <i class="bi bi-arrow-down-left-circle me-1"></i> + Kas Masuk
+              </button>
+              <button class="btn btn-outline-danger btn-sm fw-bold shadow-sm" onclick="bukaModalKas('KELUAR')">
+                <i class="bi bi-arrow-up-right-circle me-1"></i> + Kas Keluar
+              </button>
+              <button class="btn btn-outline-primary btn-sm fw-bold shadow-sm" onclick="bukaModalFakturBaru()">
+                <i class="bi bi-receipt me-1"></i> + Faktur Penjualan
+              </button>
+              <button class="btn btn-outline-dark btn-sm fw-bold shadow-sm" onclick="switchTabERP('pelaporan')">
+                <i class="bi bi-printer me-1"></i> Cetak Laporan
+              </button>
+            </div>
+          </div>
+
+          <!-- NAVIGASI MODUL LENGKAP ALA APLIKASI ACCURATE -->
+          <ul class="nav nav-pills mb-4 border-bottom pb-3 gap-2 flex-wrap" id="erpMainTabs">
             <li class="nav-item">
               <button class="nav-link active fw-bold" id="tabBtnDashboard" onclick="switchTabERP('dashboard')">
-                <i class="bi bi-speedometer2 me-1"></i> 1. Dashboard Finansial & Margin
+                <i class="bi bi-speedometer2 me-1"></i> 1. Dashboard
+              </button>
+            </li>
+            <li class="nav-item">
+              <button class="nav-link fw-bold" id="tabBtnBukuBesar" onclick="switchTabERP('bukubesar')">
+                <i class="bi bi-book-half me-1"></i> 2. Buku Besar
+              </button>
+            </li>
+            <li class="nav-item">
+              <button class="nav-link fw-bold" id="tabBtnKasBank" onclick="switchTabERP('kasbank')">
+                <i class="bi bi-bank me-1"></i> 3. Kas & Bank
+              </button>
+            </li>
+            <li class="nav-item">
+              <button class="nav-link fw-bold" id="tabBtnPenjualan" onclick="switchTabERP('penjualan')">
+                <i class="bi bi-cart-check me-1"></i> 4. Penjualan
+              </button>
+            </li>
+            <li class="nav-item">
+              <button class="nav-link fw-bold" id="tabBtnPembelian" onclick="switchTabERP('pembelian')">
+                <i class="bi bi-bag-check me-1"></i> 5. Pembelian
+              </button>
+            </li>
+            <li class="nav-item">
+              <button class="nav-link fw-bold" id="tabBtnPersediaan" onclick="switchTabERP('persediaan')">
+                <i class="bi bi-boxes me-1 text-warning"></i> 6. Persediaan & Stok
               </button>
             </li>
             <li class="nav-item">
               <button class="nav-link fw-bold" id="tabBtnManufaktur" onclick="switchTabERP('manufaktur')">
-                <i class="bi bi-gear-wide-connected me-1"></i> 2. Pabrikasi & Produksi Baja Ringan
+                <i class="bi bi-gear-wide-connected me-1"></i> 7. Pabrikasi Roll-Forming
               </button>
             </li>
             <li class="nav-item">
-              <button class="nav-link fw-bold" id="tabBtnAkuntansi" onclick="switchTabERP('akuntansi')">
-                <i class="bi bi-journal-bookmark-fill me-1"></i> 3. Akuntansi & Kas COA
+              <button class="nav-link fw-bold" id="tabBtnPelaporan" onclick="switchTabERP('pelaporan')">
+                <i class="bi bi-graph-up-arrow me-1"></i> 8. Pelaporan
               </button>
             </li>
             <li class="nav-item">
               <button class="nav-link fw-bold" id="tabBtnAdmin" onclick="switchTabERP('admin')">
-                <i class="bi bi-sliders me-1"></i> 4. Profil Pabrik & Logo
+                <i class="bi bi-sliders me-1"></i> 9. Profil Pabrik & Logo
               </button>
             </li>
           </ul>
 
-          <!-- TAB 1: KONTEN CEPAT DASHBOARD ERP -->
+          <!-- MODUL 1: DASHBOARD FINANSIAL -->
           <div id="erpTabDashboard">
             <div class="row g-3 mb-4">
-              <div class="col-sm-3">
+              <div class="col-sm-6 col-lg-3">
                 <div class="card p-3 border shadow-sm">
-                  <small class="text-secondary fw-bold text-uppercase">Total Omzet</small>
+                  <small class="text-secondary fw-bold text-uppercase">Total Omzet Penjualan</small>
                   <h4 class="fw-bold text-primary m-0" id="wsOmzet">Rp 0</h4>
+                  <small class="text-success"><i class="bi bi-arrow-up-right me-1"></i>Penjualan Proyek</small>
                 </div>
               </div>
-              <div class="col-sm-3">
+              <div class="col-sm-6 col-lg-3">
                 <div class="card p-3 border shadow-sm">
-                  <small class="text-secondary fw-bold text-uppercase">Beban HPP</small>
+                  <small class="text-secondary fw-bold text-uppercase">Beban Pokok (HPP)</small>
                   <h4 class="fw-bold text-secondary m-0" id="wsHPP">Rp 0</h4>
+                  <small class="text-muted"><i class="bi bi-box me-1"></i>Coil & Biaya Mesin</small>
                 </div>
               </div>
-              <div class="col-sm-3">
+              <div class="col-sm-6 col-lg-3">
                 <div class="card p-3 border shadow-sm">
-                  <small class="text-secondary fw-bold text-uppercase">Laba Kotor</small>
+                  <small class="text-secondary fw-bold text-uppercase">Laba Kotor Realtime</small>
                   <h4 class="fw-bold text-success m-0" id="wsLabaKotor">Rp 0</h4>
+                  <small class="text-success fw-bold"><i class="bi bi-check2-circle me-1"></i>Profit Bersih Margin</small>
                 </div>
               </div>
-              <div class="col-sm-3">
+              <div class="col-sm-6 col-lg-3">
                 <div class="card p-3 border shadow-sm">
-                  <small class="text-secondary fw-bold text-uppercase">Margin Laba</small>
+                  <small class="text-secondary fw-bold text-uppercase">Persentase Margin Laba</small>
                   <h4 class="fw-bold text-warning m-0" id="wsMarginPersen">0%</h4>
+                  <small class="text-muted"><i class="bi bi-pie-chart me-1"></i>Rasio Keuntungan</small>
                 </div>
               </div>
             </div>
 
-            <div class="card p-3 shadow-sm border mb-4">
-              <h6 class="fw-bold mb-3"><i class="bi bi-receipt me-1"></i> Data Transaksi Penjualan Proyek Terkini</h6>
+            <div class="row g-4 mb-4">
+              <div class="col-12 col-lg-8">
+                <div class="card p-4 shadow-sm border h-100">
+                  <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h6 class="fw-bold m-0"><i class="bi bi-receipt text-primary me-2"></i>Transaksi Faktur Penjualan Terkini</h6>
+                    <button class="btn btn-sm btn-outline-primary" onclick="switchTabERP('penjualan')">Lihat Semua Faktur</button>
+                  </div>
+                  <div class="table-responsive">
+                    <table class="table table-hover table-sm">
+                      <thead class="table-light">
+                        <tr><th>No Faktur</th><th>Pelanggan</th><th>Total Nilai</th><th>Laba Kotor</th><th>Status</th></tr>
+                      </thead>
+                      <tbody id="wsTabelInvoices"><tr><td colspan="5" class="text-muted text-center">Memuat transaksi...</td></tr></tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+              <div class="col-12 col-lg-4">
+                <div class="card p-4 shadow-sm border h-100">
+                  <h6 class="fw-bold mb-3"><i class="bi bi-wallet2 text-success me-2"></i>Posisi Kas & Bank</h6>
+                  <div class="p-3 bg-light rounded border mb-3">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                      <span class="small fw-bold">Kas Operasional</span>
+                      <span class="badge bg-primary">1-1001</span>
+                    </div>
+                    <h5 class="fw-bold text-success m-0" id="dashKasSaldo">Rp 48.500.000</h5>
+                  </div>
+                  <div class="p-3 bg-light rounded border mb-3">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                      <span class="small fw-bold">Bank Mandiri Giro</span>
+                      <span class="badge bg-primary">1-1003</span>
+                    </div>
+                    <h5 class="fw-bold text-primary m-0" id="dashBankSaldo">Rp 215.800.000</h5>
+                  </div>
+                  <div class="p-3 bg-light rounded border">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                      <span class="small fw-bold">Total Piutang Usaha</span>
+                      <span class="badge bg-warning text-dark">1-1005</span>
+                    </div>
+                    <h5 class="fw-bold text-warning m-0">Rp 64.200.000</h5>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- MODUL 2: BUKU BESAR (GENERAL LEDGER) ALA ACCURATE -->
+          <div id="erpTabBukuBesar" class="d-none">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <div>
+                <h5 class="fw-bold m-0"><i class="bi bi-book-half text-primary me-2"></i>Modul Buku Besar & Bagan Akun (COA)</h5>
+                <small class="text-secondary">Pencatatan akun riil, nominal, dan jurnal penyesuaian industri baja ringan.</small>
+              </div>
+              <button class="btn btn-primary btn-sm fw-bold" onclick="bukaModalJurnal()">
+                <i class="bi bi-plus-lg me-1"></i> Catat Jurnal Umum Manual
+              </button>
+            </div>
+
+            <div class="card p-4 shadow-sm border mb-4">
+              <h6 class="fw-bold mb-3"><i class="bi bi-journal-text text-primary me-2"></i>Bagan Akun (Master Chart of Accounts - COA)</h6>
               <div class="table-responsive">
                 <table class="table table-hover table-sm">
                   <thead class="table-light">
-                    <tr><th>No Faktur</th><th>Pelanggan</th><th>Total Nilai</th><th>Laba Kotor</th><th>Status</th></tr>
+                    <tr><th>Kode Akun</th><th>Nama Akun</th><th>Kategori Akun</th><th>Posisi Saldo Normal</th><th>Saldo Berjalan</th></tr>
                   </thead>
-                  <tbody id="wsTabelInvoices"><tr><td colspan="5" class="text-muted text-center">Memuat transaksi...</td></tr></tbody>
+                  <tbody>
+                    <tr><td><code>1-1001</code></td><td>Kas Operasional Pabrik</td><td>Aset Lancar</td><td><span class="badge bg-primary">Debit</span></td><td class="fw-bold text-success">Rp 48.500.000</td></tr>
+                    <tr><td><code>1-1003</code></td><td>Bank Mandiri Giro Perusahaan</td><td>Aset Lancar</td><td><span class="badge bg-primary">Debit</span></td><td class="fw-bold text-primary">Rp 215.800.000</td></tr>
+                    <tr><td><code>1-1005</code></td><td>Piutang Usaha Penjualan Proyek</td><td>Aset Lancar</td><td><span class="badge bg-primary">Debit</span></td><td class="fw-bold text-warning">Rp 64.200.000</td></tr>
+                    <tr><td><code>1-1006</code></td><td>Persediaan Bahan Baku Coil Galvalum</td><td>Aset Lancar</td><td><span class="badge bg-primary">Debit</span></td><td class="fw-bold text-dark">Rp 206.625.000</td></tr>
+                    <tr><td><code>1-1007</code></td><td>Persediaan Barang Jadi Baja Ringan</td><td>Aset Lancar</td><td><span class="badge bg-primary">Debit</span></td><td class="fw-bold text-dark">Rp 140.300.000</td></tr>
+                    <tr><td><code>2-2001</code></td><td>Hutang Usaha Suplier Coil Zincalume</td><td>Kewajiban Lancar</td><td><span class="badge bg-secondary">Kredit</span></td><td class="fw-bold text-danger">Rp 85.000.000</td></tr>
+                    <tr><td><code>3-3001</code></td><td>Modal Disetor Pemilik Pabrik</td><td>Ekuitas Modal</td><td><span class="badge bg-secondary">Kredit</span></td><td class="fw-bold text-dark">Rp 500.000.000</td></tr>
+                    <tr><td><code>4-4001</code></td><td>Pendapatan Penjualan Kanal C & Reng</td><td>Pendapatan</td><td><span class="badge bg-secondary">Kredit</span></td><td class="fw-bold text-success" id="coaTotalPendapatan">Rp 0</td></tr>
+                    <tr><td><code>5-5001</code></td><td>HPP Pemakaian Bahan Baku Coil</td><td>Beban Pokok</td><td><span class="badge bg-primary">Debit</span></td><td class="fw-bold text-secondary" id="coaTotalHPP">Rp 0</td></tr>
+                    <tr><td><code>5-5002</code></td><td>HPP Listrik & Tenaga Kerja Roll-Forming</td><td>Beban Pokok</td><td><span class="badge bg-primary">Debit</span></td><td class="fw-bold text-secondary">Rp 14.500.000</td></tr>
+                    <tr><td><code>6-6001</code></td><td>Beban Operasional & Pengiriman Truk</td><td>Beban Operasional</td><td><span class="badge bg-primary">Debit</span></td><td class="fw-bold text-secondary">Rp 9.200.000</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <div class="card p-4 shadow-sm border">
+              <h6 class="fw-bold mb-3"><i class="bi bi-clock-history text-secondary me-2"></i>Daftar Jurnal Umum Terkini</h6>
+              <div class="table-responsive">
+                <table class="table table-sm table-striped">
+                  <thead class="table-light">
+                    <tr><th>No. Jurnal</th><th>Tanggal</th><th>Akun Debit</th><th>Akun Kredit</th><th>Nominal</th><th>Keterangan</th></tr>
+                  </thead>
+                  <tbody id="tabelJurnalUmum">
+                    <tr><td><code>JU-2026-001</code></td><td>01/11/2026</td><td>1-1005 (Piutang)</td><td>4-4001 (Penjualan)</td><td class="fw-bold">Rp 13.200.000</td><td>Penjualan Kanal C PT Bumi Perkasa</td></tr>
+                    <tr><td><code>JU-2026-002</code></td><td>01/11/2026</td><td>5-5001 (HPP)</td><td>1-1007 (Persediaan)</td><td class="fw-bold">Rp 7.860.000</td><td>Pemotongan HPP Faktur INV-2026-001</td></tr>
+                    <tr><td><code>JU-2026-003</code></td><td>01/11/2026</td><td>1-1001 (Kas)</td><td>1-1005 (Piutang)</td><td class="fw-bold">Rp 13.200.000</td><td>Pelunasan Faktur INV-2026-001</td></tr>
+                  </tbody>
                 </table>
               </div>
             </div>
           </div>
 
-          <!-- TAB 2: PABRIKASI & PRODUKSI BAJA RINGAN -->
+          <!-- MODUL 3: KAS & BANK ALA ACCURATE -->
+          <div id="erpTabKasBank" class="d-none">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <div>
+                <h5 class="fw-bold m-0"><i class="bi bi-bank text-success me-2"></i>Modul Kas & Bank</h5>
+                <small class="text-secondary">Pencatatan kas masuk, kas keluar, dan rekonsiliasi bank giro pabrik.</small>
+              </div>
+              <div class="d-flex gap-2">
+                <button class="btn btn-success btn-sm fw-bold" onclick="bukaModalKas('MASUK')">
+                  <i class="bi bi-plus-circle me-1"></i> + Penerimaan Kas Masuk
+                </button>
+                <button class="btn btn-danger btn-sm fw-bold" onclick="bukaModalKas('KELUAR')">
+                  <i class="bi bi-dash-circle me-1"></i> + Pengeluaran Kas Keluar
+                </button>
+              </div>
+            </div>
+
+            <div class="row g-3 mb-4">
+              <div class="col-md-6">
+                <div class="card p-4 border shadow-sm">
+                  <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                      <small class="text-secondary fw-bold">KAS OPERASIONAL WORKSHOP</small>
+                      <h3 class="fw-bold text-success m-0">Rp 48.500.000</h3>
+                      <small class="text-muted">Akun: 1-1001 (Penerimaan Tunai & Operasional Harian)</small>
+                    </div>
+                    <i class="bi bi-cash-stack text-success fs-1 opacity-50"></i>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="card p-4 border shadow-sm">
+                  <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                      <small class="text-secondary fw-bold">BANK MANDIRI GIRO PABRIK</small>
+                      <h3 class="fw-bold text-primary m-0">Rp 215.800.000</h3>
+                      <small class="text-muted">Akun: 1-1003 (No. Rekening Resmi PT GSK)</small>
+                    </div>
+                    <i class="bi bi-building text-primary fs-1 opacity-50"></i>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="card p-4 shadow-sm border">
+              <h6 class="fw-bold mb-3"><i class="bi bi-list-columns text-primary me-2"></i>Buku Mutasi Kas & Bank Terkini</h6>
+              <div class="table-responsive">
+                <table class="table table-hover table-sm">
+                  <thead class="table-light">
+                    <tr><th>No Bukti</th><th>Tanggal</th><th>Tipe Transaksi</th><th>Akun Kas/Bank</th><th>Nominal</th><th>Keterangan</th></tr>
+                  </thead>
+                  <tbody id="tabelMutasiKas">
+                    <tr><td><code>BKM-2026-001</code></td><td>01/11/2026</td><td><span class="badge bg-success">KAS MASUK</span></td><td>Bank Mandiri Giro</td><td class="fw-bold text-success">+ Rp 13.200.000</td><td>Transfer Pelunasan Proyek PT Bumi Perkasa</td></tr>
+                    <tr><td><code>BKK-2026-001</code></td><td>31/10/2026</td><td><span class="badge bg-danger">KAS KELUAR</span></td><td>Kas Operasional</td><td class="fw-bold text-danger">- Rp 4.500.000</td><td>Biaya Listrik Mesin Roll-Forming & Mandor</td></tr>
+                    <tr><td><code>BKM-2026-002</code></td><td>30/10/2026</td><td><span class="badge bg-success">KAS MASUK</span></td><td>Kas Operasional</td><td class="fw-bold text-success">+ Rp 9.500.000</td><td>Penjualan Tunai Kanal C & Reng Kontraktor CV Mandiri</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- MODUL 4: PENJUALAN (SALES) ALA ACCURATE -->
+          <div id="erpTabPenjualan" class="d-none">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <div>
+                <h5 class="fw-bold m-0"><i class="bi bi-cart-check text-primary me-2"></i>Modul Penjualan Proyek</h5>
+                <small class="text-secondary">Faktur penjualan baja ringan, margin real-time per transaksi, dan pelunasan piutang.</small>
+              </div>
+              <button class="btn btn-primary btn-sm fw-bold" onclick="bukaModalFakturBaru()">
+                <i class="bi bi-plus-lg me-1"></i> + Buat Faktur Penjualan Baru
+              </button>
+            </div>
+
+            <div class="card p-4 shadow-sm border mb-4">
+              <div class="d-flex justify-content-between align-items-center mb-3">
+                <h6 class="fw-bold m-0"><i class="bi bi-receipt-cutoff text-primary me-2"></i>Daftar Faktur Penjualan (Sales Invoices)</h6>
+                <span class="badge bg-primary px-3 py-2">Realtime Accurate Engine</span>
+              </div>
+              <div class="table-responsive">
+                <table class="table table-hover table-sm">
+                  <thead class="table-light">
+                    <tr><th>No. Invoice</th><th>Tanggal</th><th>Pelanggan</th><th>Nilai Penjualan</th><th>HPP Pokok</th><th>Laba Kotor</th><th>Margin</th><th>Status</th><th>Aksi</th></tr>
+                  </thead>
+                  <tbody id="tabelPenjualanLengkap">
+                    <tr>
+                      <td class="fw-bold"><code>INV-2026-001</code></td>
+                      <td>01/11/2026</td>
+                      <td>PT Bumi Perkasa (Kendari)</td>
+                      <td class="fw-bold">Rp 13.200.000</td>
+                      <td class="text-muted">Rp 7.860.000</td>
+                      <td class="text-success fw-bold">Rp 5.340.000</td>
+                      <td><span class="badge bg-warning text-dark fw-bold">40.5%</span></td>
+                      <td><span class="badge bg-success">Lunas</span></td>
+                      <td><button class="btn btn-xs btn-outline-dark" onclick="alert('Cetak Kwitansi Faktur INV-2026-001 siap cetak PDF.')"><i class="bi bi-printer"></i></button></td>
+                    </tr>
+                    <tr>
+                      <td class="fw-bold"><code>INV-2026-002</code></td>
+                      <td>30/10/2026</td>
+                      <td>CV Mandiri Truss Konstruksi</td>
+                      <td class="fw-bold">Rp 9.500.000</td>
+                      <td class="text-muted">Rp 5.800.000</td>
+                      <td class="text-success fw-bold">Rp 3.700.000</td>
+                      <td><span class="badge bg-warning text-dark fw-bold">38.9%</span></td>
+                      <td><span class="badge bg-success">Lunas</span></td>
+                      <td><button class="btn btn-xs btn-outline-dark" onclick="alert('Cetak Kwitansi Faktur INV-2026-002 siap cetak PDF.')"><i class="bi bi-printer"></i></button></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- MODUL 5: PEMBELIAN (PURCHASES) ALA ACCURATE -->
+          <div id="erpTabPembelian" class="d-none">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <div>
+                <h5 class="fw-bold m-0"><i class="bi bi-bag-check text-primary me-2"></i>Modul Pembelian & Pengadaan Material</h5>
+                <small class="text-secondary">Pencatatan pembelian Coil Galvalum Zincalume G550, hutang suplier, dan PO.</small>
+              </div>
+              <button class="btn btn-primary btn-sm fw-bold" onclick="alert('Formulir Pesanan Pembelian Bahan Baku Coil Baru siap diisi.')">
+                <i class="bi bi-plus-lg me-1"></i> + Buat Pesanan Pembelian (PO)
+              </button>
+            </div>
+
+            <div class="row g-3 mb-4">
+              <div class="col-md-4">
+                <div class="card p-3 border shadow-sm">
+                  <small class="text-secondary fw-bold">TOTAL PEMBELIAN MATERIAL</small>
+                  <h4 class="fw-bold text-primary m-0">Rp 175.400.000</h4>
+                  <small class="text-muted">Bulan Berjalan</small>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="card p-3 border shadow-sm">
+                  <small class="text-secondary fw-bold">HUTANG SUPLIER BELUM LUNAS</small>
+                  <h4 class="fw-bold text-danger m-0">Rp 85.000.000</h4>
+                  <small class="text-muted">Jatuh Tempo: 15/11/2026</small>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="card p-3 border shadow-sm">
+                  <small class="text-secondary fw-bold">SUPLIER PABRIKAN AKTIF</small>
+                  <h4 class="fw-bold text-success m-0">4 Mitra Pabrik</h4>
+                  <small class="text-muted">Krakatau Steel, Sunrise, dll</small>
+                </div>
+              </div>
+            </div>
+
+            <div class="card p-4 shadow-sm border">
+              <h6 class="fw-bold mb-3"><i class="bi bi-table text-primary me-2"></i>Daftar Faktur Pembelian Bahan Baku (Purchase Invoices)</h6>
+              <div class="table-responsive">
+                <table class="table table-hover table-sm">
+                  <thead class="table-light">
+                    <tr><th>No. PO / Faktur</th><th>Tanggal</th><th>Suplier Pabrikan</th><th>Material Baku</th><th>Qty (Kg/Dus)</th><th>Total Nilai</th><th>Status Hutang</th></tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td><code>PO-2026-001</code></td>
+                      <td>25/10/2026</td>
+                      <td>PT Sunrise Steel (Surabaya)</td>
+                      <td>Coil Zincalume AZ100 G550 (0.75mm)</td>
+                      <td class="fw-bold">10.000 kg</td>
+                      <td class="fw-bold text-dark">Rp 145.000.000</td>
+                      <td><span class="badge bg-warning text-dark">Tempo (30 Hari)</span></td>
+                    </tr>
+                    <tr>
+                      <td><code>PO-2026-002</code></td>
+                      <td>28/10/2026</td>
+                      <td>PT Mitra Fastener Baja</td>
+                      <td>Baut Roofing Hex Head 12x20</td>
+                      <td class="fw-bold">50 Dus</td>
+                      <td class="fw-bold text-dark">Rp 6.250.000</td>
+                      <td><span class="badge bg-success">Lunas</span></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- MODUL 6: PERSEDIAAN & STOK (INVENTORY) DENGAN TOMBOL INPUT BARANG -->
+          <div id="erpTabPersediaan" class="d-none">
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+              <div>
+                <h5 class="fw-bold m-0"><i class="bi bi-boxes text-warning me-2"></i>Modul Persediaan & Master Barang</h5>
+                <small class="text-secondary">Kelola daftar produk jadi, bahan baku coil galvalum, harga jual, dan stok realtime.</small>
+              </div>
+              <button class="btn btn-warning btn-sm fw-bold shadow" onclick="bukaModalInputBarang()">
+                <i class="bi bi-plus-circle-fill me-1"></i> + Input / Tambah Barang Baru
+              </button>
+            </div>
+
+            <div class="row g-3 mb-4">
+              <div class="col-sm-6 col-lg-3">
+                <div class="card p-3 border shadow-sm">
+                  <small class="text-secondary fw-bold">TOTAL ITEM BARANG</small>
+                  <h4 class="fw-bold text-primary m-0" id="invTotalItem">7 Produk</h4>
+                  <small class="text-muted">Tercatat di Database</small>
+                </div>
+              </div>
+              <div class="col-sm-6 col-lg-3">
+                <div class="card p-3 border shadow-sm">
+                  <small class="text-secondary fw-bold">NILAI ASET PERSEDIAAN</small>
+                  <h4 class="fw-bold text-success m-0" id="invNilaiAset">Rp 346.925.000</h4>
+                  <small class="text-muted">Total Nilai Pokok HPP</small>
+                </div>
+              </div>
+              <div class="col-sm-6 col-lg-3">
+                <div class="card p-3 border shadow-sm">
+                  <small class="text-secondary fw-bold">STOK COIL BAKU</small>
+                  <h4 class="fw-bold text-dark m-0">14.250 Kg</h4>
+                  <small class="text-muted">Galvalum G550 Siap Roll</small>
+                </div>
+              </div>
+              <div class="col-sm-6 col-lg-3">
+                <div class="card p-3 border shadow-sm">
+                  <small class="text-secondary fw-bold">STATUS PERSEDIAAN</small>
+                  <h4 class="fw-bold text-success m-0"><i class="bi bi-shield-check me-1"></i>Aman</h4>
+                  <small class="text-success">Tidak ada stok kritis</small>
+                </div>
+              </div>
+            </div>
+
+            <div class="card p-4 shadow-sm border mb-4">
+              <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+                <h6 class="fw-bold m-0"><i class="bi bi-table text-primary me-2"></i>Daftar Master Barang & Jasa Persediaan</h6>
+                <button class="btn btn-sm btn-outline-warning fw-bold" onclick="bukaModalInputBarang()">
+                  <i class="bi bi-plus-circle me-1"></i> + Tambah Barang Baru
+                </button>
+              </div>
+              <div class="table-responsive">
+                <table class="table table-hover table-sm">
+                  <thead class="table-light">
+                    <tr>
+                      <th>Kode</th>
+                      <th>Nama Barang / Profil Baja</th>
+                      <th>Kategori</th>
+                      <th>Satuan</th>
+                      <th>Stok</th>
+                      <th>Stok Min</th>
+                      <th>Harga Pokok (HPP)</th>
+                      <th>Harga Jual Standar</th>
+                      <th>Nilai Aset</th>
+                      <th>Aksi</th>
+                    </tr>
+                  </thead>
+                  <tbody id="tabelPersediaanMaster">
+                    <!-- Diisi dinamis oleh JavaScript -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- MODUL 7: PABRIKASI & PRODUKSI ROLL-FORMING -->
           <div id="erpTabManufaktur" class="d-none">
             <div class="row g-3 mb-4">
               <div class="col-md-4">
@@ -380,7 +774,7 @@
                   <div class="d-flex justify-content-between align-items-center">
                     <div>
                       <small class="text-secondary fw-bold">STOK BAHAN BAKU</small>
-                      <h4 class="fw-bold m-0 text-primary">14,250 kg</h4>
+                      <h4 class="fw-bold m-0 text-primary">14.250 kg</h4>
                       <small class="text-muted">Coil Galvalum AZ100 G550</small>
                     </div>
                     <i class="bi bi-disc text-primary fs-1 opacity-50"></i>
@@ -404,7 +798,7 @@
                   <div class="d-flex justify-content-between align-items-center">
                     <div>
                       <small class="text-secondary fw-bold">STOK RENG 30.45</small>
-                      <h4 class="fw-bold m-0 text-warning">1,200 Btg</h4>
+                      <h4 class="fw-bold m-0 text-warning">1.200 Btg</h4>
                       <small class="text-muted">Panjang 6 Meter Galvalum</small>
                     </div>
                     <i class="bi bi-grid-3x3 text-warning fs-1 opacity-50"></i>
@@ -479,57 +873,89 @@
             </div>
           </div>
 
-          <!-- TAB 3: AKUNTANSI & KAS COA -->
-          <div id="erpTabAkuntansi" class="d-none">
-            <div class="row g-3 mb-4">
-              <div class="col-md-4">
-                <div class="card p-3 border shadow-sm">
-                  <small class="text-secondary fw-bold">KAS OPERASIONAL PABRIK</small>
-                  <h4 class="fw-bold text-success m-0">Rp 48.500.000</h4>
-                  <small class="text-muted">Kode Akun: 1-1001 (Kas Lancar)</small>
-                </div>
+          <!-- MODUL 8: PELAPORAN KEUANGAN & LABA RUGI ALA ACCURATE -->
+          <div id="erpTabPelaporan" class="d-none">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <div>
+                <h5 class="fw-bold m-0"><i class="bi bi-graph-up-arrow text-primary me-2"></i>Modul Pelaporan Keuangan Komprehensif</h5>
+                <small class="text-secondary">Laporan Laba Rugi, Neraca Keuangan, Arus Kas, dan Analisis Margin Pabrik.</small>
               </div>
-              <div class="col-md-4">
-                <div class="card p-3 border shadow-sm">
-                  <small class="text-secondary fw-bold">BANK MANDIRI GIRO</small>
-                  <h4 class="fw-bold text-primary m-0">Rp 215.800.000</h4>
-                  <small class="text-muted">Kode Akun: 1-1003 (Rekening Pabrik)</small>
-                </div>
-              </div>
-              <div class="col-md-4">
-                <div class="card p-3 border shadow-sm">
-                  <small class="text-secondary fw-bold">PIUTANG PROYEK BERJALAN</small>
-                  <h4 class="fw-bold text-warning m-0">Rp 64.200.000</h4>
-                  <small class="text-muted">Kode Akun: 1-1005 (Tempo 30 Hari)</small>
-                </div>
-              </div>
+              <button class="btn btn-outline-dark btn-sm fw-bold" onclick="window.print()">
+                <i class="bi bi-printer me-1"></i> Cetak Dokumen Laporan
+              </button>
             </div>
 
-            <div class="card p-4 shadow-sm border mb-4">
-              <h6 class="fw-bold mb-3"><i class="bi bi-journal-text text-primary me-2"></i>Bagan Akun (Master Chart of Accounts - COA)</h6>
-              <div class="table-responsive">
-                <table class="table table-hover table-sm">
-                  <thead class="table-light">
-                    <tr><th>Kode Akun</th><th>Nama Akun</th><th>Kategori</th><th>Posisi Saldo Normal</th></tr>
-                  </thead>
-                  <tbody>
-                    <tr><td><code>1-1001</code></td><td>Kas Operasional Pabrik</td><td>Aset Lancar</td><td><span class="badge bg-primary">Debit</span></td></tr>
-                    <tr><td><code>1-1003</code></td><td>Bank Mandiri Giro Perusahaan</td><td>Aset Lancar</td><td><span class="badge bg-primary">Debit</span></td></tr>
-                    <tr><td><code>1-1005</code></td><td>Piutang Usaha Penjualan Proyek</td><td>Aset Lancar</td><td><span class="badge bg-primary">Debit</span></td></tr>
-                    <tr><td><code>1-1006</code></td><td>Persediaan Bahan Baku Coil Galvalum</td><td>Aset Lancar</td><td><span class="badge bg-primary">Debit</span></td></tr>
-                    <tr><td><code>1-1007</code></td><td>Persediaan Barang Jadi Baja Ringan</td><td>Aset Lancar</td><td><span class="badge bg-primary">Debit</span></td></tr>
-                    <tr><td><code>2-2001</code></td><td>Hutang Usaha Suplier Coil Zincalume</td><td>Kewajiban Lancar</td><td><span class="badge bg-secondary">Kredit</span></td></tr>
-                    <tr><td><code>3-3001</code></td><td>Modal Disetor Pemilik Pabrik</td><td>Ekuitas</td><td><span class="badge bg-secondary">Kredit</span></td></tr>
-                    <tr><td><code>4-4001</code></td><td>Pendapatan Penjualan Kanal C & Reng</td><td>Pendapatan</td><td><span class="badge bg-secondary">Kredit</span></td></tr>
-                    <tr><td><code>5-5001</code></td><td>HPP Pemakaian Bahan Baku Coil</td><td>Beban Pokok</td><td><span class="badge bg-primary">Debit</span></td></tr>
-                    <tr><td><code>5-5002</code></td><td>HPP Listrik & Tenaga Roll-Forming</td><td>Beban Pokok</td><td><span class="badge bg-primary">Debit</span></td></tr>
-                  </tbody>
-                </table>
+            <div class="row g-4">
+              <!-- LAPORAN LABA RUGI -->
+              <div class="col-12 col-lg-6">
+                <div class="card p-4 shadow-sm border h-100">
+                  <div class="border-bottom pb-2 mb-3 text-center">
+                    <h6 class="fw-bold m-0">PT GRIYA SULTRA KONSTRUKSI</h6>
+                    <small class="text-secondary">LAPORAN LABA RUGI (INCOME STATEMENT)</small>
+                    <div class="text-muted" style="font-size: 11px;">Periode Berjalan: Tahun 2026</div>
+                  </div>
+                  <div class="table-responsive">
+                    <table class="table table-sm">
+                      <tbody>
+                        <tr class="table-light"><td colspan="2" class="fw-bold">PENDAPATAN PENJUALAN</td></tr>
+                        <tr><td class="ps-3">Penjualan Kanal C & Reng Baja Ringan</td><td class="text-end fw-bold">Rp 22.700.000</td></tr>
+                        <tr class="border-top"><td class="fw-bold">TOTAL PENDAPATAN</td><td class="text-end fw-bold text-primary">Rp 22.700.000</td></tr>
+                        
+                        <tr class="table-light"><td colspan="2" class="fw-bold pt-3">BEBAN POKOK PENJUALAN (HPP)</td></tr>
+                        <tr><td class="ps-3">Pemakaian Bahan Baku Coil Galvalum</td><td class="text-end">Rp 12.160.000</td></tr>
+                        <tr><td class="ps-3">Beban Listrik & Mesin Roll-Forming</td><td class="text-end">Rp 1.500.000</td></tr>
+                        <tr class="border-top"><td class="fw-bold">TOTAL HPP</td><td class="text-end fw-bold text-secondary">Rp 13.660.000</td></tr>
+                        
+                        <tr class="table-success"><td class="fw-bold">LABA KOTOR (GROSS PROFIT)</td><td class="text-end fw-bold text-success fs-6">Rp 9.040.000 (39.8%)</td></tr>
+                        
+                        <tr class="table-light"><td colspan="2" class="fw-bold pt-3">BEBAN OPERASIONAL</td></tr>
+                        <tr><td class="ps-3">Beban Pengiriman Armada Truk</td><td class="text-end">Rp 1.200.000</td></tr>
+                        <tr><td class="ps-3">Beban Administrasi & Kantor</td><td class="text-end">Rp 800.000</td></tr>
+                        <tr class="border-top"><td class="fw-bold">TOTAL BEBAN OPERASIONAL</td><td class="text-end fw-bold">Rp 2.000.000</td></tr>
+                        
+                        <tr class="table-primary"><td class="fw-bold">LABA BERSIH BERJALAN</td><td class="text-end fw-bold text-primary fs-6">Rp 7.040.000</td></tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+
+              <!-- NERACA KEUANGAN -->
+              <div class="col-12 col-lg-6">
+                <div class="card p-4 shadow-sm border h-100">
+                  <div class="border-bottom pb-2 mb-3 text-center">
+                    <h6 class="fw-bold m-0">PT GRIYA SULTRA KONSTRUKSI</h6>
+                    <small class="text-secondary">NERACA KEUANGAN (BALANCE SHEET)</small>
+                    <div class="text-muted" style="font-size: 11px;">Per 01 November 2026</div>
+                  </div>
+                  <div class="table-responsive">
+                    <table class="table table-sm">
+                      <tbody>
+                        <tr class="table-light"><td colspan="2" class="fw-bold">ASET LANCAR</td></tr>
+                        <tr><td class="ps-3">Kas Operasional Pabrik</td><td class="text-end">Rp 48.500.000</td></tr>
+                        <tr><td class="ps-3">Bank Mandiri Giro</td><td class="text-end">Rp 215.800.000</td></tr>
+                        <tr><td class="ps-3">Piutang Usaha Proyek</td><td class="text-end">Rp 64.200.000</td></tr>
+                        <tr><td class="ps-3">Persediaan Bahan Baku Coil</td><td class="text-end">Rp 206.625.000</td></tr>
+                        <tr><td class="ps-3">Persediaan Barang Jadi Rangka Atap</td><td class="text-end">Rp 140.300.000</td></tr>
+                        <tr class="border-top table-info"><td class="fw-bold">TOTAL ASET</td><td class="text-end fw-bold text-primary">Rp 675.425.000</td></tr>
+
+                        <tr class="table-light"><td colspan="2" class="fw-bold pt-3">KEWAJIBAN & EKUITAS MODAL</td></tr>
+                        <tr><td class="ps-3">Hutang Usaha Suplier Coil</td><td class="text-end text-danger">Rp 85.000.000</td></tr>
+                        <tr><td class="ps-3">Modal Pemilik Disetor</td><td class="text-end">Rp 583.385.000</td></tr>
+                        <tr><td class="ps-3">Laba Bersih Berjalan</td><td class="text-end text-success">Rp 7.040.000</td></tr>
+                        <tr class="border-top table-info"><td class="fw-bold">TOTAL KEWAJIBAN & EKUITAS</td><td class="text-end fw-bold text-primary">Rp 675.425.000</td></tr>
+                      </tbody>
+                    </table>
+                  </div>
+                  <div class="text-center mt-2">
+                    <span class="badge bg-success"><i class="bi bi-check-all me-1"></i>Posisi Neraca: Seimbang (Balanced)</span>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
 
-          <!-- TAB 4: PORTAL ADMIN & KUSTOMISASI LOGO -->
+          <!-- MODUL 9: PROFIL PABRIK & LOGO -->
           <div id="erpTabAdmin" class="d-none">
             <div class="row g-4">
               <div class="col-12 col-lg-6">
@@ -586,13 +1012,13 @@
                       <div>
                         <h6 class="fw-bold m-0">Administrator Utama GSK</h6>
                         <span class="badge bg-success my-1">Super Admin (Akses Penuh Semua Menu)</span>
-                        <div class="small text-muted">Email / User: <strong>admin@gsk.id</strong></div>
+                        <div class="small text-muted">Email / User: <strong>admin@gsk.id</strong> *(atau `direktur@gsk.id`)*</div>
                         <div class="small text-muted">PIN Keamanan: <code>123456</code></div>
                       </div>
                     </div>
                   </div>
                   <div class="alert alert-info py-2 small m-0">
-                    <i class="bi bi-info-circle me-1"></i> <strong>1 Akun untuk Semua Kebutuhan</strong>: Akun ini memiliki izin tertinggi yang mencakup Dashboard Finansial, Produksi Roll-Forming Pabrik, Akuntansi COA, dan Pengaturan Logo.
+                    <i class="bi bi-info-circle me-1"></i> <strong>Akses Penuh Setara Accurate</strong>: Mencakup Buku Besar COA, Kas & Bank, Penjualan, Pembelian, Persediaan Barang, Pabrikasi Roll-Forming, dan Laporan Keuangan.
                   </div>
                 </div>
               </div>
@@ -603,12 +1029,237 @@
     </div>
   </div>
 
+  <!-- MODAL INPUT BARANG BARU (PERSERIAAN ALA ACCURATE) -->
+  <div class="modal fade" id="modalInputBarang" tabindex="-1" style="z-index: 1060;">
+    <div class="modal-dialog modal-dialog-centered" style="max-width: 500px;">
+      <div class="modal-content p-3 border-0 shadow-lg" style="border-radius: 16px;">
+        <div class="modal-header border-0 pb-0">
+          <h5 class="modal-title fw-bold"><i class="bi bi-box-seam-fill text-warning me-2"></i>Tambah / Input Barang Baru</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <p class="text-secondary small mb-3">Tambahkan item barang jadi, bahan baku coil galvalum, atau aksesoris ke database persediaan.</p>
+          <form onsubmit="handleInputBarangSubmit(event)">
+            <div class="row g-2 mb-3">
+              <div class="col-5">
+                <label class="form-label small fw-bold">Kode Barang</label>
+                <input type="text" id="inpKodeBarang" class="form-control form-control-sm" placeholder="Contoh: FG-04" required>
+              </div>
+              <div class="col-7">
+                <label class="form-label small fw-bold">Kategori Produk</label>
+                <select id="inpKategori" class="form-select form-select-sm" required>
+                  <option value="Barang Jadi" selected>Barang Jadi (FG - Rangka Atap)</option>
+                  <option value="Bahan Baku">Bahan Baku (RM - Coil Galvalum)</option>
+                  <option value="Barang Pelengkap">Barang Pelengkap (Baut / Aksesoris)</option>
+                  <option value="Jasa Proyek">Jasa / Instalasi Konstruksi</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label small fw-bold">Nama Barang & Spesifikasi</label>
+              <input type="text" id="inpNamaBarang" class="form-control form-control-sm" placeholder="Contoh: Kanal C 75.65 SNI (Panjang 6M)" required>
+            </div>
+
+            <div class="row g-2 mb-3">
+              <div class="col-4">
+                <label class="form-label small fw-bold">Satuan</label>
+                <select id="inpSatuan" class="form-select form-select-sm" required>
+                  <option value="Batang" selected>Batang</option>
+                  <option value="Lembar">Lembar</option>
+                  <option value="Kg">Kg</option>
+                  <option value="Meter">Meter</option>
+                  <option value="Dus">Dus / Box</option>
+                  <option value="Pcs">Pcs</option>
+                </select>
+              </div>
+              <div class="col-4">
+                <label class="form-label small fw-bold">Stok Awal</label>
+                <input type="number" id="inpStokAwal" class="form-control form-control-sm" value="50" min="0" required>
+              </div>
+              <div class="col-4">
+                <label class="form-label small fw-bold">Stok Min (Alert)</label>
+                <input type="number" id="inpStokMin" class="form-control form-control-sm" value="10" min="0" required>
+              </div>
+            </div>
+
+            <div class="row g-2 mb-3">
+              <div class="col-6">
+                <label class="form-label small fw-bold">Harga Pokok (HPP Beli)</label>
+                <div class="input-group input-group-sm">
+                  <span class="input-group-text">Rp</span>
+                  <input type="number" id="inpHargaBeli" class="form-control" value="65000" min="0" required>
+                </div>
+              </div>
+              <div class="col-6">
+                <label class="form-label small fw-bold">Harga Jual Standar</label>
+                <div class="input-group input-group-sm">
+                  <span class="input-group-text">Rp</span>
+                  <input type="number" id="inpHargaJual" class="form-control" value="88000" min="0" required>
+                </div>
+              </div>
+            </div>
+
+            <div id="alertInputBarang" class="alert py-2 small d-none"></div>
+
+            <button type="submit" class="btn btn-warning w-100 py-2 fw-bold shadow-sm">
+              <i class="bi bi-save2-fill me-1"></i> Simpan Barang ke Persediaan
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL TRANSAKSI KAS MASUK / KELUAR -->
+  <div class="modal fade" id="modalKasTransaksi" tabindex="-1" style="z-index: 1060;">
+    <div class="modal-dialog modal-dialog-centered" style="max-width: 440px;">
+      <div class="modal-content p-3 border-0 shadow-lg" style="border-radius: 16px;">
+        <div class="modal-header border-0 pb-0">
+          <h5 class="modal-title fw-bold" id="modalKasTitle"><i class="bi bi-cash-coin text-success me-2"></i>Catat Transaksi Kas</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <form onsubmit="handleKasSubmit(event)">
+            <input type="hidden" id="kasTipe" value="MASUK">
+            <div class="mb-3">
+              <label class="form-label small fw-bold">Pilih Akun Kas / Bank</label>
+              <select id="kasAkun" class="form-select form-select-sm" required>
+                <option value="1-1001" selected>1-1001 - Kas Operasional Pabrik</option>
+                <option value="1-1003">1-1003 - Bank Mandiri Giro Perusahaan</option>
+              </select>
+            </div>
+            <div class="mb-3">
+              <label class="form-label small fw-bold">Nominal Transaksi (Rp)</label>
+              <div class="input-group input-group-sm">
+                <span class="input-group-text">Rp</span>
+                <input type="number" id="kasNominal" class="form-control" placeholder="Contoh: 5000000" min="1000" required>
+              </div>
+            </div>
+            <div class="mb-3">
+              <label class="form-label small fw-bold">Keterangan Transaksi</label>
+              <textarea id="kasKeterangan" class="form-control form-control-sm" rows="2" placeholder="Contoh: Pembayaran DP Pelanggan Proyek / Biaya Operasional" required></textarea>
+            </div>
+            <button type="submit" class="btn btn-success w-100 py-2 fw-bold" id="btnKasSubmit">
+              <i class="bi bi-check2-circle me-1"></i> Simpan Transaksi Kas
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL JURNAL UMUM MANUAL -->
+  <div class="modal fade" id="modalJurnalManual" tabindex="-1" style="z-index: 1060;">
+    <div class="modal-dialog modal-dialog-centered" style="max-width: 460px;">
+      <div class="modal-content p-3 border-0 shadow-lg" style="border-radius: 16px;">
+        <div class="modal-header border-0 pb-0">
+          <h5 class="modal-title fw-bold"><i class="bi bi-journal-plus text-primary me-2"></i>Catat Jurnal Umum Manual</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <form onsubmit="handleJurnalSubmit(event)">
+            <div class="row g-2 mb-3">
+              <div class="col-6">
+                <label class="form-label small fw-bold">Akun Debit</label>
+                <select id="jurnalDebit" class="form-select form-select-sm" required>
+                  <option value="1-1001" selected>1-1001 (Kas Pabrik)</option>
+                  <option value="1-1003">1-1003 (Bank Mandiri)</option>
+                  <option value="1-1005">1-1005 (Piutang Usaha)</option>
+                  <option value="1-1006">1-1006 (Persediaan Coil)</option>
+                  <option value="5-5001">5-5001 (Beban HPP Coil)</option>
+                  <option value="6-6001">6-6001 (Beban Ops & Truk)</option>
+                </select>
+              </div>
+              <div class="col-6">
+                <label class="form-label small fw-bold">Akun Kredit</label>
+                <select id="jurnalKredit" class="form-select form-select-sm" required>
+                  <option value="4-4001" selected>4-4001 (Pendapatan Jual)</option>
+                  <option value="1-1001">1-1001 (Kas Pabrik)</option>
+                  <option value="1-1003">1-1003 (Bank Mandiri)</option>
+                  <option value="1-1007">1-1007 (Persediaan Jadi)</option>
+                  <option value="2-2001">2-2001 (Hutang Suplier)</option>
+                  <option value="3-3001">3-3001 (Modal Pemilik)</option>
+                </select>
+              </div>
+            </div>
+            <div class="mb-3">
+              <label class="form-label small fw-bold">Nominal (Rp)</label>
+              <div class="input-group input-group-sm">
+                <span class="input-group-text">Rp</span>
+                <input type="number" id="jurnalNominal" class="form-control" placeholder="Contoh: 10000000" min="1000" required>
+              </div>
+            </div>
+            <div class="mb-3">
+              <label class="form-label small fw-bold">Keterangan Jurnal</label>
+              <input type="text" id="jurnalKeterangan" class="form-control form-control-sm" placeholder="Contoh: Penyesuaian akhir bulan" required>
+            </div>
+            <button type="submit" class="btn btn-primary w-100 py-2 fw-bold">
+              <i class="bi bi-check-lg me-1"></i> Simpan Entri Jurnal
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL BUAT FAKTUR PENJUALAN BARU -->
+  <div class="modal fade" id="modalFakturBaru" tabindex="-1" style="z-index: 1060;">
+    <div class="modal-dialog modal-dialog-centered" style="max-width: 480px;">
+      <div class="modal-content p-3 border-0 shadow-lg" style="border-radius: 16px;">
+        <div class="modal-header border-0 pb-0">
+          <h5 class="modal-title fw-bold"><i class="bi bi-receipt text-primary me-2"></i>Buat Faktur Penjualan Baru</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <form onsubmit="handleFakturSubmit(event)">
+            <div class="mb-3">
+              <label class="form-label small fw-bold">Nama Pelanggan / Kontraktor</label>
+              <input type="text" id="fakPelanggan" class="form-control form-control-sm" placeholder="Contoh: PT Bumi Konstruksi Mandiri" required>
+            </div>
+            <div class="row g-2 mb-3">
+              <div class="col-7">
+                <label class="form-label small fw-bold">Produk Baja Ringan</label>
+                <select id="fakProduk" class="form-select form-select-sm" onchange="hitungMarginFakturBaru()">
+                  <option value="FG-01" data-harga="98000" data-hpp="68000" selected>Kanal C 75.75 SNI (6M)</option>
+                  <option value="FG-02" data-harga="47500" data-hpp="31000">Reng 30.45 (6M)</option>
+                  <option value="FG-03" data-harga="198000" data-hpp="135000">Atap Spandek 0.30mm (6M)</option>
+                </select>
+              </div>
+              <div class="col-5">
+                <label class="form-label small fw-bold">Jumlah (Qty)</label>
+                <input type="number" id="fakQty" class="form-control form-control-sm" value="50" min="1" oninput="hitungMarginFakturBaru()" required>
+              </div>
+            </div>
+            <div class="p-3 bg-light rounded border mb-3">
+              <div class="d-flex justify-content-between py-1 border-bottom">
+                <span class="small">Total Penjualan:</span>
+                <strong id="fakTotalJual" class="text-primary">Rp 4.900.000</strong>
+              </div>
+              <div class="d-flex justify-content-between py-1 border-bottom">
+                <span class="small">Beban HPP Pokok:</span>
+                <span id="fakTotalHPP" class="text-secondary">Rp 3.400.000</span>
+              </div>
+              <div class="d-flex justify-content-between py-1">
+                <span class="fw-bold">Laba Kotor & Margin:</span>
+                <strong id="fakMarginHasil" class="text-success">Rp 1.500.000 (30.6%)</strong>
+              </div>
+            </div>
+            <button type="submit" class="btn btn-primary w-100 py-2 fw-bold">
+              <i class="bi bi-save-fill me-1"></i> Simpan & Terbitkan Faktur
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Bootstrap JS -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <!-- Konfigurasi API -->
-  <script src="js/config.js?v=5.0"></script>
+  <script src="js/config.js?v=6.0"></script>
   <!-- Logika Aplikasi Terpisah -->
-  <script src="js/app.js?v=5.0"></script>
+  <script src="js/app.js?v=6.0"></script>
 </body>
 </html>
 

@@ -290,6 +290,15 @@ function doPost(e) {
       case 'saveUser':
         return handleSaveUser_(body.payload, user, t0);
 
+      case 'saveProduct':
+        return handleSaveProduct_(body.payload, user, t0);
+
+      case 'saveJurnal':
+        return handleSaveJurnal_(body.payload, user, t0);
+
+      case 'saveKasTransaksi':
+        return handleSaveKasTransaksi_(body.payload, user, t0);
+
       default:
         return createJsonResponse_(false, null, 'Aksi POST tidak terdaftar: ' + action, t0);
     }
@@ -704,6 +713,118 @@ function handleSaveUser_(payload, user, t0) {
   const userId = payload.id || ('USR-' + Utilities.formatDate(new Date(), 'GMT+7', 'yyyyMMdd-HHmm'));
   sheet.appendRow([userId, payload.nama, payload.email, payload.role, payload.pin || '123456', payload.status || 'Aktif']);
   return createJsonResponse_(true, { id: userId }, 'Pengguna berhasil disimpan.', t0);
+}
+
+/**
+ * Input / Tambah Barang Baru ke Persediaan (Master_Barang)
+ */
+function handleSaveProduct_(payload, user, t0) {
+  const lock = LockService.getScriptLock();
+  try {
+    lock.waitLock(15000);
+    const ss = getDatabase_();
+    const sheet = ss.getSheetByName('Master_Barang');
+    if (!sheet) return createJsonResponse_(false, null, 'Sheet Master_Barang tidak ditemukan.', t0);
+
+    const kode = String(payload.kodeBarang || ('BRG-' + Date.now().toString().slice(-4))).toUpperCase().trim();
+    const nama = String(payload.namaBarang || '').trim();
+    const kategori = payload.kategori || 'Barang Jadi';
+    const satuan = payload.satuan || 'Batang';
+    const stokMin = Number(payload.stokMinimal) || 10;
+    const stokAwal = Number(payload.stokAwal) || 0;
+    const hargaBeli = Number(payload.hargaBeli) || 0;
+    const hargaJual = Number(payload.hargaJual) || 0;
+
+    if (!nama) {
+      return createJsonResponse_(false, null, 'Nama barang wajib diisi.', t0);
+    }
+
+    // Cek apakah kode sudah ada
+    const data = sheet.getDataRange().getValues();
+    let rowIndex = -1;
+    for (let i = 1; i < data.length; i++) {
+      if (String(data[i][0]).toUpperCase().trim() === kode) {
+        rowIndex = i + 1;
+        break;
+      }
+    }
+
+    if (rowIndex > 0) {
+      // Update
+      sheet.getRange(rowIndex, 2, 1, 7).setValues([[nama, kategori, satuan, stokMin, stokAwal, hargaBeli, hargaJual]]);
+    } else {
+      // Tambah Baru
+      sheet.appendRow([kode, nama, kategori, satuan, stokMin, stokAwal, hargaBeli, hargaJual]);
+    }
+
+    // Catat mutasi jika ada stok awal
+    if (stokAwal > 0 && rowIndex < 0) {
+      const sheetMutasi = ss.getSheetByName('Mutasi_Stok');
+      if (sheetMutasi) {
+        const idMutasi = 'MUT-' + Utilities.formatDate(new Date(), 'GMT+7', 'yyyyMMdd-HHmmss');
+        sheetMutasi.appendRow([idMutasi, new Date(), kode, 'IN', stokAwal, 0, stokAwal, 'Stok Awal Input Barang Baru']);
+      }
+    }
+
+    // Bersihkan cache publik
+    CacheX.remove('GSK_PUBLIC_CATALOG');
+    logActivity_(ss, user.userId, user.nama, 'INPUT_BARANG', 'Simpan barang: ' + nama + ' (' + kode + ')');
+
+    return createJsonResponse_(true, { kodeBarang: kode, namaBarang: nama }, 'Barang baru ' + nama + ' berhasil disimpan ke persediaan.', t0);
+  } catch (err) {
+    return createJsonResponse_(false, null, 'Gagal menyimpan barang: ' + err.message, t0);
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+/**
+ * Catat Jurnal Umum Akuntansi (Jurnal_Umum)
+ */
+function handleSaveJurnal_(payload, user, t0) {
+  const ss = getDatabase_();
+  const sheet = ss.getSheetByName('Jurnal_Umum');
+  if (!sheet) return createJsonResponse_(false, null, 'Sheet Jurnal_Umum tidak ditemukan.', t0);
+
+  const noJurnal = payload.noJurnal || ('JU-' + Utilities.formatDate(new Date(), 'GMT+7', 'yyyyMMdd-HHmm'));
+  const tanggal = new Date();
+  const debitAkun = payload.debitAkun || '1-1001';
+  const kreditAkun = payload.kreditAkun || '4-4001';
+  const nominal = Number(payload.nominal) || 0;
+  const keterangan = payload.keterangan || 'Jurnal Penyesuaian Manual';
+
+  sheet.appendRow([noJurnal, tanggal, debitAkun, nominal, 0, keterangan]);
+  sheet.appendRow([noJurnal, tanggal, kreditAkun, 0, nominal, keterangan]);
+
+  logActivity_(ss, user.userId, user.nama, 'JURNAL_MANUAL', 'Input Jurnal ' + noJurnal + ' senilai Rp ' + nominal);
+  return createJsonResponse_(true, { noJurnal: noJurnal }, 'Jurnal umum berhasil dicatat.', t0);
+}
+
+/**
+ * Catat Kas Masuk / Keluar (Kas & Bank)
+ */
+function handleSaveKasTransaksi_(payload, user, t0) {
+  const ss = getDatabase_();
+  const sheetJurnal = ss.getSheetByName('Jurnal_Umum');
+  const tipe = payload.tipe; // 'MASUK' atau 'KELUAR'
+  const akunKas = payload.akunKas || '1-1001';
+  const akunLawan = payload.akunLawan || (tipe === 'MASUK' ? '4-4001' : '6-6001');
+  const nominal = Number(payload.nominal) || 0;
+  const keterangan = payload.keterangan || (tipe === 'MASUK' ? 'Penerimaan Kas' : 'Pengeluaran Kas');
+  const noBukti = (tipe === 'MASUK' ? 'BKM-' : 'BKK-') + Utilities.formatDate(new Date(), 'GMT+7', 'yyyyMMdd-HHmm');
+
+  if (sheetJurnal) {
+    if (tipe === 'MASUK') {
+      sheetJurnal.appendRow([noBukti, new Date(), akunKas, nominal, 0, keterangan]);
+      sheetJurnal.appendRow([noBukti, new Date(), akunLawan, 0, nominal, keterangan]);
+    } else {
+      sheetJurnal.appendRow([noBukti, new Date(), akunLawan, nominal, 0, keterangan]);
+      sheetJurnal.appendRow([noBukti, new Date(), akunKas, 0, nominal, keterangan]);
+    }
+  }
+
+  logActivity_(ss, user.userId, user.nama, 'TRANSAKSI_KAS', tipe + ' ' + noBukti + ': Rp ' + nominal);
+  return createJsonResponse_(true, { noBukti: noBukti }, 'Transaksi Kas & Bank berhasil dibukukan.', t0);
 }
 
 // =========================================================================
