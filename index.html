@@ -18,7 +18,7 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
   <!-- Style CSS Standar Desain Industri GSK -->
-  <link rel="stylesheet" href="css/style.css?v=10.0">
+  <link rel="stylesheet" href="css/style.css?v=11.0">
 </head>
 <body>
 
@@ -342,7 +342,10 @@
           </div>
 
           <!-- TOPBAR KANAN: IDENTITAS & KELUAR -->
-          <div class="d-flex align-items-center gap-3">
+          <div class="d-flex align-items-center gap-2">
+            <button type="button" class="btn btn-sm btn-outline-light py-1 px-2 fw-semibold" onclick="bukaModalBackupERP()" title="Unduh Backup & Ekspor Data ERP">
+              <i class="bi bi-cloud-arrow-down-fill me-1 text-info"></i> Backup Data
+            </button>
             <span class="badge bg-danger text-uppercase fw-bold d-none d-sm-inline" style="font-size: 10px; letter-spacing: 0.5px;">PT Griya Sultra Konstruksi</span>
             <div class="text-end d-none d-md-block">
               <div class="small fw-bold text-white lh-1" id="wsUserName">Administrator Utama</div>
@@ -1653,12 +1656,133 @@
     </div>
   </div>
 
+  <!-- MODAL BACKUP & RESTORE DATA ERP -->
+  <div class="modal fade" id="modalBackupERP" tabindex="-1" style="z-index: 1060;">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+      <div class="modal-content border-0 shadow-lg" style="border-radius: 16px;">
+        <div class="modal-header border-bottom py-3 px-4 d-flex justify-content-between align-items-center">
+          <div class="d-flex align-items-center gap-2">
+            <span class="badge bg-primary p-2 fs-6"><i class="bi bi-cloud-arrow-down-fill text-white"></i></span>
+            <div>
+              <h5 class="modal-title fw-bold m-0 text-dark">Backup & Pulihkan Data ERP</h5>
+              <small class="text-secondary">Pusat Keamanan Database PT Griya Sultra Konstruksi</small>
+            </div>
+          </div>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body p-4">
+          <!-- RINGKASAN DATA SAAT INI -->
+          <div class="card border-0 bg-light p-3 mb-4 rounded-3">
+            <h6 class="fw-bold mb-3 text-dark"><i class="bi bi-info-circle-fill text-primary me-2"></i>Status & Ringkasan Data Aktif Saat Ini</h6>
+            <div class="row g-2 text-center">
+              <div class="col-6 col-md-3">
+                <div class="p-2 bg-white rounded border">
+                  <small class="text-muted d-block">Persediaan Barang</small>
+                  <strong class="fs-5 text-dark" id="bkpTotalProduk">0</strong> <small class="text-muted">Item</small>
+                </div>
+              </div>
+              <div class="col-6 col-md-3">
+                <div class="p-2 bg-white rounded border">
+                  <small class="text-muted d-block">Faktur Penjualan</small>
+                  <strong class="fs-5 text-success" id="bkpTotalPenjualan">0</strong> <small class="text-muted">Trx</small>
+                </div>
+              </div>
+              <div class="col-6 col-md-3">
+                <div class="p-2 bg-white rounded border">
+                  <small class="text-muted d-block">PO Pembelian</small>
+                  <strong class="fs-5 text-danger" id="bkpTotalPembelian">0</strong> <small class="text-muted">Trx</small>
+                </div>
+              </div>
+              <div class="col-6 col-md-3">
+                <div class="p-2 bg-white rounded border">
+                  <small class="text-muted d-block">Jurnal & Mutasi</small>
+                  <strong class="fs-5 text-primary" id="bkpTotalJurnal">0</strong> <small class="text-muted">Baris</small>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- OPSI UNDUH BACKUP -->
+          <div class="row g-3">
+            <!-- 1. BACKUP DATABASE LENGKAP -->
+            <div class="col-12 col-md-6">
+              <div class="card h-100 border p-3 rounded-3 shadow-sm">
+                <div class="d-flex align-items-center gap-2 mb-2">
+                  <div class="p-2 rounded bg-primary bg-opacity-10 text-primary">
+                    <i class="bi bi-file-earmark-code fs-4"></i>
+                  </div>
+                  <div>
+                    <h6 class="fw-bold m-0 text-dark">Backup Penuh Database (.JSON)</h6>
+                    <small class="text-muted">Format resmi restore & migrasi</small>
+                  </div>
+                </div>
+                <p class="text-secondary small flex-grow-1">
+                  Menyimpan 100% data sistem: master barang, harga jual, seluruh riwayat faktur penjualan, pembelian coil galvalum, kas bank, dan jurnal umum.
+                </p>
+                <button type="button" class="btn btn-primary w-100 py-2 fw-semibold" onclick="unduhBackupJSON()">
+                  <i class="bi bi-download me-1"></i> Unduh Database JSON
+                </button>
+              </div>
+            </div>
+
+            <!-- 2. EKSPOR KE EXCEL / CSV -->
+            <div class="col-12 col-md-6">
+              <div class="card h-100 border p-3 rounded-3 shadow-sm">
+                <div class="d-flex align-items-center gap-2 mb-2">
+                  <div class="p-2 rounded bg-success bg-opacity-10 text-success">
+                    <i class="bi bi-file-earmark-excel fs-4"></i>
+                  </div>
+                  <div>
+                    <h6 class="fw-bold m-0 text-dark">Ekspor Laporan (Excel / CSV)</h6>
+                    <small class="text-muted">Dapat dibuka di Microsoft Excel</small>
+                  </div>
+                </div>
+                <p class="text-secondary small mb-2">
+                  Pilih tabel transaksi yang ingin diunduh dalam bentuk spreadsheet:
+                </p>
+                <div class="d-grid gap-2">
+                  <button type="button" class="btn btn-sm btn-outline-success text-start" onclick="unduhLaporanCSV('persediaan')">
+                    <i class="bi bi-table me-2"></i> Unduh Data Persediaan (CSV)
+                  </button>
+                  <button type="button" class="btn btn-sm btn-outline-success text-start" onclick="unduhLaporanCSV('penjualan')">
+                    <i class="bi bi-receipt me-2"></i> Unduh Riwayat Penjualan (CSV)
+                  </button>
+                  <button type="button" class="btn btn-sm btn-outline-success text-start" onclick="unduhLaporanCSV('pembelian')">
+                    <i class="bi bi-bag-check me-2"></i> Unduh Riwayat Pembelian (CSV)
+                  </button>
+                  <button type="button" class="btn btn-sm btn-outline-success text-start" onclick="unduhLaporanCSV('jurnal')">
+                    <i class="bi bi-journal-text me-2"></i> Unduh Jurnal & Kas Bank (CSV)
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 3. FITUR RESTORE / PULIHKAN DATA -->
+          <div class="card border border-warning border-opacity-50 bg-warning bg-opacity-10 p-3 mt-4 rounded-3">
+            <h6 class="fw-bold text-dark mb-1"><i class="bi bi-arrow-counterclockwise text-warning me-2"></i>Pulihkan / Restore Data dari File Backup</h6>
+            <p class="text-secondary small mb-3">Punya file backup <code>.json</code> yang pernah diunduh sebelumnya? Unggah di sini untuk memulihkan seluruh data ERP.</p>
+            <div class="input-group input-group-sm">
+              <input type="file" id="inpFileRestore" class="form-control" accept=".json">
+              <button class="btn btn-warning fw-bold px-3" type="button" onclick="prosesRestoreData()">
+                <i class="bi bi-upload me-1"></i> Pulihkan Data
+              </button>
+            </div>
+            <small class="text-muted mt-2 d-block" style="font-size: 11px;">
+              * Perhatian: Memulihkan data akan menggantikan data yang sedang aktif dengan data dari file backup.
+            </small>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Bootstrap JS -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <!-- Konfigurasi API -->
-  <script src="js/config.js?v=10.0"></script>
+  <script src="js/config.js?v=11.0"></script>
   <!-- Logika Aplikasi Terpisah -->
-  <script src="js/app.js?v=10.0"></script>
+  <script src="js/app.js?v=11.0"></script>
 </body>
 </html>
 

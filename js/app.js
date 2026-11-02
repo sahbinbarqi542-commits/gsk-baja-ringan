@@ -890,6 +890,7 @@ const ACCURATE_MENUS = {
       { name: 'Laporan Laba Rugi', icon: 'bi-graph-up', color: 'tile-emerald', action: "switchTabERP('pelaporan')" },
       { name: 'Neraca Keuangan', icon: 'bi-shield-check', color: 'tile-sky', action: "switchTabERP('pelaporan')" },
       { name: 'Arus Kas', icon: 'bi-currency-exchange', color: 'tile-purple', action: "switchTabERP('pelaporan')" },
+      { name: 'Unduh Backup Data', icon: 'bi-cloud-arrow-down-fill', color: 'tile-emerald', action: "bukaModalBackupERP()" },
       { name: 'Cetak Dokumen Laporan', icon: 'bi-printer', color: 'tile-amber', action: "window.print()" }
     ]
   },
@@ -907,6 +908,7 @@ const ACCURATE_MENUS = {
       { name: 'Profil Perusahaan', icon: 'bi-building', color: 'tile-sky', action: "switchTabERP('admin')" },
       { name: 'Kustomisasi Logo', icon: 'bi-image', color: 'tile-amber', action: "switchTabERP('admin')" },
       { name: 'Akses Super Admin', icon: 'bi-shield-lock', color: 'tile-emerald', action: "switchTabERP('admin')" },
+      { name: 'Unduh Backup & Restore', icon: 'bi-database-down', color: 'tile-sky', action: "bukaModalBackupERP()" },
       { name: 'Reset Semua Data ke Nol', icon: 'bi-trash3-fill', color: 'tile-rose', action: "resetSemuaDataERP()" }
     ]
   }
@@ -1991,4 +1993,164 @@ function tampilkanPinBawaan() {
   }
   const pinInput = document.getElementById('resetPinBaru');
   if (pinInput) pinInput.value = '123456';
+}
+
+/**
+ * =========================================================================
+ * 10. MODUL BACKUP & RESTORE DATA DATABASE ERP
+ * =========================================================================
+ */
+function bukaModalBackupERP() {
+  const totProduk = document.getElementById('bkpTotalProduk');
+  const totPenjualan = document.getElementById('bkpTotalPenjualan');
+  const totPembelian = document.getElementById('bkpTotalPembelian');
+  const totJurnal = document.getElementById('bkpTotalJurnal');
+
+  if (totProduk) totProduk.textContent = (erpState.products || []).length;
+  if (totPenjualan) totPenjualan.textContent = (erpState.invoices || []).length;
+  if (totPembelian) totPembelian.textContent = (erpState.purchases || []).length;
+  if (totJurnal) totJurnal.textContent = (erpState.jurnal || []).length + (erpState.kasMutasi || []).length;
+
+  const modalEl = document.getElementById('modalBackupERP');
+  if (modalEl && typeof bootstrap !== 'undefined') {
+    const inst = bootstrap.Modal.getOrCreateInstance(modalEl);
+    inst.show();
+  }
+}
+
+function unduhBackupJSON() {
+  const d = new Date();
+  const pad = n => String(n).padStart(2, '0');
+  const stamp = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}_${pad(d.getHours())}${pad(d.getMinutes())}`;
+  
+  const backupPayload = {
+    app: "PT Griya Sultra Konstruksi ERP Keuangan & Pabrikasi",
+    versi: "10.0",
+    waktuBackup: d.toISOString(),
+    waktuLokal: d.toLocaleString('id-ID'),
+    perusahaan: DATA_FALLBACK_GSK.perusahaan,
+    data: erpState
+  };
+
+  const jsonStr = JSON.stringify(backupPayload, null, 2);
+  const blob = new Blob([jsonStr], { type: 'application/json;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `BACKUP_GSK_ERP_${stamp}.json`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+
+  alert(`Backup database berhasil diunduh sebagai "BACKUP_GSK_ERP_${stamp}.json"!\n\nSimpan file ini dengan aman. File ini dapat digunakan sewaktu-waktu untuk memulihkan seluruh data.`);
+}
+
+function unduhLaporanCSV(jenis) {
+  const d = new Date();
+  const pad = n => String(n).padStart(2, '0');
+  const stamp = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+  let csvContent = '\uFEFF'; // UTF-8 BOM untuk Microsoft Excel
+  let filename = '';
+
+  if (jenis === 'persediaan') {
+    filename = `LAPORAN_PERSEDIAAN_GSK_${stamp}.csv`;
+    csvContent += 'Kode Barang,Nama Barang,Kategori,Satuan,Stok,Stok Minimal,HPP (Rp),Harga Jual (Rp),Total Nilai Aset (Rp)\n';
+    (erpState.products || []).forEach(p => {
+      const stok = Number(p.stok) || 0;
+      const hpp = Number(p.hpp) || 0;
+      const nilaiAset = stok * hpp;
+      csvContent += `"${p.kode}","${p.nama}","${p.kategori || 'Barang Jadi'}","${p.satuan}",${stok},${p.stokMin || 10},${hpp},${p.harga || 0},${nilaiAset}\n`;
+    });
+  } else if (jenis === 'penjualan') {
+    filename = `LAPORAN_PENJUALAN_GSK_${stamp}.csv`;
+    csvContent += 'No Invoice,Tanggal,Pelanggan,Telepon,Proyek,Total Qty,Total Omzet (Rp),HPP Total (Rp),Laba Kotor (Rp),Margin %,Status Bayar,Jatuh Tempo\n';
+    (erpState.invoices || []).forEach(inv => {
+      const omzet = Number(inv.total) || 0;
+      const hpp = Number(inv.hppTotal) || 0;
+      const laba = omzet - hpp;
+      const margin = omzet > 0 ? ((laba / omzet) * 100).toFixed(1) + '%' : '0%';
+      csvContent += `"${inv.noInvoice}","${inv.tanggal}","${inv.pelanggan}","${inv.telepon || '-'}","${inv.proyek || '-'}","${inv.items ? inv.items.reduce((s,i) => s + (Number(i.qty)||0), 0) : 0}",${omzet},${hpp},${laba},"${margin}","${inv.statusBayar || 'LUNAS'}","${inv.jatuhTempo || '-'}"\n`;
+    });
+  } else if (jenis === 'pembelian') {
+    filename = `LAPORAN_PEMBELIAN_GSK_${stamp}.csv`;
+    csvContent += 'No PO,Tanggal,Pemasok,Telepon,Bahan Baku/Material,Jumlah,Satuan,Harga Satuan (Rp),Total Pembelian (Rp),Status Pembayaran\n';
+    (erpState.purchases || []).forEach(po => {
+      csvContent += `"${po.noPO}","${po.tanggal}","${po.pemasok}","${po.telepon || '-'}","${po.namaBarang}",${po.jumlah},"${po.satuan}",${po.hargaSatuan},${po.total},"${po.status || 'LUNAS'}"\n`;
+    });
+  } else if (jenis === 'jurnal') {
+    filename = `LAPORAN_JURNAL_KAS_GSK_${stamp}.csv`;
+    csvContent += 'No Bukti,Tanggal,Jenis Akun Debit,Jenis Akun Kredit,Nominal (Rp),Keterangan Transaksi\n';
+    (erpState.jurnal || []).forEach(j => {
+      csvContent += `"${j.noJurnal}","${j.tanggal}","${j.debit}","${j.kredit}",${j.nominal},"${j.keterangan}"\n`;
+    });
+  }
+
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function prosesRestoreData() {
+  const fileInput = document.getElementById('inpFileRestore');
+  if (!fileInput || !fileInput.files || fileInput.files.length === 0) {
+    alert('Silakan pilih berkas cadangan (.json) yang ingin dipulihkan terlebih dahulu!');
+    return;
+  }
+
+  const file = fileInput.files[0];
+  const reader = new FileReader();
+
+  reader.onload = function(e) {
+    try {
+      const content = JSON.parse(e.target.result);
+      const dataPulih = content.data || content;
+
+      if (!dataPulih || typeof dataPulih !== 'object') {
+        throw new Error('Format berkas backup tidak valid');
+      }
+
+      const totalItem = Array.isArray(dataPulih.products) ? dataPulih.products.length : 0;
+      const totalInv = Array.isArray(dataPulih.invoices) ? dataPulih.invoices.length : 0;
+
+      const konfirmasi = confirm(
+        `Konfirmasi Pemulihan Data:\n\n` +
+        `- Persediaan: ${totalItem} barang\n` +
+        `- Penjualan: ${totalInv} faktur\n\n` +
+        `PERINGATAN: Memulihkan cadangan ini akan menimpa data yang sedang aktif di sistem.\nLanjutkan pemulihan?`
+      );
+
+      if (!konfirmasi) return;
+
+      erpState.products = Array.isArray(dataPulih.products) ? dataPulih.products : [];
+      erpState.invoices = Array.isArray(dataPulih.invoices) ? dataPulih.invoices : [];
+      erpState.purchases = Array.isArray(dataPulih.purchases) ? dataPulih.purchases : [];
+      erpState.kasMutasi = Array.isArray(dataPulih.kasMutasi) ? dataPulih.kasMutasi : [];
+      erpState.jurnal = Array.isArray(dataPulih.jurnal) ? dataPulih.jurnal : [];
+      erpState.kasSaldo = Number(dataPulih.kasSaldo) || 0;
+      erpState.bankSaldo = Number(dataPulih.bankSaldo) || 0;
+
+      saveERPState();
+      recalculateAll();
+
+      const modalEl = document.getElementById('modalBackupERP');
+      if (modalEl && typeof bootstrap !== 'undefined') {
+        const inst = bootstrap.Modal.getInstance(modalEl);
+        if (inst) inst.hide();
+      }
+
+      alert('Seluruh data ERP berhasil dipulihkan dari file backup!');
+      fileInput.value = '';
+    } catch(err) {
+      alert('Gagal memulihkan file backup: Format berkas tidak cocok atau rusak (' + err.message + ')');
+    }
+  };
+
+  reader.readAsText(file);
 }
