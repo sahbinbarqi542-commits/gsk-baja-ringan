@@ -51,6 +51,13 @@ function loadERPState() {
     } else {
       // Pembersihan cache legacy jika ada
       localStorage.removeItem('gsk_local_products');
+      const pubCache = localStorage.getItem('gsk_public_cache');
+      if (pubCache) {
+        try {
+          const parsedPub = JSON.parse(pubCache);
+          if (Array.isArray(parsedPub.produk)) erpState.products = parsedPub.produk;
+        } catch(e) {}
+      }
     }
   } catch (e) {
     console.warn('Gagal memuat ERP state:', e);
@@ -58,11 +65,15 @@ function loadERPState() {
   DATA_FALLBACK_GSK.produk = erpState.products;
 }
 
-// Simpan State ke LocalStorage
+// Simpan State ke LocalStorage dan Sinkronkan ke Portal Publik
 function saveERPState() {
   try {
     localStorage.setItem('gsk_erp_state_v4', JSON.stringify(erpState));
     localStorage.setItem('gsk_local_products', JSON.stringify(erpState.products));
+    localStorage.setItem('gsk_public_cache', JSON.stringify({
+      perusahaan: DATA_FALLBACK_GSK.perusahaan,
+      produk: erpState.products
+    }));
   } catch (e) {
     console.warn('Gagal menyimpan ERP state:', e);
   }
@@ -1037,7 +1048,8 @@ function renderTabelPersediaan() {
       <td class="text-secondary">${formatRupiah(hpp)}</td>
       <td class="fw-bold text-success">${formatRupiah(hargaJual)}</td>
       <td class="fw-bold text-dark">${formatRupiah(nilaiAset)}</td>
-      <td>
+      <td class="text-nowrap">
+        <button class="btn btn-xs btn-outline-primary me-1" onclick="editBarang('${p.kode}')" title="Ubah Data & Harga Produk Portal"><i class="bi bi-pencil-square me-1"></i> Ubah Harga</button>
         <button class="btn btn-xs btn-outline-danger" onclick="hapusBarang('${p.kode}')" title="Hapus Barang"><i class="bi bi-trash"></i></button>
       </td>
     `;
@@ -1047,8 +1059,66 @@ function renderTabelPersediaan() {
 
 function bukaModalInputBarang() {
   const count = erpState.products.length + 1;
+  const titleEl = document.getElementById('modalInputBarangTitle');
+  if (titleEl) {
+    titleEl.innerHTML = `<i class="bi bi-box-seam-fill text-warning me-2"></i>Tambah / Input Barang Baru`;
+  }
+
   const kodeEl = document.getElementById('inpKodeBarang');
-  if (kodeEl) kodeEl.value = 'FG-0' + count;
+  if (kodeEl) {
+    kodeEl.value = 'FG-0' + count;
+    kodeEl.readOnly = false;
+  }
+  const namaEl = document.getElementById('inpNamaBarang');
+  if (namaEl) namaEl.value = '';
+  const katEl = document.getElementById('inpKategori');
+  if (katEl) katEl.value = 'Barang Jadi';
+  const satEl = document.getElementById('inpSatuan');
+  if (satEl) satEl.value = 'Batang';
+  const stokEl = document.getElementById('inpStokAwal');
+  if (stokEl) stokEl.value = '0';
+  const stokMinEl = document.getElementById('inpStokMin');
+  if (stokMinEl) stokMinEl.value = '10';
+  const hppEl = document.getElementById('inpHargaBeli');
+  if (hppEl) hppEl.value = '0';
+  const hargaEl = document.getElementById('inpHargaJual');
+  if (hargaEl) hargaEl.value = '0';
+
+  const modalEl = document.getElementById('modalInputBarang');
+  if (modalEl && typeof bootstrap !== 'undefined') {
+    const inst = bootstrap.Modal.getOrCreateInstance(modalEl);
+    inst.show();
+  }
+}
+
+function editBarang(kode) {
+  const p = erpState.products.find(item => item.kode === kode);
+  if (!p) return;
+
+  const titleEl = document.getElementById('modalInputBarangTitle');
+  if (titleEl) {
+    titleEl.innerHTML = `<i class="bi bi-pencil-square text-primary me-2"></i>Ubah Data & Harga Produk Portal`;
+  }
+
+  const kodeEl = document.getElementById('inpKodeBarang');
+  if (kodeEl) {
+    kodeEl.value = p.kode;
+    kodeEl.readOnly = true;
+  }
+  const namaEl = document.getElementById('inpNamaBarang');
+  if (namaEl) namaEl.value = p.nama || '';
+  const katEl = document.getElementById('inpKategori');
+  if (katEl) katEl.value = p.kategori || 'Barang Jadi';
+  const satEl = document.getElementById('inpSatuan');
+  if (satEl) satEl.value = p.satuan || 'Batang';
+  const stokEl = document.getElementById('inpStokAwal');
+  if (stokEl) stokEl.value = p.stok !== undefined ? p.stok : 0;
+  const stokMinEl = document.getElementById('inpStokMin');
+  if (stokMinEl) stokMinEl.value = p.stokMin !== undefined ? p.stokMin : 10;
+  const hppEl = document.getElementById('inpHargaBeli');
+  if (hppEl) hppEl.value = p.hpp !== undefined ? p.hpp : 0;
+  const hargaEl = document.getElementById('inpHargaJual');
+  if (hargaEl) hargaEl.value = p.harga !== undefined ? p.harga : 0;
 
   const modalEl = document.getElementById('modalInputBarang');
   if (modalEl && typeof bootstrap !== 'undefined') {
@@ -1080,23 +1150,24 @@ async function handleInputBarangSubmit(e) {
   };
 
   const idx = erpState.products.findIndex(p => p.kode === kode);
-  if (idx >= 0) {
+  const isEdit = idx >= 0;
+
+  if (isEdit) {
     erpState.products[idx] = itemBaru;
   } else {
     erpState.products.push(itemBaru);
-  }
-
-  // Catat Jurnal Saldo Awal Persediaan jika ada stok awal
-  if (stokAwal > 0) {
-    const nilaiAset = stokAwal * hargaBeli;
-    erpState.jurnal.unshift({
-      noJurnal: 'JU-INIT-' + Date.now().toString().slice(-4),
-      tanggal: new Date().toLocaleDateString('id-ID'),
-      debit: kategori === 'Bahan Baku' ? '1-1006 (Persediaan Baku)' : '1-1007 (Persediaan Jadi)',
-      kredit: '3-3001 (Modal Pemilik)',
-      nominal: nilaiAset,
-      keterangan: `Saldo Awal Persediaan ${nama} (${stokAwal} ${satuan})`
-    });
+    // Catat Jurnal Saldo Awal Persediaan jika ada stok awal
+    if (stokAwal > 0) {
+      const nilaiAset = stokAwal * hargaBeli;
+      erpState.jurnal.unshift({
+        noJurnal: 'JU-INIT-' + Date.now().toString().slice(-4),
+        tanggal: new Date().toLocaleDateString('id-ID'),
+        debit: kategori === 'Bahan Baku' ? '1-1006 (Persediaan Baku)' : '1-1007 (Persediaan Jadi)',
+        kredit: '3-3001 (Modal Pemilik)',
+        nominal: nilaiAset,
+        keterangan: `Saldo Awal Persediaan ${nama} (${stokAwal} ${satuan})`
+      });
+    }
   }
 
   saveERPState();
@@ -1133,7 +1204,7 @@ async function handleInputBarangSubmit(e) {
     if (inst) inst.hide();
   }
 
-  alert(`Barang "${nama}" (${kode}) berhasil disimpan! Persediaan dan seluruh laporan langsung diperbarui.`);
+  alert(`Produk "${nama}" (${kode}) dengan harga jual ${formatRupiah(hargaJual)} berhasil disimpan!\n\nDaftar harga produk otomatis langsung tampil pada Katalog Portal Publik.`);
 }
 
 function hapusBarang(kode) {
