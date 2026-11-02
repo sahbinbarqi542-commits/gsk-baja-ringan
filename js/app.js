@@ -46,6 +46,8 @@ function loadERPState() {
       erpState.purchases = Array.isArray(parsed.purchases) ? parsed.purchases : [];
       erpState.kasMutasi = Array.isArray(parsed.kasMutasi) ? parsed.kasMutasi : [];
       erpState.jurnal = Array.isArray(parsed.jurnal) ? parsed.jurnal : [];
+      erpState.customers = Array.isArray(parsed.customers) ? parsed.customers : [];
+      erpState.vendors = Array.isArray(parsed.vendors) ? parsed.vendors : [];
       erpState.kasSaldo = Number(parsed.kasSaldo) || 0;
       erpState.bankSaldo = Number(parsed.bankSaldo) || 0;
     } else {
@@ -326,6 +328,9 @@ function recalculateAll() {
 
   // 8. RENDER TREND GRAFIK (CHART.JS)
   renderChartsERP(totalOmzet, totalHPP, totalLabaKotor, labaBersih);
+
+  // 9. DAFTAR MASTER PELANGGAN
+  renderTabelPelanggan();
 }
 
 /**
@@ -818,9 +823,9 @@ const ACCURATE_MENUS = {
       { name: 'Faktur Penjualan', icon: 'bi-receipt', color: 'tile-emerald', action: "bukaModalFakturBaru()" },
       { name: 'Penerimaan Penjualan', icon: 'bi-cash', color: 'tile-emerald', action: "bukaModalKas('MASUK')" },
       { name: 'Retur Penjualan', icon: 'bi-arrow-return-left', color: 'tile-amber', action: "switchTabERP('penjualan')" },
-      { name: 'Kategori Pelanggan', icon: 'bi-people', color: 'tile-sky', action: "switchTabERP('penjualan')" },
+      { name: 'Kategori Pelanggan', icon: 'bi-people', color: 'tile-sky', action: "bukaModalDaftarPelanggan()" },
       { name: 'Kategori Penjualan', icon: 'bi-tags', color: 'tile-sky', action: "switchTabERP('penjualan')" },
-      { name: 'Pelanggan', icon: 'bi-person-circle', color: 'tile-sky', action: "switchTabERP('penjualan')" },
+      { name: 'Pelanggan', icon: 'bi-person-circle', color: 'tile-sky', action: "bukaModalDaftarPelanggan()" },
       { name: 'Penyesuaian Harga/Diskon', icon: 'bi-percent', color: 'tile-rose', action: "switchTabERP('penjualan')" },
       { name: 'Komisi Penjual', icon: 'bi-person-badge', color: 'tile-amber', action: "switchTabERP('penjualan')" },
       { name: 'Target Penjualan', icon: 'bi-graph-up-arrow', color: 'tile-purple', action: "switchTabERP('penjualan')" },
@@ -838,8 +843,8 @@ const ACCURATE_MENUS = {
       { name: 'Pembayaran Pembelian', icon: 'bi-wallet', color: 'tile-emerald', action: "bukaModalKas('KELUAR')" },
       { name: 'Retur Pembelian', icon: 'bi-arrow-return-right', color: 'tile-amber', action: "switchTabERP('pembelian')" },
       { name: 'Harga Pemasok', icon: 'bi-currency-dollar', color: 'tile-rose', action: "switchTabERP('pembelian')" },
-      { name: 'Kategori Pemasok', icon: 'bi-diagram-3', color: 'tile-sky', action: "switchTabERP('pembelian')" },
-      { name: 'Pemasok', icon: 'bi-building-fill', color: 'tile-sky', action: "switchTabERP('pembelian')" },
+      { name: 'Kategori Pemasok', icon: 'bi-diagram-3', color: 'tile-sky', action: "bukaModalDaftarPemasok()" },
+      { name: 'Pemasok', icon: 'bi-building-fill', color: 'tile-sky', action: "bukaModalDaftarPemasok()" },
       { name: 'Perintah Pembayaran', icon: 'bi-journal-check', color: 'tile-purple', action: "bukaModalKas('KELUAR')" },
       { name: 'Transfer Pemasok', icon: 'bi-arrow-left-right', color: 'tile-purple', action: "bukaModalKas('KELUAR')" }
     ]
@@ -898,17 +903,17 @@ const ACCURATE_MENUS = {
   perusahaan: {
     title: 'Perusahaan',
     tiles: [
-      { name: 'Pajak', icon: 'bi-file-earmark-text', color: 'tile-sky', action: "switchTabERP('admin')" },
-      { name: 'Syarat Pembayaran', icon: 'bi-wallet2', color: 'tile-sky', action: "switchTabERP('admin')" },
+      { name: 'Pajak', icon: 'bi-file-earmark-text', color: 'tile-sky', action: "bukaModalPajak()" },
+      { name: 'Syarat Pembayaran', icon: 'bi-wallet2', color: 'tile-sky', action: "bukaModalSyaratBayar()" },
       { name: 'Pengiriman', icon: 'bi-truck', color: 'tile-sky', action: "bukaSuratJalan()" },
-      { name: 'FOB', icon: 'bi-box-seam', color: 'tile-sky', action: "switchTabERP('admin')" },
-      { name: 'Gaji/Tunjangan', icon: 'bi-cash-coin', color: 'tile-sky', action: "bukaModalKas('KELUAR')" },
-      { name: 'Karyawan', icon: 'bi-person-badge', color: 'tile-sky', action: "switchTabERP('admin')" },
-      { name: 'Transaksi Berulang', icon: 'bi-arrow-repeat', color: 'tile-emerald', action: "switchTabERP('admin')" },
+      { name: 'FOB', icon: 'bi-box-seam', color: 'tile-sky', action: "bukaModalFOB()" },
+      { name: 'Gaji/Tunjangan', icon: 'bi-cash-coin', color: 'tile-sky', action: "bukaModalGaji()" },
+      { name: 'Karyawan', icon: 'bi-person-badge', color: 'tile-sky', action: "bukaModalKaryawan()" },
+      { name: 'Transaksi Berulang', icon: 'bi-arrow-repeat', color: 'tile-emerald', action: "bukaModalTransaksiBerulang()" },
       { name: 'Proses Akhir Bulan', icon: 'bi-calendar-check', color: 'tile-emerald', action: "prosesAkhirBulan()" },
-      { name: 'Kontak', icon: 'bi-person-lines-fill', color: 'tile-purple', action: "switchTabERP('admin')" },
-      { name: 'Transaksi Favorit', icon: 'bi-star-fill', color: 'tile-purple', action: "switchTabERP('admin')" },
-      { name: 'Kalender', icon: 'bi-calendar3', color: 'tile-purple', action: "switchTabERP('admin')" },
+      { name: 'Kontak', icon: 'bi-person-lines-fill', color: 'tile-purple', action: "bukaModalKontak()" },
+      { name: 'Transaksi Favorit', icon: 'bi-star-fill', color: 'tile-purple', action: "bukaModalTransaksiFavorit()" },
+      { name: 'Kalender', icon: 'bi-calendar3', color: 'tile-purple', action: "bukaModalKalender()" },
       { name: 'Log Aktifitas', icon: 'bi-clock-history', color: 'tile-purple', action: "bukaModalLogAktifitas()" }
     ]
   },
@@ -1320,6 +1325,22 @@ function bukaSuratJalan(noInvoice) {
   if (document.getElementById('sjNoFaktur')) document.getElementById('sjNoFaktur').textContent = noFaktur;
   if (document.getElementById('sjWaktuCetak')) document.getElementById('sjWaktuCetak').textContent = new Date().toLocaleString('id-ID');
 
+  // Input manual pengiriman & supir
+  const inpTgl = document.getElementById('inpSjTanggal');
+  if (inpTgl) inpTgl.value = tgl;
+  const inpSupir = document.getElementById('inpSjSupir');
+  if (inpSupir) inpSupir.value = 'Pak Junaedi (Ekspedisi Pabrik)';
+  const inpGudang = document.getElementById('inpSjGudang');
+  if (inpGudang) inpGudang.value = 'Ahmad Fauzi (QC Pabrik)';
+  const inpArmada = document.getElementById('inpSjArmada');
+  if (inpArmada) inpArmada.value = 'Truk Engkel GSK DT 8821 AR';
+  const inpPenerima = document.getElementById('inpSjPenerima');
+  if (inpPenerima) inpPenerima.value = pelanggan;
+  const inpAlamat = document.getElementById('inpSjAlamat');
+  if (inpAlamat) inpAlamat.value = 'Jl. Malaka No. 12, Anduonohu, Kendari';
+
+  sinkronInputSuratJalan();
+
   const tbody = document.getElementById('sjTabelItem');
   if (tbody) {
     tbody.innerHTML = '';
@@ -1353,6 +1374,23 @@ function bukaSuratJalan(noInvoice) {
     const inst = bootstrap.Modal.getOrCreateInstance(modalEl);
     inst.show();
   }
+}
+
+function sinkronInputSuratJalan() {
+  const tgl = document.getElementById('inpSjTanggal')?.value || new Date().toLocaleDateString('id-ID');
+  const supir = document.getElementById('inpSjSupir')?.value || 'Pak Junaedi';
+  const gudang = document.getElementById('inpSjGudang')?.value || 'Ahmad Fauzi';
+  const armada = document.getElementById('inpSjArmada')?.value || 'Truk Engkel GSK DT 8821 AR';
+  const penerima = document.getElementById('inpSjPenerima')?.value || 'Mandor Proyek';
+  const alamat = document.getElementById('inpSjAlamat')?.value || 'Kendari, Sulawesi Tenggara';
+
+  if (document.getElementById('sjTanggal')) document.getElementById('sjTanggal').textContent = tgl;
+  if (document.getElementById('sjSupir')) document.getElementById('sjSupir').textContent = supir;
+  if (document.getElementById('sjArmada')) document.getElementById('sjArmada').textContent = armada;
+  if (document.getElementById('sjAlamat')) document.getElementById('sjAlamat').textContent = alamat;
+  if (document.getElementById('sjTtdGudang')) document.getElementById('sjTtdGudang').textContent = `( ${gudang} )`;
+  if (document.getElementById('sjTtdSupir')) document.getElementById('sjTtdSupir').textContent = `( ${supir} )`;
+  if (document.getElementById('sjTtdPenerima')) document.getElementById('sjTtdPenerima').textContent = `( ${penerima} )`;
 }
 
 function printSuratJalan() {
@@ -2579,4 +2617,328 @@ function bukaModalLogAktifitas() {
     `- Penyimpanan Lokal: Tersinkronisasi Penuh (Auto-Saved)\n\n` +
     `Semua aktivitas sistem tercatat dengan aman.`
   );
+}
+
+/**
+ * =========================================================================
+ * 13. MANAJEMEN PELANGGAN, KARYAWAN & MODAL RESMI ACCURATE
+ * =========================================================================
+ */
+// 1. PELANGGAN (CUSTOMERS)
+function renderTabelPelanggan() {
+  const tbody = document.getElementById('tabelPelangganLengkap');
+  if (!tbody) return;
+
+  if (!Array.isArray(erpState.customers)) erpState.customers = [];
+
+  if (erpState.customers.length === 0) {
+    erpState.customers = [
+      { id: 'CUST-001', nama: 'PT Bumi Perkasa Konstruksi', kategori: 'Kontraktor Proyek', telepon: '0812-4567-8901', alamat: 'Jl. Malaka No. 12, Anduonohu, Kendari' },
+      { id: 'CUST-002', nama: 'Toko Berkah Baja Baruga', kategori: 'Toko Grosir', telepon: '0852-7788-9900', alamat: 'Jl. Poros Baruga No. 45, Kendari' },
+      { id: 'CUST-003', nama: 'CV Sultra Atap Mandiri', kategori: 'Aplikator Rangka Atap', telepon: '0813-1122-3344', alamat: 'Konawe Selatan, Sultra' }
+    ];
+    saveERPState();
+  }
+
+  tbody.innerHTML = '';
+  erpState.customers.forEach((c, idx) => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><code>${c.id || ('CUST-0' + (idx + 1))}</code></td>
+      <td class="fw-bold">${c.nama}</td>
+      <td><span class="badge ${c.kategori === 'Kontraktor Proyek' ? 'bg-primary' : (c.kategori === 'Toko Grosir' ? 'bg-success' : 'bg-secondary')}">${c.kategori || 'Kontraktor Proyek'}</span></td>
+      <td>${c.telepon || '-'}</td>
+      <td><small class="text-muted">${c.alamat || 'Kendari'}</small></td>
+      <td class="text-center">
+        <button class="btn btn-xs btn-outline-primary me-1" onclick="bukaModalInputPelanggan('${c.id}')" title="Edit Pelanggan"><i class="bi bi-pencil-square"></i></button>
+        <button class="btn btn-xs btn-outline-danger" onclick="hapusPelanggan('${c.id}')" title="Hapus"><i class="bi bi-trash"></i></button>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+function bukaModalDaftarPelanggan() {
+  switchTabERP('penjualan');
+  const el = document.getElementById('cardDaftarPelanggan');
+  if (el) {
+    el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    el.classList.add('border-primary');
+    setTimeout(() => el.classList.remove('border-primary'), 2000);
+  }
+}
+
+function bukaModalInputPelanggan(id = null) {
+  const title = document.getElementById('modalInputPelangganTitle');
+  const inpId = document.getElementById('inpPelangganId');
+  const inpNama = document.getElementById('inpPelangganNama');
+  const inpKat = document.getElementById('inpPelangganKategori');
+  const inpTelp = document.getElementById('inpPelangganTelepon');
+  const inpAlm = document.getElementById('inpPelangganAlamat');
+
+  if (id) {
+    const c = (erpState.customers || []).find(x => x.id === id);
+    if (c) {
+      if (title) title.innerHTML = '<i class="bi bi-pencil-square text-primary me-2"></i>Ubah Data Pelanggan';
+      if (inpId) { inpId.value = c.id; inpId.readOnly = true; }
+      if (inpNama) inpNama.value = c.nama || '';
+      if (inpKat) inpKat.value = c.kategori || 'Kontraktor Proyek';
+      if (inpTelp) inpTelp.value = c.telepon || '';
+      if (inpAlm) inpAlm.value = c.alamat || '';
+    }
+  } else {
+    const nextNum = (erpState.customers || []).length + 1;
+    if (title) title.innerHTML = '<i class="bi bi-person-plus-fill text-primary me-2"></i>Tambah Pelanggan Baru';
+    if (inpId) { inpId.value = 'CUST-0' + nextNum; inpId.readOnly = false; }
+    if (inpNama) inpNama.value = '';
+    if (inpKat) inpKat.value = 'Kontraktor Proyek';
+    if (inpTelp) inpTelp.value = '';
+    if (inpAlm) inpAlm.value = '';
+  }
+
+  const modalEl = document.getElementById('modalInputPelanggan');
+  if (modalEl && typeof bootstrap !== 'undefined') {
+    const inst = bootstrap.Modal.getOrCreateInstance(modalEl);
+    inst.show();
+  }
+}
+
+function handleInputPelangganSubmit(e) {
+  e.preventDefault();
+  const id = document.getElementById('inpPelangganId').value.trim();
+  const nama = document.getElementById('inpPelangganNama').value.trim();
+  const kategori = document.getElementById('inpPelangganKategori').value;
+  const telepon = document.getElementById('inpPelangganTelepon').value.trim();
+  const alamat = document.getElementById('inpPelangganAlamat').value.trim();
+
+  if (!Array.isArray(erpState.customers)) erpState.customers = [];
+
+  const idx = erpState.customers.findIndex(c => c.id === id);
+  const dataCust = { id, nama, kategori, telepon, alamat };
+
+  if (idx >= 0) {
+    erpState.customers[idx] = dataCust;
+  } else {
+    erpState.customers.push(dataCust);
+  }
+
+  saveERPState();
+  renderTabelPelanggan();
+
+  const modalEl = document.getElementById('modalInputPelanggan');
+  if (modalEl && typeof bootstrap !== 'undefined') {
+    const inst = bootstrap.Modal.getInstance(modalEl);
+    if (inst) inst.hide();
+  }
+
+  alert(`Pelanggan "${nama}" (${id}) berhasil disimpan ke database!`);
+}
+
+function hapusPelanggan(id) {
+  if (!confirm(`Yakin ingin menghapus pelanggan dengan ID ${id}?`)) return;
+  erpState.customers = (erpState.customers || []).filter(c => c.id !== id);
+  saveERPState();
+  renderTabelPelanggan();
+}
+
+// 2. KARYAWAN (EMPLOYEES)
+function renderTabelKaryawan() {
+  const tbody = document.getElementById('tabelKaryawanLengkap');
+  if (!tbody) return;
+
+  if (!Array.isArray(erpState.employees)) erpState.employees = [];
+
+  if (erpState.employees.length === 0) {
+    erpState.employees = [
+      { id: 'EMP-01', nama: 'Ahmad Fauzi', jabatan: 'Bagian Gudang & QC Pabrik', telepon: '0812-4567-8901', gaji: 3800000 },
+      { id: 'EMP-02', nama: 'Pak Junaedi', jabatan: 'Pengemudi / Supir Armada', telepon: '0852-9876-5432', gaji: 3500000 },
+      { id: 'EMP-03', nama: 'Bpk. Wahyu', jabatan: 'Operator Mesin Roll-Forming', telepon: '0821-3344-5566', gaji: 4000000 },
+      { id: 'EMP-04', nama: 'Sitti Rahma', jabatan: 'Admin Keuangan & Kasir', telepon: '0813-7788-9900', gaji: 3500000 }
+    ];
+    saveERPState();
+  }
+
+  tbody.innerHTML = '';
+  erpState.employees.forEach((emp, idx) => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><code>${emp.id || ('EMP-0' + (idx+1))}</code></td>
+      <td class="fw-bold">${emp.nama}</td>
+      <td><span class="badge bg-secondary">${emp.jabatan}</span></td>
+      <td>${emp.telepon || '-'}</td>
+      <td class="fw-bold text-success">${formatRupiah(emp.gaji)}</td>
+      <td class="text-center">
+        <button class="btn btn-xs btn-outline-danger" onclick="hapusKaryawan('${emp.id}')" title="Hapus"><i class="bi bi-trash"></i></button>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+function bukaModalKaryawan() {
+  renderTabelKaryawan();
+  const modalEl = document.getElementById('modalKaryawan');
+  if (modalEl && typeof bootstrap !== 'undefined') {
+    const inst = bootstrap.Modal.getOrCreateInstance(modalEl);
+    inst.show();
+  }
+}
+
+function bukaModalInputKaryawan() {
+  const modalEl = document.getElementById('modalInputKaryawan');
+  if (modalEl && typeof bootstrap !== 'undefined') {
+    const inst = bootstrap.Modal.getOrCreateInstance(modalEl);
+    inst.show();
+  }
+}
+
+function handleInputKaryawanSubmit(e) {
+  e.preventDefault();
+  const nama = document.getElementById('inpKaryawanNama').value.trim();
+  const jabatan = document.getElementById('inpKaryawanJabatan').value;
+  const telepon = document.getElementById('inpKaryawanTelepon').value.trim();
+  const gaji = Number(document.getElementById('inpKaryawanGaji').value) || 0;
+
+  if (!Array.isArray(erpState.employees)) erpState.employees = [];
+  const nextId = 'EMP-0' + (erpState.employees.length + 1);
+
+  erpState.employees.push({ id: nextId, nama, jabatan, telepon, gaji });
+  saveERPState();
+  renderTabelKaryawan();
+
+  const modalEl = document.getElementById('modalInputKaryawan');
+  if (modalEl && typeof bootstrap !== 'undefined') {
+    const inst = bootstrap.Modal.getInstance(modalEl);
+    if (inst) inst.hide();
+  }
+
+  alert(`Karyawan "${nama}" (${jabatan}) berhasil ditambahkan!`);
+}
+
+function hapusKaryawan(id) {
+  if (!confirm(`Yakin ingin menghapus data karyawan ${id}?`)) return;
+  erpState.employees = (erpState.employees || []).filter(e => e.id !== id);
+  saveERPState();
+  renderTabelKaryawan();
+}
+
+// 3. PEMASOK (SUPPLIERS)
+function renderTabelPemasok() {
+  const tbody = document.getElementById('tabelPemasokLengkap');
+  if (!tbody) return;
+
+  if (!Array.isArray(erpState.vendors)) erpState.vendors = [];
+
+  if (erpState.vendors.length === 0) {
+    erpState.vendors = [
+      { id: 'VEND-01', nama: 'PT Sunrise Steel Surabaya', produk: 'Bahan Baku Coil Galvalum Zincalume G550', telepon: '031-8899-7700', alamat: 'Kawasan Industri Rungkut, Surabaya' },
+      { id: 'VEND-02', nama: 'PT Krakatau Posco', produk: 'Coil Baja Ringan & Plat Baja SNI', telepon: '0254-3921-000', alamat: 'Cilegon, Banten' },
+      { id: 'VEND-03', nama: 'CV Baut Perkasa Sultra', produk: 'Baut Roofing, Screw & Dynabolt', telepon: '0812-9988-7766', alamat: 'Kendari, Sulawesi Tenggara' }
+    ];
+    saveERPState();
+  }
+
+  tbody.innerHTML = '';
+  erpState.vendors.forEach((v, idx) => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><code>${v.id || ('VEND-0' + (idx+1))}</code></td>
+      <td class="fw-bold">${v.nama}</td>
+      <td><span class="badge bg-info text-dark">${v.produk || 'Bahan Baku'}</span></td>
+      <td>${v.telepon || '-'}</td>
+      <td><small class="text-muted">${v.alamat || 'Indonesia'}</small></td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+function bukaModalDaftarPemasok() {
+  renderTabelPemasok();
+  const modalEl = document.getElementById('modalDaftarPemasok');
+  if (modalEl && typeof bootstrap !== 'undefined') {
+    const inst = bootstrap.Modal.getOrCreateInstance(modalEl);
+    inst.show();
+  }
+}
+
+// 4. MODAL-MODAL PERUSAHAAN (ACCURATE ONLINE)
+function bukaModalPajak() {
+  const el = document.getElementById('modalPajak');
+  if (el && typeof bootstrap !== 'undefined') bootstrap.Modal.getOrCreateInstance(el).show();
+}
+
+function bukaModalSyaratBayar() {
+  const el = document.getElementById('modalSyaratBayar');
+  if (el && typeof bootstrap !== 'undefined') bootstrap.Modal.getOrCreateInstance(el).show();
+}
+
+function bukaModalFOB() {
+  const el = document.getElementById('modalFOB');
+  if (el && typeof bootstrap !== 'undefined') bootstrap.Modal.getOrCreateInstance(el).show();
+}
+
+function bukaModalGaji() {
+  bukaModalKas('KELUAR');
+  const ket = document.getElementById('kasKeterangan');
+  const akun = document.getElementById('kasAkunTujuan');
+  if (ket) ket.value = 'Pembayaran Gaji & Upah Karyawan Pabrik';
+  if (akun) akun.value = '5-5002 (Beban Gaji & Upah)';
+}
+
+function bukaModalTransaksiBerulang() {
+  const el = document.getElementById('modalTransaksiBerulang');
+  if (el && typeof bootstrap !== 'undefined') bootstrap.Modal.getOrCreateInstance(el).show();
+}
+
+function bayarTransaksiRutin(nama, nominal) {
+  erpState.kasSaldo -= nominal;
+  erpState.kasMutasi.unshift({
+    noBukti: 'BKK-RUTIN-' + Date.now().toString().slice(-4),
+    tanggal: new Date().toLocaleDateString('id-ID'),
+    tipe: 'KELUAR',
+    akun: '1-1001 (Kas Operasional)',
+    nominal: nominal,
+    keterangan: `Pembayaran Rutin: ${nama}`
+  });
+
+  erpState.jurnal.unshift({
+    noJurnal: 'JU-RUTIN-' + Date.now().toString().slice(-4),
+    tanggal: new Date().toLocaleDateString('id-ID'),
+    debit: '5-5003 (Beban Utilitas & Workshop)',
+    kredit: '1-1001 (Kas Operasional)',
+    nominal: nominal,
+    keterangan: `Beban Rutin ${nama}`
+  });
+
+  saveERPState();
+  recalculateAll();
+
+  const modalEl = document.getElementById('modalTransaksiBerulang');
+  if (modalEl && typeof bootstrap !== 'undefined') {
+    const inst = bootstrap.Modal.getInstance(modalEl);
+    if (inst) inst.hide();
+  }
+
+  alert(`Transaksi rutin "${nama}" sebesar ${formatRupiah(nominal)} berhasil dibukukan!`);
+}
+
+function bukaModalKontak() {
+  const el = document.getElementById('modalKontak');
+  if (el && typeof bootstrap !== 'undefined') bootstrap.Modal.getOrCreateInstance(el).show();
+}
+
+function bukaModalKalender() {
+  const d = new Date();
+  const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+  const str = d.toLocaleDateString('id-ID', options);
+  const tglEl = document.getElementById('kalenderTanggalHariIni');
+  if (tglEl) tglEl.textContent = str;
+
+  const el = document.getElementById('modalKalender');
+  if (el && typeof bootstrap !== 'undefined') bootstrap.Modal.getOrCreateInstance(el).show();
+}
+
+function bukaModalTransaksiFavorit() {
+  const el = document.getElementById('modalTransaksiFavorit');
+  if (el && typeof bootstrap !== 'undefined') bootstrap.Modal.getOrCreateInstance(el).show();
 }
