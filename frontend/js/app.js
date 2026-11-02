@@ -855,6 +855,7 @@ const ACCURATE_MENUS = {
       { name: 'Perintah Stok Opname', icon: 'bi-search', color: 'tile-sky', action: "switchTabERP('persediaan')" },
       { name: 'Hasil Stok Opname', icon: 'bi-clipboard-data', color: 'tile-sky', action: "switchTabERP('persediaan')" },
       { name: 'Barang & Jasa (+ Input)', icon: 'bi-box-seam-fill', color: 'tile-emerald', action: "bukaModalInputBarang()" },
+      { name: 'Impor dari Accurate', icon: 'bi-file-earmark-spreadsheet-fill', color: 'tile-emerald', action: "bukaModalImporAccurate()" },
       { name: 'Satuan Barang', icon: 'bi-rulers', color: 'tile-sky', action: "switchTabERP('persediaan')" },
       { name: 'Kategori Barang', icon: 'bi-grid', color: 'tile-sky', action: "switchTabERP('persediaan')" },
       { name: 'Merek Barang', icon: 'bi-award', color: 'tile-purple', action: "switchTabERP('persediaan')" },
@@ -2153,4 +2154,233 @@ function prosesRestoreData() {
   };
 
   reader.readAsText(file);
+}
+
+/**
+ * =========================================================================
+ * 11. MODUL SMART IMPOR DARI ACCURATE ONLINE (EXCEL / CSV / PASTE)
+ * =========================================================================
+ */
+let dataImporAccuratePending = [];
+
+function bukaModalImporAccurate() {
+  dataImporAccuratePending = [];
+  const areaPreview = document.getElementById('areaPreviewImpor');
+  if (areaPreview) areaPreview.classList.add('d-none');
+  const alertEl = document.getElementById('alertImporAccurate');
+  if (alertEl) alertEl.classList.add('d-none');
+  const fileInput = document.getElementById('inpFileAccurateExcel');
+  if (fileInput) fileInput.value = '';
+  const txtArea = document.getElementById('txtPasteAccurate');
+  if (txtArea) txtArea.value = '';
+
+  const modalEl = document.getElementById('modalImporAccurate');
+  if (modalEl && typeof bootstrap !== 'undefined') {
+    const inst = bootstrap.Modal.getOrCreateInstance(modalEl);
+    inst.show();
+  }
+}
+
+function cariNilaiKolom(row, kandidatArray) {
+  const keys = Object.keys(row);
+  for (const k of keys) {
+    const cleanKey = String(k).toLowerCase().replace(/[^a-z0-9]/g, '');
+    for (const cand of kandidatArray) {
+      const cleanCand = cand.toLowerCase().replace(/[^a-z0-9]/g, '');
+      if (cleanKey === cleanCand || cleanKey.includes(cleanCand)) {
+        return row[k];
+      }
+    }
+  }
+  return null;
+}
+
+function bersihkanAngka(val) {
+  if (val === null || val === undefined) return 0;
+  if (typeof val === 'number') return val;
+  const str = String(val).replace(/Rp|\s|\./g, '').replace(',', '.');
+  return Number(str) || 0;
+}
+
+function bacaFileExcelAccurate() {
+  const fileInput = document.getElementById('inpFileAccurateExcel');
+  const alertEl = document.getElementById('alertImporAccurate');
+  if (alertEl) alertEl.classList.add('d-none');
+
+  if (!fileInput || !fileInput.files || fileInput.files.length === 0) {
+    alert('Silakan pilih berkas Excel (.xlsx / .csv) hasil unduhan dari Accurate Online!');
+    return;
+  }
+
+  const file = fileInput.files[0];
+  const reader = new FileReader();
+
+  reader.onload = function(e) {
+    try {
+      if (typeof XLSX === 'undefined') {
+        throw new Error('Pustaka pembaca Excel (SheetJS) belum siap. Pastikan koneksi internet stabil.');
+      }
+      const data = new Uint8Array(e.target.result);
+      const workbook = XLSX.read(data, { type: 'array' });
+      const firstSheetName = workbook.SheetNames[0];
+      const worksheet = workbook.Sheets[firstSheetName];
+      const rows = XLSX.utils.sheet_to_json(worksheet, { defval: '' });
+
+      if (!rows || rows.length === 0) {
+        throw new Error('Lembar kerja Excel kosong atau tidak memiliki baris data.');
+      }
+
+      prosesBarisAccurate(rows);
+    } catch(err) {
+      if (alertEl) {
+        alertEl.className = 'alert alert-danger py-2 small mt-3';
+        alertEl.textContent = 'Gagal membaca file: ' + err.message;
+        alertEl.classList.remove('d-none');
+      } else {
+        alert('Gagal membaca file: ' + err.message);
+      }
+    }
+  };
+
+  reader.readAsArrayBuffer(file);
+}
+
+function bacaTeksPasteAccurate() {
+  const txtArea = document.getElementById('txtPasteAccurate');
+  const alertEl = document.getElementById('alertImporAccurate');
+  if (alertEl) alertEl.classList.add('d-none');
+
+  const teks = txtArea ? txtArea.value.trim() : '';
+  if (!teks) {
+    alert('Silakan tempel (paste) tabel dari Excel terlebih dahulu!');
+    return;
+  }
+
+  try {
+    const lines = teks.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+    if (lines.length < 2) {
+      throw new Error('Data terlalu pendek. Pastikan menyalin baris judul kolom dan minimal 1 baris produk.');
+    }
+
+    const separator = lines[0].includes('\t') ? '\t' : (lines[0].includes(';') ? ';' : ',');
+    const headers = lines[0].split(separator).map(h => h.trim().replace(/^["']|["']$/g, ''));
+
+    const rows = [];
+    for (let i = 1; i < lines.length; i++) {
+      const cols = lines[i].split(separator).map(c => c.trim().replace(/^["']|["']$/g, ''));
+      const obj = {};
+      headers.forEach((h, idx) => {
+        obj[h] = cols[idx] !== undefined ? cols[idx] : '';
+      });
+      rows.push(obj);
+    }
+
+    prosesBarisAccurate(rows);
+  } catch(err) {
+    if (alertEl) {
+      alertEl.className = 'alert alert-danger py-2 small mt-3';
+      alertEl.textContent = 'Gagal memproses teks: ' + err.message;
+      alertEl.classList.remove('d-none');
+    } else {
+      alert('Gagal memproses teks: ' + err.message);
+    }
+  }
+}
+
+function prosesBarisAccurate(rows) {
+  const hasil = [];
+  rows.forEach((row, i) => {
+    const kode = cariNilaiKolom(row, ['nobarang', 'kodebarang', 'kode', 'itemno', 'itemnumber', 'no']) || ('FG-ACC-' + String(i + 1).padStart(3, '0'));
+    const nama = cariNilaiKolom(row, ['namabarang', 'deskripsi', 'namaitem', 'itemname', 'itemdescription', 'nama', 'keterangan']);
+    if (!nama || String(nama).trim() === '') return;
+
+    const kategori = cariNilaiKolom(row, ['kategori', 'kategoribarang', 'category']) || 'Barang Jadi';
+    const satuan = cariNilaiKolom(row, ['satuan', 'satuandasar', 'unit']) || 'Batang';
+    const stok = bersihkanAngka(cariNilaiKolom(row, ['kuantitas', 'stok', 'kuantitassaatini', 'saldokuantitas', 'qty', 'quantity']));
+    const hpp = bersihkanAngka(cariNilaiKolom(row, ['hargabeli', 'hargapokok', 'biayasatuan', 'biayaterakhir', 'hpp', 'cost']));
+    const hargaJual = bersihkanAngka(cariNilaiKolom(row, ['hargajual', 'hargajualdefault', 'hargasatuan1', 'hargasatuan', 'price', 'unitprice']));
+
+    hasil.push({
+      kode: String(kode).trim().toUpperCase(),
+      nama: String(nama).trim(),
+      kategori: String(kategori).trim(),
+      satuan: String(satuan).trim(),
+      stok: stok,
+      stokMin: 10,
+      hpp: hpp,
+      harga: hargaJual
+    });
+  });
+
+  if (hasil.length === 0) {
+    throw new Error('Tidak ada baris data barang yang cocok. Pastikan tabel memiliki kolom "Nama Barang" atau "Deskripsi".');
+  }
+
+  dataImporAccuratePending = hasil;
+  tampilkanPreviewImpor(hasil);
+}
+
+function tampilkanPreviewImpor(items) {
+  const areaPreview = document.getElementById('areaPreviewImpor');
+  const countEl = document.getElementById('prvJumlahBarang');
+  const tbody = document.getElementById('tbodyPreviewAccurate');
+  if (!areaPreview || !tbody) return;
+
+  if (countEl) countEl.textContent = items.length;
+  tbody.innerHTML = '';
+
+  const sample = items.slice(0, 5);
+  sample.forEach(it => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><code>${it.kode}</code></td>
+      <td class="fw-bold">${it.nama}</td>
+      <td><span class="badge bg-secondary">${it.kategori}</span></td>
+      <td>${it.satuan}</td>
+      <td class="fw-bold text-primary">${it.stok.toLocaleString('id-ID')}</td>
+      <td class="text-secondary">${formatRupiah(it.hpp)}</td>
+      <td class="fw-bold text-success">${formatRupiah(it.harga)}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+
+  areaPreview.classList.remove('d-none');
+}
+
+function batalPratinjauImpor() {
+  dataImporAccuratePending = [];
+  const areaPreview = document.getElementById('areaPreviewImpor');
+  if (areaPreview) areaPreview.classList.add('d-none');
+}
+
+function simpanHasilImporAccurate() {
+  if (!dataImporAccuratePending || dataImporAccuratePending.length === 0) {
+    alert('Tidak ada data barang yang siap diimpor!');
+    return;
+  }
+
+  let ditambah = 0;
+  let diupdate = 0;
+
+  dataImporAccuratePending.forEach(item => {
+    const idx = erpState.products.findIndex(p => p.kode === item.kode);
+    if (idx >= 0) {
+      erpState.products[idx] = item;
+      diupdate++;
+    } else {
+      erpState.products.push(item);
+      ditambah++;
+    }
+  });
+
+  saveERPState();
+  recalculateAll();
+
+  const modalEl = document.getElementById('modalImporAccurate');
+  if (modalEl && typeof bootstrap !== 'undefined') {
+    const inst = bootstrap.Modal.getInstance(modalEl);
+    if (inst) inst.hide();
+  }
+
+  alert(`Sukses Mengimpor dari Accurate Online!\n\n- ${ditambah} Barang Baru Ditambahkan\n- ${diupdate} Barang Diperbarui\n\nSeluruh produk dan harga jual langsung aktif di Katalog Portal Publik & Form Order.`);
 }
