@@ -18,7 +18,7 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
   <!-- Style CSS Standar Desain Industri GSK -->
-  <link rel="stylesheet" href="css/style.css?v=8.0">
+  <link rel="stylesheet" href="css/style.css?v=9.0">
 </head>
 <body>
 
@@ -509,6 +509,106 @@
               </div>
             </div>
 
+            <!-- GRAFIK TREN FINANSIAL & ANALISIS MARGIN (CHART.JS) -->
+            <div class="row g-4 mb-4">
+              <div class="col-12 col-lg-8">
+                <div class="card p-4 shadow-sm border h-100">
+                  <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
+                    <div>
+                      <h6 class="fw-bold m-0"><i class="bi bi-graph-up-arrow text-primary me-2"></i>Trend Finansial Pabrik (Omzet, Beban Pokok & Laba)</h6>
+                      <small class="text-secondary">Grafik pergerakan omzet vs HPP baja ringan</small>
+                    </div>
+                    <span class="badge bg-primary bg-opacity-10 text-primary border border-primary small">Realtime Accurate</span>
+                  </div>
+                  <div style="position: relative; height: 260px; width: 100%;">
+                    <canvas id="chartTrendOmzet"></canvas>
+                  </div>
+                </div>
+              </div>
+              <div class="col-12 col-lg-4">
+                <div class="card p-4 shadow-sm border h-100">
+                  <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h6 class="fw-bold m-0"><i class="bi bi-pie-chart-fill text-warning me-2"></i>Rasio Margin & Portofolio</h6>
+                    <small class="text-muted">Breakdown</small>
+                  </div>
+                  <div style="position: relative; height: 200px; width: 100%; display: flex; align-items: center; justify-content: center;">
+                    <canvas id="chartKomposisiProduk"></canvas>
+                  </div>
+                  <div class="text-center mt-2 small text-muted">
+                    <span class="badge bg-success bg-opacity-10 text-success me-1">Gross Margin</span>
+                    <span class="badge bg-primary bg-opacity-10 text-primary">HPP Pokok</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- PANEL ANALISIS MARGIN PROFITABILITAS -->
+            <div class="card p-4 shadow-sm border mb-4">
+              <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 border-bottom pb-2">
+                <div>
+                  <h6 class="fw-bold m-0 text-dark"><i class="bi bi-percent text-success me-2"></i>Panel Analisis Margin Keuntungan (Gross & Net Profit)</h6>
+                  <small class="text-secondary">Indikator rasio margin laba kotor, margin bersih, dan efisiensi produksi roll-forming.</small>
+                </div>
+                <span class="badge bg-warning text-dark px-3 py-2 fw-bold" id="badgeMarginStatus">Margin: 0%</span>
+              </div>
+              
+              <div class="row g-3">
+                <div class="col-md-6">
+                  <div class="p-3 bg-light rounded border">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                      <span class="small fw-bold">Gross Profit Margin (Laba Kotor / Omzet)</span>
+                      <strong class="text-success fs-6" id="marginGrossVal">0%</strong>
+                    </div>
+                    <div class="progress" style="height: 10px;">
+                      <div class="progress-bar bg-success" role="progressbar" id="progressBarGross" style="width: 0%"></div>
+                    </div>
+                    <small class="text-muted d-block mt-1" style="font-size: 11px;">Target Industri Baja Ringan: > 25% (Optimal)</small>
+                  </div>
+                </div>
+
+                <div class="col-md-6">
+                  <div class="p-3 bg-light rounded border">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                      <span class="small fw-bold">Net Profit Margin (Laba Bersih Setelah Biaya Ops)</span>
+                      <strong class="text-primary fs-6" id="marginNetVal">0%</strong>
+                    </div>
+                    <div class="progress" style="height: 10px;">
+                      <div class="progress-bar bg-primary" role="progressbar" id="progressBarNet" style="width: 0%"></div>
+                    </div>
+                    <small class="text-muted d-block mt-1" style="font-size: 11px;">Target Industri: > 15% (Sehat)</small>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Baris Rincian Perbandingan Margin -->
+              <div class="row g-3 mt-1 text-center">
+                <div class="col-6 col-md-3">
+                  <div class="border rounded p-2">
+                    <small class="text-muted d-block">Harga Pokok (HPP)</small>
+                    <strong class="text-secondary" id="marginHppNominal">Rp 0</strong>
+                  </div>
+                </div>
+                <div class="col-6 col-md-3">
+                  <div class="border rounded p-2">
+                    <small class="text-muted d-block">Laba Kotor Nominal</small>
+                    <strong class="text-success" id="marginLabaNominal">Rp 0</strong>
+                  </div>
+                </div>
+                <div class="col-6 col-md-3">
+                  <div class="border rounded p-2">
+                    <small class="text-muted d-block">Beban Operasional</small>
+                    <strong class="text-danger" id="marginOpsNominal">Rp 0</strong>
+                  </div>
+                </div>
+                <div class="col-6 col-md-3">
+                  <div class="border rounded p-2">
+                    <small class="text-muted d-block">Laba Bersih Riil</small>
+                    <strong class="text-primary" id="marginBersihNominal">Rp 0</strong>
+                  </div>
+                </div>
+              </div>
+            </div>
+
             <div class="row g-4 mb-4">
               <div class="col-12 col-lg-8">
                 <div class="card p-4 shadow-sm border h-100">
@@ -672,9 +772,14 @@
                 <h5 class="fw-bold m-0"><i class="bi bi-cart-check text-primary me-2"></i>Modul Penjualan Proyek</h5>
                 <small class="text-secondary">Faktur penjualan baja ringan, margin real-time per transaksi, dan pelunasan piutang.</small>
               </div>
-              <button class="btn btn-primary btn-sm fw-bold" onclick="bukaModalFakturBaru()">
-                <i class="bi bi-plus-lg me-1"></i> + Buat Faktur Penjualan Baru
-              </button>
+              <div class="d-flex gap-2">
+                <button class="btn btn-outline-dark btn-sm fw-bold shadow-sm" onclick="bukaSuratJalan()">
+                  <i class="bi bi-truck me-1"></i> Cetak Surat Jalan
+                </button>
+                <button class="btn btn-primary btn-sm fw-bold" onclick="bukaModalFakturBaru()">
+                  <i class="bi bi-plus-lg me-1"></i> + Buat Faktur Penjualan Baru
+                </button>
+              </div>
             </div>
 
             <div class="card p-4 shadow-sm border mb-4">
@@ -1394,12 +1499,166 @@
     </div>
   </div>
 
+  <!-- MODAL SURAT JALAN RESMI PABRIK (PRINT & DOWNLOAD) -->
+  <div class="modal fade" id="modalSuratJalan" tabindex="-1" style="z-index: 1060;">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+      <div class="modal-content border-0 shadow-lg" style="border-radius: 16px;">
+        <div class="modal-header border-bottom py-3 px-4 d-flex justify-content-between align-items-center">
+          <div class="d-flex align-items-center gap-2">
+            <span class="badge bg-danger p-2 fs-6"><i class="bi bi-truck text-white"></i></span>
+            <div>
+              <h5 class="modal-title fw-bold m-0 text-dark">Surat Jalan Pengiriman Material</h5>
+              <small class="text-secondary">Dokumen Resmi Pabrik PT Griya Sultra Konstruksi</small>
+            </div>
+          </div>
+          <div class="d-flex align-items-center gap-2">
+            <button type="button" class="btn btn-sm btn-primary fw-bold shadow-sm" onclick="printSuratJalan()">
+              <i class="bi bi-printer-fill me-1"></i> Cetak Dokumen (Print)
+            </button>
+            <button type="button" class="btn btn-sm btn-outline-success fw-bold" onclick="unduhSuratJalan()">
+              <i class="bi bi-download me-1"></i> Unduh Surat Jalan
+            </button>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+        </div>
+
+        <div class="modal-body p-4" style="background: #f8fafc; max-height: 80vh; overflow-y: auto;">
+          <!-- AREA CETAK SURAT JALAN STANDAR A4 -->
+          <div id="printAreaSuratJalan" class="bg-white p-4 border rounded shadow-sm" style="max-width: 800px; margin: 0 auto; color: #111827; font-size: 13px;">
+            
+            <!-- KOP SURAT PABRIK -->
+            <div class="d-flex justify-content-between align-items-center pb-3 mb-3 border-bottom border-2 border-dark">
+              <div class="d-flex align-items-center gap-3">
+                <div class="bg-dark text-white rounded p-2 text-center" style="width: 50px; height: 50px; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 22px;">
+                  GSK
+                </div>
+                <div>
+                  <h4 class="fw-bold m-0" style="letter-spacing: -0.5px; color: #0F172A;">PT GRIYA SULTRA KONSTRUKSI</h4>
+                  <div class="small fw-semibold text-secondary">Pabrik & Manufaktur Rangka Atap Baja Ringan, Kanal C, Reng & Spandek SNI</div>
+                  <div class="small text-muted" style="font-size: 11px;">Jl. Poros Konstruksi No. 88, Kendari, Sulawesi Tenggara | Telp: 0812-4567-8901</div>
+                </div>
+              </div>
+              <div class="text-end">
+                <span class="badge bg-danger text-uppercase fw-bold px-3 py-2 fs-6">SURAT JALAN</span>
+                <div class="small fw-bold mt-1 text-dark" id="sjNomor">SJ/GSK/2026/001</div>
+              </div>
+            </div>
+
+            <!-- DETAIL PENGIRIMAN & EKSPEDISI -->
+            <div class="row g-3 mb-3">
+              <div class="col-6">
+                <table class="table table-sm table-borderless m-0" style="font-size: 12px;">
+                  <tr>
+                    <td class="text-secondary ps-0" style="width: 120px;">Tanggal Kirim:</td>
+                    <td><strong id="sjTanggal">02/11/2026</strong></td>
+                  </tr>
+                  <tr>
+                    <td class="text-secondary ps-0">Penerima / Toko:</td>
+                    <td><strong id="sjPelanggan">PT Bumi Perkasa Konstruksi</strong></td>
+                  </tr>
+                  <tr>
+                    <td class="text-secondary ps-0">Tujuan Proyek:</td>
+                    <td><span id="sjProyek">Proyek Perumahan Griya Asri</span></td>
+                  </tr>
+                  <tr>
+                    <td class="text-secondary ps-0">Alamat Kirim:</td>
+                    <td><span id="sjAlamat">Jl. Malaka No. 12, Anduonohu, Kendari</span></td>
+                  </tr>
+                </table>
+              </div>
+              <div class="col-6">
+                <table class="table table-sm table-borderless m-0" style="font-size: 12px;">
+                  <tr>
+                    <td class="text-secondary ps-0" style="width: 120px;">No. Faktur Acuan:</td>
+                    <td><strong class="text-primary" id="sjNoFaktur">INV-2026-001</strong></td>
+                  </tr>
+                  <tr>
+                    <td class="text-secondary ps-0">Armada Pengangkut:</td>
+                    <td><span id="sjArmada">Truk Engkel GSK DT 8821 AR</span></td>
+                  </tr>
+                  <tr>
+                    <td class="text-secondary ps-0">Nama Pengemudi:</td>
+                    <td><strong id="sjSupir">Pak Junaedi (Ekspedisi Pabrik)</strong></td>
+                  </tr>
+                  <tr>
+                    <td class="text-secondary ps-0">Status Mutu:</td>
+                    <td><span class="badge bg-success">Lulus QC Roll-Forming SNI</span></td>
+                  </tr>
+                </table>
+              </div>
+            </div>
+
+            <!-- TABEL DAFTAR BARANG YANG DIKIRIM -->
+            <div class="table-responsive mb-3">
+              <table class="table table-sm table-bordered border-dark" style="font-size: 12px;">
+                <thead class="table-light border-dark text-center">
+                  <tr>
+                    <th style="width: 40px;">No</th>
+                    <th style="width: 110px;">Kode Item</th>
+                    <th>Nama Profil Baja / Material Konstruksi</th>
+                    <th style="width: 80px;">Satuan</th>
+                    <th style="width: 90px;">Qty Kirim</th>
+                    <th>Keterangan / Kondisi Fisik</th>
+                  </tr>
+                </thead>
+                <tbody id="sjTabelItem">
+                  <!-- Diisi dinamis -->
+                </tbody>
+              </table>
+            </div>
+
+            <!-- CATATAN DOKUMEN -->
+            <div class="p-2 bg-light border rounded mb-4" style="font-size: 11px;">
+              <strong>Syarat & Ketentuan Penerimaan:</strong>
+              <ul class="m-0 ps-3">
+                <li>Material baja ringan diserahkan dalam kondisi baru, lurus, presisi standar toleransi pabrik, dan berlabel SNI.</li>
+                <li>Harap barang diperiksa dengan seksama saat diturunkan dari armada. Segala komplain atau kekurangan jumlah wajib dicatat pada lembar surat jalan ini.</li>
+                <li>Lembar 1 (Putih): Arsip Kantor Pabrik | Lembar 2 (Merah): Pembeli / Kontraktor | Lembar 3 (Kuning): Pengemudi Truk.</li>
+              </ul>
+            </div>
+
+            <!-- 3 KOLOM TANDA TANGAN RESMI -->
+            <div class="row text-center mt-3" style="font-size: 12px;">
+              <div class="col-4">
+                <div class="text-secondary small mb-1">Diserahkan Oleh:</div>
+                <div class="fw-bold">Bagian Gudang & QC Pabrik</div>
+                <div style="height: 60px;"></div>
+                <div class="border-top pt-1 mx-3"><strong>( Ahmad Fauzi )</strong></div>
+                <small class="text-muted" style="font-size: 10px;">PT GSK Kendari</small>
+              </div>
+              <div class="col-4">
+                <div class="text-secondary small mb-1">Dibawa / Diangkut Oleh:</div>
+                <div class="fw-bold">Pengemudi / Supir Armada</div>
+                <div style="height: 60px;"></div>
+                <div class="border-top pt-1 mx-3"><strong id="sjTtdSupir">( Pak Junaedi )</strong></div>
+                <small class="text-muted" style="font-size: 10px;">Armada Ekspedisi</small>
+              </div>
+              <div class="col-4">
+                <div class="text-secondary small mb-1">Diterima Dengan Baik Oleh:</div>
+                <div class="fw-bold">Mandor / Kontraktor Proyek</div>
+                <div style="height: 60px;"></div>
+                <div class="border-top pt-1 mx-3"><strong id="sjTtdPenerima">( .................................... )</strong></div>
+                <small class="text-muted" style="font-size: 10px;">Tanda Tangan & Cap Stempel</small>
+              </div>
+            </div>
+
+            <!-- FOOTER AUTHENTICITY -->
+            <div class="d-flex justify-content-between align-items-center mt-4 pt-2 border-top text-muted" style="font-size: 10px;">
+              <div>Dicetak otomatis oleh Sistem ERP Pabrik GSK pada <span id="sjWaktuCetak"></span></div>
+              <div class="fw-bold">Dokumen Sah Pengiriman Pabrik Baja Ringan PT GSK</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Bootstrap JS -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <!-- Konfigurasi API -->
-  <script src="js/config.js?v=8.0"></script>
+  <script src="js/config.js?v=9.0"></script>
   <!-- Logika Aplikasi Terpisah -->
-  <script src="js/app.js?v=8.0"></script>
+  <script src="js/app.js?v=9.0"></script>
 </body>
 </html>
 

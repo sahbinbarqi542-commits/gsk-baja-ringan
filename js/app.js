@@ -297,6 +297,156 @@ function recalculateAll() {
   if (document.getElementById('neracaLabaBersih')) document.getElementById('neracaLabaBersih').textContent = formatRupiah(labaBersih);
   if (document.getElementById('neracaTotalPasiva')) document.getElementById('neracaTotalPasiva').textContent = formatRupiah(totalAset);
   if (document.getElementById('coaModal')) document.getElementById('coaModal').textContent = formatRupiah(modalPemilik > 0 ? modalPemilik : 0);
+
+  // 7. UPDATE TAMPILAN MARGIN KOMPREHENSIF
+  const marginGrossNum = Number(marginPersen) || 0;
+  const marginNetNum = totalOmzet > 0 ? ((labaBersih / totalOmzet) * 100).toFixed(1) : 0;
+
+  if (document.getElementById('marginGrossVal')) document.getElementById('marginGrossVal').textContent = marginGrossNum + '%';
+  if (document.getElementById('marginNetVal')) document.getElementById('marginNetVal').textContent = marginNetNum + '%';
+  if (document.getElementById('progressBarGross')) document.getElementById('progressBarGross').style.width = Math.min(100, Math.max(0, marginGrossNum)) + '%';
+  if (document.getElementById('progressBarNet')) document.getElementById('progressBarNet').style.width = Math.min(100, Math.max(0, Number(marginNetNum) || 0)) + '%';
+  if (document.getElementById('badgeMarginStatus')) document.getElementById('badgeMarginStatus').textContent = `Margin Kotor: ${marginGrossNum}%`;
+
+  if (document.getElementById('marginHppNominal')) document.getElementById('marginHppNominal').textContent = formatRupiah(totalHPP);
+  if (document.getElementById('marginLabaNominal')) document.getElementById('marginLabaNominal').textContent = formatRupiah(totalLabaKotor);
+  if (document.getElementById('marginOpsNominal')) document.getElementById('marginOpsNominal').textContent = formatRupiah(biayaOps);
+  if (document.getElementById('marginBersihNominal')) document.getElementById('marginBersihNominal').textContent = formatRupiah(labaBersih);
+
+  // 8. RENDER TREND GRAFIK (CHART.JS)
+  renderChartsERP(totalOmzet, totalHPP, totalLabaKotor, labaBersih);
+}
+
+/**
+ * =========================================================================
+ * RENDERING TREND GRAFIK KEUANGAN & MARGIN (CHART.JS)
+ * =========================================================================
+ */
+let chartTrendOmzetInstance = null;
+let chartKomposisiProdukInstance = null;
+
+function renderChartsERP(omzet, hpp, labaKotor, labaBersih) {
+  if (typeof Chart === 'undefined') return;
+
+  // 1. Chart Trend Finansial (Line & Bar)
+  const ctxTrend = document.getElementById('chartTrendOmzet');
+  if (ctxTrend) {
+    if (chartTrendOmzetInstance) chartTrendOmzetInstance.destroy();
+
+    let labels = ['Bulan 1', 'Bulan 2', 'Bulan 3', 'Bulan 4', 'Bulan 5', 'Bulan Berjalan'];
+    let dataOmzet = [0, 0, 0, 0, 0, omzet];
+    let dataHPP = [0, 0, 0, 0, 0, hpp];
+    let dataLaba = [0, 0, 0, 0, 0, labaKotor];
+
+    if (erpState.invoices.length > 0) {
+      const reversedInvs = [...erpState.invoices].reverse();
+      labels = reversedInvs.map(i => i.noInvoice);
+      dataOmzet = reversedInvs.map(i => Number(i.totalJual) || 0);
+      dataHPP = reversedInvs.map(i => Number(i.totalHPP) || 0);
+      dataLaba = reversedInvs.map(i => Number(i.laba) || 0);
+    }
+
+    chartTrendOmzetInstance = new Chart(ctxTrend, {
+      type: 'bar',
+      data: {
+        labels: labels,
+        datasets: [
+          {
+            label: 'Omzet Penjualan (Rp)',
+            data: dataOmzet,
+            backgroundColor: 'rgba(59, 130, 246, 0.75)',
+            borderColor: '#3B82F6',
+            borderWidth: 1,
+            borderRadius: 6
+          },
+          {
+            label: 'Beban HPP Pokok (Rp)',
+            data: dataHPP,
+            backgroundColor: 'rgba(148, 163, 184, 0.6)',
+            borderColor: '#94A3B8',
+            borderWidth: 1,
+            borderRadius: 6
+          },
+          {
+            label: 'Laba Kotor Margin (Rp)',
+            data: dataLaba,
+            type: 'line',
+            borderColor: '#10B981',
+            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+            borderWidth: 3,
+            tension: 0.3,
+            fill: true
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { position: 'top', labels: { boxWidth: 12, font: { size: 11 } } },
+          tooltip: {
+            callbacks: {
+              label: function(context) {
+                return context.dataset.label + ': ' + formatRupiah(context.raw);
+              }
+            }
+          }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: {
+              callback: function(value) {
+                if (value >= 1000000) return 'Rp ' + (value / 1000000).toFixed(1) + 'M';
+                if (value >= 1000) return 'Rp ' + (value / 1000).toFixed(0) + 'k';
+                return value;
+              }
+            }
+          }
+        }
+      }
+    });
+  }
+
+  // 2. Chart Komposisi Rasio Margin (Doughnut)
+  const ctxPie = document.getElementById('chartKomposisiProduk');
+  if (ctxPie) {
+    if (chartKomposisiProdukInstance) chartKomposisiProdukInstance.destroy();
+
+    const isZero = (omzet === 0 && hpp === 0);
+    const labels = isZero ? ['Belum Ada Penjualan'] : ['Beban HPP Pokok', 'Laba Kotor Margin'];
+    const dataValues = isZero ? [1] : [hpp, labaKotor];
+    const bgColors = isZero ? ['#E2E8F0'] : ['#94A3B8', '#10B981'];
+
+    chartKomposisiProdukInstance = new Chart(ctxPie, {
+      type: 'doughnut',
+      data: {
+        labels: labels,
+        datasets: [{
+          data: dataValues,
+          backgroundColor: bgColors,
+          borderWidth: 2,
+          hoverOffset: 4
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 10 } } },
+          tooltip: {
+            callbacks: {
+              label: function(context) {
+                if (isZero) return 'Belum ada transaksi';
+                return context.label + ': ' + formatRupiah(context.raw);
+              }
+            }
+          }
+        },
+        cutout: '70%'
+      }
+    });
+  }
 }
 
 /**
@@ -652,7 +802,7 @@ const ACCURATE_MENUS = {
     tiles: [
       { name: 'Penawaran Penjualan', icon: 'bi-file-earmark-text', color: 'tile-emerald', action: "bukaModalFakturBaru()" },
       { name: 'Pesanan Penjualan', icon: 'bi-bag-check', color: 'tile-emerald', action: "bukaModalFakturBaru()" },
-      { name: 'Pengiriman Pesanan', icon: 'bi-truck', color: 'tile-sky', action: "switchTabERP('penjualan')" },
+      { name: 'Pengiriman Pesanan (Surat Jalan)', icon: 'bi-truck', color: 'tile-sky', action: "bukaSuratJalan()" },
       { name: 'Uang Muka Penjualan', icon: 'bi-wallet2', color: 'tile-sky', action: "bukaModalKas('MASUK')" },
       { name: 'Faktur Penjualan', icon: 'bi-receipt', color: 'tile-emerald', action: "bukaModalFakturBaru()" },
       { name: 'Penerimaan Penjualan', icon: 'bi-cash', color: 'tile-emerald', action: "bukaModalKas('MASUK')" },
@@ -1018,7 +1168,12 @@ function renderTabelPenjualan() {
           <td class="text-success fw-bold">${formatRupiah(inv.laba)}</td>
           <td><span class="badge bg-warning text-dark fw-bold">${inv.margin}%</span></td>
           <td><span class="badge ${inv.statusBayar.includes('Tempo') ? 'bg-warning text-dark' : 'bg-success'}">${inv.statusBayar}</span></td>
-          <td><button class="btn btn-xs btn-outline-dark" onclick="alert('Cetak Faktur ${inv.noInvoice} siap cetak.')"><i class="bi bi-printer"></i></button></td>
+          <td>
+            <div class="btn-group btn-group-sm">
+              <button class="btn btn-xs btn-outline-primary fw-bold" onclick="bukaSuratJalan('${inv.noInvoice}')" title="Cetak Surat Jalan"><i class="bi bi-truck me-1"></i>Surat Jalan</button>
+              <button class="btn btn-xs btn-outline-dark" onclick="bukaSuratJalan('${inv.noInvoice}')" title="Cetak Dokumen Faktur"><i class="bi bi-printer"></i></button>
+            </div>
+          </td>
         `;
         tLengkap.appendChild(tr);
       });
@@ -1037,12 +1192,127 @@ function renderTabelPenjualan() {
           <td>${inv.pelanggan}</td>
           <td class="fw-bold">${formatRupiah(inv.totalJual)}</td>
           <td class="text-success fw-bold">${formatRupiah(inv.laba)}</td>
-          <td><span class="badge ${inv.statusBayar.includes('Tempo') ? 'bg-warning text-dark' : 'bg-success'}">${inv.statusBayar}</span></td>
+          <td>
+            <button class="btn btn-xs btn-outline-primary py-0" onclick="bukaSuratJalan('${inv.noInvoice}')" title="Cetak Surat Jalan"><i class="bi bi-truck me-1"></i>Surat Jalan</button>
+          </td>
         `;
         tDash.appendChild(tr);
       });
     }
   }
+}
+
+/**
+ * =========================================================================
+ * SURAT JALAN PENGIRIMAN MATERIAL (PRINT & UNDUH)
+ * =========================================================================
+ */
+let suratJalanAktif = null;
+
+function bukaSuratJalan(noInvoice) {
+  let inv = null;
+  if (noInvoice) {
+    inv = erpState.invoices.find(i => i.noInvoice === noInvoice);
+  }
+  if (!inv && erpState.invoices.length > 0) {
+    inv = erpState.invoices[0];
+  }
+
+  const noSj = 'SJ/GSK/2026/' + (inv ? inv.noInvoice.replace(/[^0-9]/g, '').slice(-3) || '001' : '001');
+  const tgl = inv ? inv.tanggal : new Date().toLocaleDateString('id-ID');
+  const pelanggan = inv ? inv.pelanggan : 'Pelanggan Proyek';
+  const noFaktur = inv ? inv.noInvoice : 'INV-2026-001';
+
+  suratJalanAktif = {
+    nomor: noSj,
+    tanggal: tgl,
+    pelanggan: pelanggan,
+    noFaktur: noFaktur
+  };
+
+  if (document.getElementById('sjNomor')) document.getElementById('sjNomor').textContent = noSj;
+  if (document.getElementById('sjTanggal')) document.getElementById('sjTanggal').textContent = tgl;
+  if (document.getElementById('sjPelanggan')) document.getElementById('sjPelanggan').textContent = pelanggan;
+  if (document.getElementById('sjProyek')) document.getElementById('sjProyek').textContent = `Proyek Rangka Atap (${pelanggan})`;
+  if (document.getElementById('sjNoFaktur')) document.getElementById('sjNoFaktur').textContent = noFaktur;
+  if (document.getElementById('sjWaktuCetak')) document.getElementById('sjWaktuCetak').textContent = new Date().toLocaleString('id-ID');
+
+  const tbody = document.getElementById('sjTabelItem');
+  if (tbody) {
+    tbody.innerHTML = '';
+    if (inv) {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td class="text-center">1</td>
+        <td class="text-center fw-bold"><code>${inv.kodeProduk || 'FG-01'}</code></td>
+        <td class="fw-bold">${inv.namaProduk || 'Kanal C 75.75 SNI (Baja Ringan 6M)'}</td>
+        <td class="text-center">Batang</td>
+        <td class="text-center fw-bold fs-6">${inv.qty || 1}</td>
+        <td>Baja Ringan SNI G550, Baru dari Mesin Roll-Forming, Lulus Uji QC</td>
+      `;
+      tbody.appendChild(tr);
+    } else {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td class="text-center">1</td>
+        <td class="text-center fw-bold"><code>FG-01</code></td>
+        <td class="fw-bold">Kanal C 75.75 SNI (Baja Ringan 6M)</td>
+        <td class="text-center">Batang</td>
+        <td class="text-center fw-bold fs-6">100</td>
+        <td>Baja Ringan SNI G550, Baru dari Mesin Roll-Forming, Lulus Uji QC</td>
+      `;
+      tbody.appendChild(tr);
+    }
+  }
+
+  const modalEl = document.getElementById('modalSuratJalan');
+  if (modalEl && typeof bootstrap !== 'undefined') {
+    const inst = bootstrap.Modal.getOrCreateInstance(modalEl);
+    inst.show();
+  }
+}
+
+function printSuratJalan() {
+  window.print();
+}
+
+function unduhSuratJalan() {
+  const container = document.getElementById('printAreaSuratJalan');
+  if (!container) return;
+
+  const noSj = suratJalanAktif ? suratJalanAktif.nomor.replace(/[^a-zA-Z0-9]/g, '_') : 'Surat_Jalan_GSK';
+  const htmlContent = `
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <title>Surat Jalan ${noSj}</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body { font-family: 'Inter', sans-serif; background: #fff; color: #111; padding: 20px; }
+    @media print {
+      body { padding: 0; }
+    }
+  </style>
+</head>
+<body>
+  ${container.outerHTML}
+  <script>
+    window.onload = function() { window.print(); }
+  </script>
+</body>
+</html>
+  `;
+
+  const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `${noSj}.html`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
 }
 
 function bukaModalFakturBaru() {
